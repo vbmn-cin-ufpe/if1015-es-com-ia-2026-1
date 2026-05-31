@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: codecompass
+      POSTGRES_USER: codecompass
+      POSTGRES_PASSWORD: codecompass
+    ports:
+      - "5432:5432"
+
+  chroma:
+    image: chromadb/chroma:0.5.5
+    ports:
+      - "8001:8000"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      POSTGRES_DSN: postgresql://codecompass:codecompass@postgres:5432/codecompass
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      ALLOW_LOCAL_REPOS: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - chroma
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://backend:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
