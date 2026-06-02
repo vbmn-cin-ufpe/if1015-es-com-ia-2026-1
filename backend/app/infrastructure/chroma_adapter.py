@@ -2,7 +2,7 @@ import math
 import threading
 from typing import Any
 
-from app.infrastructure.settings import get_settings
+from app.infrastructure.settings import Settings
 
 try:
     import chromadb
@@ -11,8 +11,8 @@ except Exception:
 
 
 class ChromaAdapter:
-    def __init__(self) -> None:
-        self._settings = get_settings()
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
         self._memory_lock = threading.Lock()
         self._memory: dict[str, list[dict[str, Any]]] = {}
         self._client = None

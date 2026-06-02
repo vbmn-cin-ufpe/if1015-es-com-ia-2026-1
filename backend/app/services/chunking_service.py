@@ -1,8 +1,12 @@
+"""Service for chunking code files into manageable pieces."""
+
 import hashlib
 from pathlib import Path
 
 
 class ChunkingService:
+    """Service to split files into overlapping chunks for embedding."""
+
     def __init__(self, chunk_size: int = 80, overlap: int = 20) -> None:
         self._chunk_size = chunk_size
         self._overlap = overlap

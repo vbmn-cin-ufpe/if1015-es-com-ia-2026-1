@@ -1,26 +1,30 @@
+"""Repository indexing service - orchestrates the ingestion pipeline."""
+
 from uuid import uuid4
 
-from app.infrastructure.chroma_adapter import ChromaAdapter
-from app.infrastructure.git_client import GitClient
-from app.infrastructure.postgres_adapter import PostgresAdapter
-from app.infrastructure.settings import get_settings
+from app.infrastructure.settings import Settings
+from app.ports import EmbeddingPort, GitClientPort, RepositoryMetadataPort, VectorStorePort
 from app.services.chunking_service import ChunkingService
-from app.services.embedding_service import EmbeddingService
 from app.services.ingestion_service import IngestionService
 from app.services.models import RepositoryIndexResponse, RepositoryStatusResponse
 
 
 class RepoService:
+    """Service for managing repository indexing operations."""
+
     def __init__(
         self,
-        metadata_adapter: PostgresAdapter,
-        git_client: GitClient,
+        metadata_adapter: RepositoryMetadataPort,
+        git_client: GitClientPort,
         ingestion_service: IngestionService,
         chunking_service: ChunkingService,
-        embedding_service: EmbeddingService,
-        chroma_adapter: ChromaAdapter,
+        embedding_service: EmbeddingPort,
+        chroma_adapter: VectorStorePort,
+        settings: Settings | None = None,
     ) -> None:
-        self._settings = get_settings()
+        from app.infrastructure.settings import get_settings
+
+        self._settings = settings or get_settings()
         self._metadata = metadata_adapter
         self._git = git_client
         self._ingestion = ingestion_service
@@ -29,6 +33,7 @@ class RepoService:
         self._chroma = chroma_adapter
 
     def start_index(self, repository_url: str) -> RepositoryIndexResponse:
+        """Start indexing a repository."""
         self._validate_repository_ref(repository_url)
         repository_id = str(uuid4())
         self._metadata.create_repository(repository_id=repository_id, repository_url=repository_url, status="queued")
@@ -46,13 +51,26 @@ class RepoService:
             }
             self._metadata.update_repository_status(repository_id=repository_id, status="completed", stats=stats)
             return RepositoryIndexResponse(repository_id=repository_id, job_status="completed")
-        except Exception as exc:
+        except (ValueError, OSError, RuntimeError) as exc:
+            # Catch specific exceptions: validation, file I/O, and runtime errors
             self._metadata.update_repository_status(
                 repository_id=repository_id,
                 status="failed",
                 stats={},
                 error_message=str(exc),
             )
+            return RepositoryIndexResponse(repository_id=repository_id, job_status="failed")
+        except Exception as exc:
+            # Unexpected errors - log and re-raise for debugging
+            import logging
+            logging.error(f"Unexpected error indexing repository {repository_id}: {exc}", exc_info=True)
+            self._metadata.update_repository_status(
+                repository_id=repository_id,
+                status="failed",
+                stats={},
+                error_message=f"Unexpected error: {str(exc)}",
+            )
+            # In production, you might want to re-raise or return failed status
             return RepositoryIndexResponse(repository_id=repository_id, job_status="failed")
 
     def get_status(self, repository_id: str) -> RepositoryStatusResponse:

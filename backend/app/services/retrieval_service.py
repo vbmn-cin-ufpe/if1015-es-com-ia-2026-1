@@ -1,9 +1,12 @@
-from app.infrastructure.chroma_adapter import ChromaAdapter
-from app.services.embedding_service import EmbeddingService
+"""Retrieval service for finding relevant code chunks using semantic search."""
+
+from app.ports import EmbeddingPort, VectorStorePort
 
 
 class RetrievalService:
-    def __init__(self, chroma_adapter: ChromaAdapter, embedding_service: EmbeddingService) -> None:
+    """Service for retrieving relevant code chunks based on semantic similarity."""
+
+    def __init__(self, chroma_adapter: VectorStorePort, embedding_service: EmbeddingPort) -> None:
         self._chroma = chroma_adapter
         self._embedding = embedding_service
 

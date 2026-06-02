@@ -2,12 +2,12 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from app.infrastructure.settings import get_settings
+from app.infrastructure.settings import Settings
 
 
 class GitClient:
-    def __init__(self) -> None:
-        self._settings = get_settings()
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
 
     def prepare_repository(self, repository_ref: str, repository_id: str) -> Path:
         maybe_local = Path(repository_ref).expanduser()

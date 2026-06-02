@@ -1,10 +1,10 @@
 import json
 import threading
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from app.infrastructure.settings import get_settings
+from app.infrastructure.settings import Settings
+from app.ports import RepositoryRecord
 
 try:
     import psycopg
@@ -12,20 +12,9 @@ except Exception:
     psycopg = None
 
 
-@dataclass
-class RepositoryRecord:
-    repository_id: str
-    repository_url: str
-    status: str
-    stats: dict[str, Any]
-    error_message: str | None
-    created_at: str
-    updated_at: str
-
-
 class PostgresAdapter:
-    def __init__(self) -> None:
-        self._settings = get_settings()
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
         self._lock = threading.Lock()
         self._memory: dict[str, RepositoryRecord] = {}
         self._dsn = self._settings.postgres_dsn

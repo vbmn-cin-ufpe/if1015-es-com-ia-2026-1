@@ -1,15 +1,18 @@
-from app.infrastructure.llm_client import LlmClient
-from app.infrastructure.postgres_adapter import PostgresAdapter
+"""Chat service for answering questions about code using RAG."""
+
+from app.ports import LLMPort, RepositoryMetadataPort
 from app.services.models import ChatAskResponse, ChatSource
 from app.services.retrieval_service import RetrievalService
 
 
 class ChatService:
+    """Service for handling chat/question-answering over codebases."""
+
     def __init__(
         self,
-        metadata_adapter: PostgresAdapter,
+        metadata_adapter: RepositoryMetadataPort,
         retrieval_service: RetrievalService,
-        llm_client: LlmClient,
+        llm_client: LLMPort,
     ) -> None:
         self._metadata = metadata_adapter
         self._retrieval = retrieval_service
