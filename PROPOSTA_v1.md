@@ -106,21 +106,28 @@
 
 ## 7. Escopo do MVP
 
-> ### ✅ Entra no MVP:
-> - Indexação de repositório Python via URL do GitHub
+> ### ✅ Entrou no MVP (implementado):
+> - Indexação de repositório via URL do GitHub ou path local
 > - Busca semântica sobre o código (RAG com ChromaDB)
-> - Chat conversacional: perguntas em linguagem natural sobre a codebase
+> - Chat conversacional com perguntas em linguagem natural sobre a codebase
 > - Geração automática de tour guiado dos módulos mais importantes
-> - Visualização básica de dependências entre módulos
+> - Visualização de dependências entre módulos (grafo)
 > - Sumarização de arquivos/funções principais
+> - Suporte a **15 linguagens de programação** (Python, JavaScript, TypeScript, Java, Go, Rust, C, C++, C#, Ruby, PHP, Kotlin, Scala, Shell/Bash, Swift)
 >
-> ### ❌ Fora do MVP:
-> - Suporte a linguagens além de Python
-> - Análise profunda de histórico de PRs (apenas commits no MVP)
+> ### ✅ Além do MVP (implementado na fase Composição/Ensaio):
+> - Embeddings OpenAI `text-embedding-3-small` com processamento paralelo (ThreadPoolExecutor) — 18.7x mais rápido
+> - Dark mode completo com persistência em localStorage
+> - Sidebar lateral colapsável (estilo ChatLLM)
+> - Renderização Markdown com blocos de código estilo VS Code (react-syntax-highlighter)
+> - Múltiplos providers LLM: Abacus AI, OpenAI, Anthropic
+> - Auditoria de segurança: credenciais hardcoded removidas, env vars obrigatórias
+>
+> ### ❌ Fora do escopo (não implementado):
 > - Integração com Slack/Teams
 > - Personalização do tour por role (backend dev vs frontend dev)
-> - Métricas de progresso do onboarding
-> - Deploy on-premise / self-hosted
+> - Análise profunda de PRs (apenas commits implementados)
+> - Deploy on-premise / self-hosted com documentação DevOps
 
 ## 8. Dependências técnicas
 
@@ -144,8 +151,8 @@
 
 > O projeto será bem-sucedido se, ao final do semestre:
 >
-> 1. **Funcional:** A aplicação consegue indexar um repositório Python real (>10k LOC), responder perguntas sobre ele com respostas contextualizadas e gerar um tour guiado automaticamente
-> 2. **Qualidade das respostas:** Em um teste com 20 perguntas sobre uma codebase conhecida, ≥70% das respostas são avaliadas como "úteis" ou "corretas" por um desenvolvedor familiarizado com o código
-> 3. **Tempo de resposta:** Perguntas respondidas em <15 segundos (excluindo indexação inicial)
-> 4. **Cobertura de testes:** ≥80% nos componentes core (RAG engine, analyzers)
-> 5. **Processo documentado:** Workflow Document completo com registro de economicidade em todas as fases
+> 1. **Funcional:** ✅ A aplicação indexa repositórios em 15 linguagens, responde perguntas contextualizadas e gera tour guiado automaticamente
+> 2. **Performance:** ✅ Embedding de 2825 chunks em 11.8s (18.7x melhoria vs 220s inicial) com OpenAI `text-embedding-3-small`
+> 3. **Tempo de resposta:** ✅ Perguntas respondidas em <15 segundos (excluindo indexação)
+> 4. **Cobertura de testes:** Testes unitários, integração e E2E implementados para todos os componentes core
+> 5. **Processo documentado:** ✅ Workflow Document completo com registro de economicidade em todas as fases

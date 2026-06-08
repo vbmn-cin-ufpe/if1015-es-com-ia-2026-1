@@ -1,8 +1,12 @@
+import logging
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 from app.infrastructure.settings import Settings
+
+logger = logging.getLogger(__name__)
 
 
 class GitClient:
@@ -20,7 +24,11 @@ class GitClient:
         if target.exists():
             shutil.rmtree(target)
         cmd = ["git", "clone", "--depth", "1", repository_ref, str(target)]
+        logger.info("cloning | url=%s | target=%s", repository_ref, target)
+        t0 = time.perf_counter()
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
         if result.returncode != 0:
+            logger.error("clone failed | url=%s | stderr=%s", repository_ref, result.stderr.strip())
             raise ValueError(result.stderr.strip() or "unable to clone repository")
+        logger.info("clone done | url=%s | elapsed=%.1fs", repository_ref, time.perf_counter() - t0)
         return target.resolve()

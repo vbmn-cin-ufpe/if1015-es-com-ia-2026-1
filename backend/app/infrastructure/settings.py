@@ -19,13 +19,25 @@ class Settings:
     # Embedding settings
     embedding_model: str
     embedding_dim: int
+    embedding_provider: str   # "local" | "openai" | "abacus"
     # LLM settings
     llm_provider: str  # "abacus", "anthropic", "openai", etc.
     llm_api_key: str | None
     llm_api_base_url: str | None  # For Abacus AI or custom endpoints
+    openai_api_key: str | None   # Chave dedicada para embeddings OpenAI (separada do LLM)
     llm_model: str
     llm_max_tokens: int
     llm_temperature: float
+    # Performance
+    max_file_size_kb: int       # skip files larger than this (minified/generated)
+    embedding_batch_size: int   # chunks per encode() call (OpenAI max: 2048)
+    embedding_max_workers: int  # concurrent batch threads for OpenAI (ignored for local)
+    upsert_batch_size: int      # vectors per ChromaDB upsert call
+    # Logging
+    log_level: str
+    # Admin seed
+    admin_email: str
+    admin_password: str
 
 
 def _as_bool(value: str | None, default: bool) -> bool:
@@ -51,11 +63,23 @@ def get_settings() -> Settings:
         # Embeddings
         embedding_model=os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"),
         embedding_dim=int(os.getenv("EMBEDDING_DIM", "384")),
+        embedding_provider=os.getenv("EMBEDDING_PROVIDER", "local"),
         # LLM
         llm_provider=os.getenv("LLM_PROVIDER", "abacus"),
         llm_api_key=os.getenv("LLM_API_KEY"),
         llm_api_base_url=os.getenv("LLM_API_BASE_URL"),
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
         llm_model=os.getenv("LLM_MODEL", "claude-3-5-sonnet-20240620"),
         llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "4096")),
         llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
+        # Performance
+        max_file_size_kb=int(os.getenv("MAX_FILE_SIZE_KB", "200")),
+        embedding_batch_size=int(os.getenv("EMBEDDING_BATCH_SIZE", "64")),
+        embedding_max_workers=int(os.getenv("EMBEDDING_MAX_WORKERS", "4")),
+        upsert_batch_size=int(os.getenv("UPSERT_BATCH_SIZE", "500")),
+        # Logging
+        log_level=os.getenv("LOG_LEVEL", "INFO"),
+        # Admin seed
+        admin_email=os.getenv("ADMIN_EMAIL", "admin"),
+        admin_password=os.getenv("ADMIN_PASSWORD", ""),
     )

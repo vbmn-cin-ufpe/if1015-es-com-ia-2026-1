@@ -7,40 +7,44 @@ from app.infrastructure.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# Try importing various LLM clients
 try:
-    from anthropic import Anthropic
+    from abacusai import ApiClient as AbacusApiClient
 except ImportError:
-    Anthropic = None
+    AbacusApiClient = None
 
 try:
     from openai import OpenAI
 except ImportError:
     OpenAI = None
 
+try:
+    from anthropic import Anthropic
+except ImportError:
+    Anthropic = None
+
+
+SYSTEM_PROMPT = """Você é um assistente especializado em onboarding de desenvolvedores em codebases.
+Sua função é ajudar novos desenvolvedores a entender código existente, explicando:
+- O que o código faz e por que foi implementado dessa forma
+- Como diferentes partes se relacionam
+- Conceitos e padrões utilizados
+
+Baseie suas respostas SOMENTE no contexto fornecido. Se o contexto não for suficiente,
+diga isso claramente. Use linguagem clara e exemplos quando relevante."""
+
 
 class LlmClient:
-    """Client for interacting with multiple LLM providers.
-    
-    Supports:
-    - Abacus AI (OpenAI-compatible API)
-    - Anthropic Claude (direct)
-    - OpenAI (direct)
-    - Any OpenAI-compatible endpoint
-    
-    Falls back to simple context preview for development/testing.
-    """
+    """Unified LLM client. Supports Abacus AI (native SDK), OpenAI, and Anthropic."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._client = None
         self._provider = settings.llm_provider.lower()
-        
+
         if not settings.llm_api_key:
-            logger.warning(f"LLM_API_KEY not configured, using fallback stub")
+            logger.warning("LLM_API_KEY not configured, using fallback stub")
             return
-        
-        # Initialize based on provider
+
         if self._provider == "abacus":
             self._init_abacus()
         elif self._provider == "anthropic":
@@ -48,198 +52,142 @@ class LlmClient:
         elif self._provider == "openai":
             self._init_openai()
         else:
-            logger.warning(f"Unknown provider '{self._provider}', using fallback")
+            logger.warning("Unknown LLM provider '%s', using fallback", self._provider)
+
+    # ── Initializers ────────────────────────────────────────────────────────
 
     def _init_abacus(self) -> None:
-        """Initialize Abacus AI client (OpenAI-compatible)."""
-        if OpenAI is None:
-            logger.warning("openai package not installed, cannot use Abacus AI")
+        if AbacusApiClient is None:
+            logger.warning("abacusai package not installed")
             return
-        
         try:
-            # Abacus AI uses OpenAI-compatible API
-            base_url = self._settings.llm_api_base_url or "https://api.abacus.ai/v1"
-            self._client = OpenAI(
-                api_key=self._settings.llm_api_key,
-                base_url=base_url,
-            )
-            logger.info(f"Initialized Abacus AI client with model: {self._settings.llm_model}")
-        except Exception as e:
-            logger.warning(f"Failed to initialize Abacus AI client: {e}")
-            self._client = None
+            self._client = AbacusApiClient(self._settings.llm_api_key)
+            logger.info("Initialized Abacus AI client (model=%s)", self._settings.llm_model)
+        except Exception as exc:
+            logger.warning("Failed to initialize Abacus AI client: %s", exc)
 
     def _init_anthropic(self) -> None:
-        """Initialize Anthropic Claude client (direct)."""
         if Anthropic is None:
-            logger.warning("anthropic package not installed, cannot use Anthropic")
+            logger.warning("anthropic package not installed")
             return
-        
         try:
             self._client = Anthropic(api_key=self._settings.llm_api_key)
-            logger.info(f"Initialized Anthropic client with model: {self._settings.llm_model}")
-        except Exception as e:
-            logger.warning(f"Failed to initialize Anthropic client: {e}")
-            self._client = None
+            logger.info("Initialized Anthropic client (model=%s)", self._settings.llm_model)
+        except Exception as exc:
+            logger.warning("Failed to initialize Anthropic client: %s", exc)
 
     def _init_openai(self) -> None:
-        """Initialize OpenAI client (direct or custom base URL)."""
         if OpenAI is None:
-            logger.warning("openai package not installed, cannot use OpenAI")
+            logger.warning("openai package not installed")
             return
-        
         try:
-            kwargs = {"api_key": self._settings.llm_api_key}
+            kwargs: dict[str, Any] = {"api_key": self._settings.llm_api_key}
             if self._settings.llm_api_base_url:
                 kwargs["base_url"] = self._settings.llm_api_base_url
-            
             self._client = OpenAI(**kwargs)
-            logger.info(f"Initialized OpenAI client with model: {self._settings.llm_model}")
-        except Exception as e:
-            logger.warning(f"Failed to initialize OpenAI client: {e}")
-            self._client = None
+            logger.info("Initialized OpenAI client (model=%s)", self._settings.llm_model)
+        except Exception as exc:
+            logger.warning("Failed to initialize OpenAI client: %s", exc)
+
+    # ── Public API ───────────────────────────────────────────────────────────
 
     def generate_answer(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
-        """Generate answer based on question and retrieved context."""
         if not context_chunks:
             return "Não encontrei contexto suficiente para responder. Tente reformular sua pergunta."
-        
+
         if self._client is None:
             return self._generate_fallback(question, context_chunks)
-        
-        # Route to appropriate generator based on provider
-        if self._provider == "anthropic":
+
+        if self._provider == "abacus":
+            return self._generate_with_abacus(question, context_chunks)
+        elif self._provider == "anthropic":
             return self._generate_with_anthropic(question, context_chunks)
-        elif self._provider in ["abacus", "openai"]:
-            return self._generate_with_openai_compatible(question, context_chunks)
-        else:
-            return self._generate_fallback(question, context_chunks)
+        elif self._provider == "openai":
+            return self._generate_with_openai(question, context_chunks)
+        return self._generate_fallback(question, context_chunks)
+
+    # ── Provider implementations ─────────────────────────────────────────────
+
+    def _build_context(self, chunks: list[dict[str, Any]], max_chunks: int = 5) -> str:
+        parts = []
+        for i, chunk in enumerate(chunks[:max_chunks], 1):
+            meta = chunk.get("metadata", {})
+            file_path = meta.get("file_path", "unknown")
+            start_line = meta.get("start_line", 0)
+            text = chunk.get("text", "")
+            parts.append(f"[Fonte {i}] {file_path} (linha {start_line}):\n```\n{text}\n```")
+        return "\n\n".join(parts)
+
+    def _build_user_prompt(self, question: str, context: str) -> str:
+        return (
+            f"Com base no código recuperado da codebase, responda:\n\n"
+            f"{question}\n\n"
+            f"Contexto da codebase:\n{context}\n\n"
+            f"Forneça uma resposta clara e objetiva."
+        )
+
+    def _generate_with_abacus(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+        context = self._build_context(context_chunks)
+        prompt = self._build_user_prompt(question, context)
+        try:
+            response = self._client.evaluate_prompt(
+                system_message=SYSTEM_PROMPT,
+                prompt=prompt,
+                llm_name=self._settings.llm_model,
+            )
+            answer = response.content
+            logger.info("Abacus AI response: %d tokens (model=%s)", response.total_tokens, response.llm_name)
+            return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
+        except Exception as exc:
+            logger.error("Error calling Abacus AI: %s", exc)
+            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
 
     def _generate_with_anthropic(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
-        """Generate answer using Anthropic Claude API (Messages API)."""
-        # Build context from retrieved chunks
-        context_parts = []
-        for i, chunk in enumerate(context_chunks[:5], 1):
-            file_path = chunk.get("metadata", {}).get("file_path", "unknown")
-            start_line = chunk.get("metadata", {}).get("start_line", 0)
-            text = chunk.get("text", "")
-            context_parts.append(
-                f"[Fonte {i}] {file_path} (linha {start_line}):\n```\n{text}\n```"
-            )
-        
-        context_text = "\n\n".join(context_parts)
-        
-        # Create prompt following Claude best practices
-        system_prompt = """Você é um assistente especializado em onboarding de desenvolvedores em codebases legados. 
-Sua função é ajudar novos desenvolvedores a entender código existente, explicando:
-- O que o código faz
-- Por que foi implementado dessa forma
-- Como diferentes partes se relacionam
-- Conceitos e padrões utilizados
-
-Baseie suas respostas SOMENTE no contexto fornecido. Se o contexto não contém informação suficiente, 
-diga isso claramente. Use linguagem clara e exemplos quando relevante."""
-
-        user_prompt = f"""Com base no código recuperado da codebase, responda a seguinte pergunta:
-
-{question}
-
-Contexto recuperado da codebase:
-{context_text}
-
-Forneça uma resposta clara e objetiva baseada no contexto acima."""
-
+        context = self._build_context(context_chunks)
+        prompt = self._build_user_prompt(question, context)
         try:
             response = self._client.messages.create(
                 model=self._settings.llm_model,
                 max_tokens=self._settings.llm_max_tokens,
                 temperature=self._settings.llm_temperature,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ],
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}],
             )
-            
-            # Extract text from response
-            answer = ""
-            for block in response.content:
-                if hasattr(block, "text"):
-                    answer += block.text
+            answer = "".join(b.text for b in response.content if hasattr(b, "text"))
             return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
-        
-        except Exception as e:
-            logger.error(f"Error calling Anthropic API: {e}")
-            return f"Erro ao gerar resposta: {str(e)}. Usando resposta de fallback:\n\n{self._generate_fallback(question, context_chunks)}"
+        except Exception as exc:
+            logger.error("Error calling Anthropic API: %s", exc)
+            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
 
-    def _generate_with_openai_compatible(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
-        """Generate answer using OpenAI-compatible API (Abacus AI, OpenAI, etc.)."""
-        # Build context from retrieved chunks
-        context_parts = []
-        for i, chunk in enumerate(context_chunks[:5], 1):
-            file_path = chunk.get("metadata", {}).get("file_path", "unknown")
-            start_line = chunk.get("metadata", {}).get("start_line", 0)
-            text = chunk.get("text", "")
-            context_parts.append(
-                f"[Fonte {i}] {file_path} (linha {start_line}):\n```\n{text}\n```"
-            )
-        
-        context_text = "\n\n".join(context_parts)
-        
-        # Create system prompt
-        system_prompt = """Você é um assistente especializado em onboarding de desenvolvedores em codebases legados. 
-Sua função é ajudar novos desenvolvedores a entender código existente, explicando:
-- O que o código faz
-- Por que foi implementado dessa forma
-- Como diferentes partes se relacionam
-- Conceitos e padrões utilizados
-
-Baseie suas respostas SOMENTE no contexto fornecido. Se o contexto não contém informação suficiente, 
-diga isso claramente. Use linguagem clara e exemplos quando relevante."""
-
-        user_prompt = f"""Com base no código recuperado da codebase, responda a seguinte pergunta:
-
-{question}
-
-Contexto recuperado da codebase:
-{context_text}
-
-Forneça uma resposta clara e objetiva baseada no contexto acima."""
-
+    def _generate_with_openai(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+        context = self._build_context(context_chunks)
+        prompt = self._build_user_prompt(question, context)
         try:
-            # OpenAI-compatible Chat Completions API
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
                 max_tokens=self._settings.llm_max_tokens,
                 temperature=self._settings.llm_temperature,
                 messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
                 ],
             )
-            
-            # Extract text from response
             answer = response.choices[0].message.content
             return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
-        
-        except Exception as e:
-            logger.error(f"Error calling {self._provider} API: {e}")
-            return f"Erro ao gerar resposta: {str(e)}. Usando resposta de fallback:\n\n{self._generate_fallback(question, context_chunks)}"
+        except Exception as exc:
+            logger.error("Error calling OpenAI API: %s", exc)
+            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
 
     def _generate_fallback(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
-        """Fallback response when Claude API is not available."""
         best = context_chunks[0]
-        file_path = best.get("metadata", {}).get("file_path", "unknown")
-        start_line = best.get("metadata", {}).get("start_line", 0)
+        meta = best.get("metadata", {})
+        file_path = meta.get("file_path", "unknown")
+        start_line = meta.get("start_line", 0)
         preview = best["text"][:600]
-        
-        return f"""[MODO FALLBACK - Configure LLM_API_KEY para respostas reais]
-
-Pergunta: {question}
-
-Contexto mais relevante encontrado:
-Arquivo: {file_path} (linha {start_line})
-
-```
-{preview}
-```
-
-{len(context_chunks)} fonte(s) recuperada(s) da codebase."""
+        return (
+            f"[MODO FALLBACK - Configure LLM_API_KEY para respostas reais]\n\n"
+            f"Pergunta: {question}\n\n"
+            f"Contexto mais relevante:\nArquivo: {file_path} (linha {start_line})\n\n"
+            f"```\n{preview}\n```\n\n"
+            f"{len(context_chunks)} fonte(s) recuperada(s) da codebase."
+        )

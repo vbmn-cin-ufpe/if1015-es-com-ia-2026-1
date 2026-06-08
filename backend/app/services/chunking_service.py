@@ -1,7 +1,10 @@
 """Service for chunking code files into manageable pieces."""
 
 import hashlib
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class ChunkingService:
@@ -12,6 +15,7 @@ class ChunkingService:
         self._overlap = overlap
 
     def build_chunks(self, repo_root: Path, files: list[Path]) -> list[dict]:
+        logger.info("build_chunks started | files=%d | chunk_size=%d", len(files), self._chunk_size)
         chunks: list[dict] = []
         for file_path in files:
             text = file_path.read_text(encoding="utf-8", errors="ignore")
@@ -39,4 +43,5 @@ class ChunkingService:
                 if end == len(lines):
                     break
                 start = max(end - self._overlap, start + 1)
+        logger.info("build_chunks done | files=%d | chunks=%d", len(files), len(chunks))
         return chunks

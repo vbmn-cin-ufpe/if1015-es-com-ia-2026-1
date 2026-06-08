@@ -1,8 +1,11 @@
+import logging
 import math
 import threading
 from typing import Any
 
 from app.infrastructure.settings import Settings
+
+logger = logging.getLogger(__name__)
 
 try:
     import chromadb
@@ -29,17 +32,36 @@ class ChromaAdapter:
         return f"{self._settings.chroma_collection_prefix}_{repository_id}"
 
     def upsert_chunks(self, repository_id: str, vectors: list[dict[str, Any]]) -> None:
+        """Upsert vectors into ChromaDB, splitting into batches to avoid timeouts/OOM.
+
+        A single call with 10k+ vectors can exceed ChromaDB's gRPC message size limit
+        and cause memory spikes.  Batching keeps each request small and provides
+        progress logging visible in ``docker logs``.
+        """
+        total = len(vectors)
+        batch_size: int = getattr(self._settings, "upsert_batch_size", 500)
+        logger.info("upsert_chunks | repo=%s | vectors=%d | batch_size=%d", repository_id, total, batch_size)
+
         if self._client is not None:
             collection = self._client.get_or_create_collection(name=self._collection_name(repository_id))
-            collection.upsert(
-                ids=[v["chunk_id"] for v in vectors],
-                embeddings=[v["embedding"] for v in vectors],
-                metadatas=[v["metadata"] for v in vectors],
-                documents=[v["text"] for v in vectors],
-            )
+            for start in range(0, total, batch_size):
+                batch = vectors[start: start + batch_size]
+                collection.upsert(
+                    ids=[v["chunk_id"] for v in batch],
+                    embeddings=[v["embedding"] for v in batch],
+                    metadatas=[v["metadata"] for v in batch],
+                    documents=[v["text"] for v in batch],
+                )
+                logger.info(
+                    "upsert_chunks progress | repo=%s | %d/%d",
+                    repository_id, min(start + batch_size, total), total,
+                )
+            logger.info("upsert_chunks done | repo=%s", repository_id)
             return
+
         with self._memory_lock:
             self._memory[repository_id] = vectors
+        logger.debug("upsert_chunks (in-memory) | repo=%s | vectors=%d", repository_id, total)
 
     def query(self, repository_id: str, embedding: list[float], top_k: int) -> list[dict[str, Any]]:
         if self._client is not None:

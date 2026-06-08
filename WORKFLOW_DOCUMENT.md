@@ -13,10 +13,7 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 | Ferramenta | Categoria | Quando usada | Modelo/Versão | Avaliação geral |
 |---|---|---|---|---|
 | ChatLLM (Claude) | LLM/Assistente | Elaboração da proposta, pesquisa de arquitetura, geração de código de referência, análise de viabilidade | Claude Opus 4 | ⭐⭐⭐⭐⭐ |
-| GitHub Copilot (Agent Mode) | Code generation / Agent | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs | Claude Opus 4 | ⭐⭐⭐⭐⭐ |
-| [Outras ferramentas] | [categoria] | [quando] | [modelo] | [A preencher] |
-
-> Registrar o modelo específico utilizado é importante para o cálculo de custo por token, pois modelos diferentes têm preços diferentes.
+| GitHub Copilot (Agent Mode) | Code generation / Agent | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs, otimizações e melhorias de UX | Claude Sonnet 4.6 | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -222,10 +219,186 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 ---
 
 ## Fase: Composição (Aulas 21-24)
-[Mesma estrutura — A preencher]
+
+Fase de otimização e expansão do projeto após a implementação das 8 specs. Foco em performance de embeddings, observabilidade e suporte a mais linguagens de programação.
+
+### Onde a IA ajudou
+
+- **Diagnóstico de bug de indexação travada em 92%:** A IA identificou que o endpoint `/api/repos/index` estava bloqueando a resposta HTTP enquanto executava a indexação de forma síncrona. Solução: uso de `BackgroundTasks` do FastAPI para retornar em ~576ms e executar em background.
+- **Integração com OpenAI Embeddings API:** A IA implementou suporte a `text-embedding-3-small` via `OPENAI_API_KEY` separada da `LLM_API_KEY` do Abacus AI, com fallback gracioso para `sentence-transformers` local quando a chave não está configurada.
+- **Concorrência com ThreadPoolExecutor:** A IA implementou processamento paralelo de batches de embeddings usando `ThreadPoolExecutor` (controlado por `EMBEDDING_MAX_WORKERS=4`), reduzindo o tempo de embedding de 220s para **11.8s** — ganho de **18.7x**.
+- **Expansão de linguagens:** A IA registrou 9 novas linguagens (C, C++, C#, Ruby, PHP, Kotlin, Swift, Scala, Shell/Bash) no `language_registry.py` com node types de tree-sitter para métricas de complexidade e imports.
+- **Investigação de APIs externas:** A IA conduziu testes exaustivos da API do Abacus AI para embeddings, confirmando via múltiplos endpoints que não suporta `/embeddings` (todos retornam 404). Documentou a conclusão com evidências.
+- **Limpeza de ambiente Docker:** A IA guiou a limpeza de ~58.6 GB de imagens Docker obsoletas com `docker system prune -a`.
+
+### Onde a IA não ajudou (ou atrapalhou)
+
+- **Sintaxe do PowerShell para scripts Python inline:** Tentativas de executar código Python multi-linha via `docker exec ... python3 -c "..."` falharam repetidamente por conflito de aspas e lambdas — solução foi usar arquivo temporário copiado com `docker cp`.
+- **Disponibilidade de pacotes PyPI:** `tree-sitter-swift>=0.23.0` não existe no PyPI (versão máxima 0.7.3, API antiga incompatível) — a IA precisou detectar o erro no build e remover a dependência.
+- **Rate-limit da OpenAI conta nova (Tier 1):** O SDK faz retry automático com backoff exponencial (chegando a 50s de espera), o que inflou o tempo inicial de embedding para 220s na primeira indexação antes da otimização de concorrência.
+
+### Prompts notáveis desta fase
+
+- "Fix indexação parada em 92%"
+- "Usar OpenAI API Key para embeddings separada do Abacus"
+- "Tem como eu otimizar já que tou usando a api do open ai no meu codigo?"
+- "Agora faça um novo teste do embedding com o repositório do nestjs e veja se ficou mais rápido"
+- "Eu gostaria que expandisse a possibilidade de linguagens de programação além das que temos agora para outras"
+
+### Decisões tomadas sem IA
+
+- **Escolha de `OPENAI_API_KEY` separada de `LLM_API_KEY`:** Decisão de não misturar chaves de providers diferentes — Abacus para LLM, OpenAI para embeddings.
+- **`EMBEDDING_MAX_WORKERS=4` como padrão:** Balanceamento entre concorrência e rate-limit do Tier 1 da OpenAI.
+- **Exclusão do Swift do `pyproject.toml`:** Decisão de não incluir como dependência obrigatória dado que nenhuma versão compatível existe — mantido no registry como fallback texto.
+
+### Registro de economicidade desta fase
+
+#### Camada 1 — Consumo de IA
+
+| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+|---|---|---|---|---|
+| Diagnóstico e fix do bug de 92% (BackgroundTasks) | GitHub Copilot / Claude Sonnet 4.6 | ~12.000 | ~8.000 | ~$0.14 |
+| Investigação Abacus AI embeddings (testes exaustivos) | GitHub Copilot / Claude Sonnet 4.6 | ~18.000 | ~12.000 | ~$0.21 |
+| Implementação OpenAI embeddings + Settings refactor | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~15.000 | ~$0.26 |
+| Otimização concorrência (ThreadPoolExecutor) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.18 |
+| Expansão de 15 linguagens no registry | GitHub Copilot / Claude Sonnet 4.6 | ~10.000 | ~12.000 | ~$0.17 |
+| Testes de embedding direto (nestjs/nest benchmark) | GitHub Copilot / Claude Sonnet 4.6 | ~8.000 | ~5.000 | ~$0.09 |
+| Limpeza Docker + suporte operacional | GitHub Copilot / Claude Sonnet 4.6 | ~5.000 | ~3.000 | ~$0.06 |
+| **Total da fase** | | **~88.000** | **~65.000** | **~$1.11** |
+
+> **Nota:** Preços de referência: Claude Sonnet 4.6 ~$3/M tokens input, ~$15/M tokens output (junho 2026).
+> Custo real de embeddings OpenAI na indexação do nestjs/nest (2825 chunks, `text-embedding-3-small`): **~$0.00006** — praticamente zero.
+
+#### Camada 2 — Esforço humano real (auto-declarado)
+
+| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
+|---|---|---|---|---|
+| Debug do bug de 92% + BackgroundTasks | [Membro] (pleno) | 0.5h | 0.3h | Build e teste do fix |
+| Investigação Abacus AI + integração OpenAI | [Membro] (pleno) | 1.0h | 0.5h | Testes reais de API |
+| Otimização concorrência (ThreadPoolExecutor) | [Membro] (pleno) | 0.5h | 0.3h | Build e benchmark |
+| Expansão de linguagens (9 novas) | [Membro] (pleno) | 0.5h | 0.2h | Build e verificação |
+| Limpeza Docker + operacional | [Membro] (pleno) | 0.3h | 0.1h | Liberou ~58.6 GB |
+| **Total da fase** | | **2.8h** | **1.4h** | **4.2h total de esforço humano** |
+
+#### Camada 3 — Estimativa contrafactual
+
+| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+|---|---|---|---|---|
+| Diagnóstico e fix bug assíncrono (BackgroundTasks) | Sênior | 4.0h | R$ 115 | R$ 460 |
+| Investigação de APIs de embedding + integração | Sênior | 6.0h | R$ 115 | R$ 690 |
+| Implementação concorrência com ThreadPoolExecutor | Sênior | 4.0h | R$ 115 | R$ 460 |
+| Expansão registry de linguagens (9 linguagens) | Pleno | 3.0h | R$ 75 | R$ 225 |
+| Testes de performance e benchmark | Pleno | 2.0h | R$ 75 | R$ 150 |
+| **Total da fase** | | **19.0h** | | **R$ 1.985** |
+
+### Análise parcial de economicidade (esta fase)
+
+- **Custo real com IA:** ~$1.11 USD (~R$ 6.11 a R$5.50/USD) + 4.2h de trabalho humano
+- **Custo humano das 4.2h (perfil médio pleno):** ~R$ 315 (4.2h × R$75 média)
+- **Custo total com IA:** ~R$ 321
+- **Custo contrafactual sem IA:** ~R$ 1.985
+- **Razão de economicidade:** 6.2x (cada R$1 gasto com IA equivaleu a ~R$6.20 sem IA)
+- **Saving estimado:** ~R$ 1.664 (83.8%)
+
+**Resultado técnico de destaque desta fase:**
+- Embedding de 2825 chunks: **220s → 11.8s** (18.7x mais rápido)
+- Custo de indexação completa do nestjs/nest: ~$0.00006 (praticamente grátis)
+- Suporte a linguagens: **6 → 15** (+9 novas)
+
+### Lições aprendidas
+
+- Endpoints I/O-bound devem usar `BackgroundTasks` (ou Celery para escala maior) — nunca bloquear a resposta HTTP
+- APIs de terceiros devem ser testadas antes de ser assumidas como disponíveis — Abacus AI não suportava embeddings apesar da documentação sugerir compatibilidade OpenAI
+- `ThreadPoolExecutor` é ideal para I/O-bound paralelo em Python — GIL não impede concorrência real em chamadas de rede
+- Scripts Python complexos no PowerShell devem usar arquivos temporários (`docker cp`) em vez de `-c "..."` inline
+- Antes de adicionar dependências, verificar a disponibilidade real no PyPI com as constraints de versão exigidas
+
+---
 
 ## Fase: Ensaio (Aulas 25-29)
-[Mesma estrutura — A preencher]
+
+Fase de polimento de UX, segurança e documentação do projeto.
+
+### Onde a IA ajudou
+
+- **Sidebar colapsável (estilo ChatLLM):** A IA refatorou completamente o `App.tsx` de abas horizontais para sidebar lateral retrátil com ícones, labels e botão de recolher/expandir, mantendo estado entre navegações.
+- **Dark mode completo:** Implementou dark mode com Tailwind `dark:` classes em todos os componentes (`App.tsx`, `ui/index.tsx`), botão de toggle 🌙/☀️ no header e persistência em `localStorage`.
+- **Renderização Markdown com VS Code blocks:** Refatorou o `ChatTab.tsx` com parser Markdown próprio + `react-syntax-highlighter` (tema `vscDarkPlus`) — blocos de código com barra de título, dots coloridos (macOS), número de linhas e botão "Copiar".
+- **Diagnóstico e remoção de código duplicado:** Identificou e removeu múltiplas ocorrências de conteúdo duplicado em `App.tsx` e `ui/index.tsx` causadas por operações de `replace_string_in_file` que substituíam apenas o início do arquivo.
+- **Auditoria de segurança (OWASP Top 10):** Varreu todo o projeto em busca de segredos hardcoded, identificando: senha admin `"a1b2c3d4"` em `main.py`, `POSTGRES_PASSWORD` no `docker-compose.yml`, e chaves de API no `.env`. Moveu todos para variáveis de ambiente obrigatórias.
+- **Troca de modelo LLM:** Suporte a múltiplos modelos via `LLM_MODEL` env var — testou `GPT4_O`, `CLAUDE_V4_5_SONNET` no Abacus AI.
+
+### Onde a IA não ajudou (ou atrapalhou)
+
+- **Operações `replace_string_in_file` parciais:** Ao substituir apenas a seção de imports, o conteúdo novo foi inserido no início e o conteúdo antigo permaneceu — gerando arquivos com código duplicado e erros de `Duplicate function implementation`. Necessitou de múltiplas operações de limpeza.
+- **Cache Docker nas layers:** O `COPY package.json` + `RUN npm install` são cacheados — ao adicionar `react-syntax-highlighter`, o `docker compose build` reutilizou a layer antiga. Foi necessário `--no-cache` para forçar reinstalação.
+- **Babel vs `??` + `||` misturados:** O parser Babel do Vite não aceita `??` sem parênteses ao misturar com `||` — erro detectado apenas em tempo de build no container, não pelo LSP local.
+
+### Prompts notáveis desta fase
+
+- "As abas eu gostaria que colocasse numa coluna lateral do lado esquerdo feito o chat llm que pode ser retratil. Também gostaria de colocar o dark mode para o projeto."
+- "Eu gostaria que você criasse nesse container de resposta uma resposta mais bonita respeitando essa regra de saida e em codigo colocar uma caixa de codigo bonita e que simule como se fosse o visual code"
+- "Analise uma resposta trazida pelo chat... Eu acho que é tipo Markdown."
+- "Agora um gostaria que você analisasse todos os lugares que tem chaves de api e substituísse por uma CONSTANTE para env pois pretendo subir o projeto para o github"
+
+### Decisões tomadas sem IA
+
+- **Escolha do estilo visual:** Referência ao "ChatLLM" como inspiração para a sidebar — decisão do usuário, não da IA
+- **Revogação de chaves de API:** Decisão de revogar chaves expostas na conversa — ação manual obrigatória
+- **`CLAUDE_V4_5_SONNET` como modelo padrão:** Escolha após testar `GPT4_O` e preferir Claude
+
+### Registro de economicidade desta fase
+
+#### Camada 1 — Consumo de IA
+
+| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+|---|---|---|---|---|
+| Sidebar colapsável + dark mode (App.tsx refactor) | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
+| VS Code code blocks (react-syntax-highlighter) | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~18.000 | ~$0.33 |
+| Debug código duplicado (App.tsx + ui/index.tsx) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.22 |
+| Auditoria de segurança + hardened env vars | GitHub Copilot / Claude Sonnet 4.6 | ~12.000 | ~8.000 | ~$0.16 |
+| Troca de modelos LLM + testes | GitHub Copilot / Claude Sonnet 4.6 | ~5.000 | ~3.000 | ~$0.06 |
+| Documentação (README, COMO_FUNCIONA, COMO_RODAR) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~25.000 | ~$0.42 |
+| **Total da fase** | | **~92.000** | **~84.000** | **~$1.56** |
+
+#### Camada 2 — Esforço humano real (auto-declarado)
+
+| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
+|---|---|---|---|---|
+| Sidebar + dark mode + code blocks | [Membro] (pleno) | 1.0h | 0.5h | Múltiplos rebuilds Docker |
+| Debug de duplicações | [Membro] (pleno) | 0.5h | 0.3h | Leitura de erros do Vite |
+| Auditoria de segurança | [Membro] (pleno) | 0.3h | 0.2h | Revisão de variáveis |
+| Documentação | [Membro] (pleno) | 0.5h | 0.5h | Revisão dos textos gerados |
+| **Total da fase** | | **2.3h** | **1.5h** | **3.8h total de esforço humano** |
+
+#### Camada 3 — Estimativa contrafactual
+
+| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+|---|---|---|---|---|
+| Refatorar navegação para sidebar colapsável | Pleno | 6.0h | R$ 75 | R$ 450 |
+| Implementar dark mode (Tailwind) em todos os componentes | Pleno | 4.0h | R$ 75 | R$ 300 |
+| Markdown renderer + syntax highlighting VS Code | Sênior | 8.0h | R$ 115 | R$ 920 |
+| Auditoria de segurança e hardening de env vars | Sênior | 3.0h | R$ 115 | R$ 345 |
+| Documentação completa (3 documentos) | Pleno | 6.0h | R$ 75 | R$ 450 |
+| **Total da fase** | | **27.0h** | | **R$ 2.465** |
+
+### Análise parcial de economicidade (esta fase)
+
+- **Custo real com IA:** ~$1.56 USD (~R$ 8.58 a R$5.50/USD) + 3.8h de trabalho humano
+- **Custo humano das 3.8h (perfil médio pleno):** ~R$ 285 (3.8h × R$75 média)
+- **Custo total com IA:** ~R$ 294
+- **Custo contrafactual sem IA:** ~R$ 2.465
+- **Razão de economicidade:** 8.4x
+- **Saving estimado:** ~R$ 2.171 (88.1%)
+
+### Lições aprendidas
+
+- `replace_string_in_file` deve substituir o arquivo completo quando a mudança é abrangente — substituir apenas o topo e deixar o restante gera duplicação silenciosa
+- Docker layer cache de `npm install` exige `--no-cache` quando `package.json` muda — o hash da layer não é recalculado automaticamente ao alterar dependências
+- Credenciais hardcoded são risco real mesmo em projetos acadêmicos — o histórico do chat expõe segredos da mesma forma que um commit no git
+- Babel (Vite) tem restrições sintáticas mais rígidas que TypeScript puro — `??` + `||` sem parênteses é válido em TS mas inválido no parser Babel
+
+---
 
 ## Fase: Ressonância (Aulas 30-32)
 [Mesma estrutura — A preencher]
@@ -252,20 +425,20 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 |---|---|---|---|---|
 | Pré-proposta | ~30.000 | ~57.000 | ~$1.08 | ~R$ 5.94 |
 | Exposição | ~186.000 | ~266.000 | ~$22.74 | ~R$ 125.07 |
-| Composição | | | | |
-| Ensaio | | | | |
+| Composição | ~88.000 | ~65.000 | ~$1.11 | ~R$ 6.11 |
+| Ensaio | ~92.000 | ~84.000 | ~$1.56 | ~R$ 8.58 |
 | Ressonância | | | | |
-| **Total parcial** | **~216.000** | **~323.000** | **~$23.82** | **~R$ 131.01** |
+| **Total parcial** | **~304.000** | **~388.000** | **~$24.93** | **~R$ 137.12** |
 
 #### Custo contrafactual humano (total do projeto)
 | Fase | Horas totais estimadas | Custo humano estimado (R$) |
 |---|---|---|
 | Pré-proposta | 31.0h | R$ 2.775 |
 | Exposição | 136.0h | R$ 13.960 |
-| Composição | | |
+| Composição | 19.0h | R$ 1.985 |
 | Ensaio | | |
 | Ressonância | | |
-| **Total** | | |
+| **Total parcial** | **186.0h** | **R$ 18.720** |
 
 #### Análise comparativa
 - **Custo total com IA (R$):** [A calcular ao final]

@@ -29,14 +29,16 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 
 | Funcionalidade | Descrição |
 |---|---|
-| **Indexação de repositório** | Clona repositórios Git (URL remota ou path local), faz chunking do código-fonte, gera embeddings com `sentence-transformers` e armazena no ChromaDB |
-| **Chat RAG** | Interface conversacional com recuperação semântica de contexto (RAG) e geração de respostas via LLM (compatível com OpenAI API / Abacus AI) |
+| **Indexação de repositório** | Clona repositórios Git (URL remota ou path local), faz chunking do código-fonte com tree-sitter (15 linguagens), gera embeddings e armazena no ChromaDB |
+| **Chat RAG** | Interface conversacional com RAG, respostas via LLM, renderização Markdown com blocos de código estilo VS Code |
 | **Tour guiado** | Gera automaticamente walkthroughs dos módulos mais importantes ranqueados por complexidade ciclomática, churn e acoplamento |
 | **Grafo de dependências** | Analisa imports/dependências entre módulos e expõe grafo interativo com métricas de grau por nó |
 | **Histórico de commits** | Timeline de commits por módulo com explicações geradas por IA e endpoint "Por que?" para decisões arquiteturais |
 | **Métricas de qualidade** | Coleta métricas de complexidade, churn e acoplamento; gera relatório de qualidade com feedback via LLM |
 | **Autenticação e sessões** | Signup/signin com hashing seguro de senha, tokens de sessão, checkpoints de progresso de onboarding |
 | **Observabilidade** | Logging estruturado, rastreamento por correlation ID, coleta de latência/erros, endpoints de liveness e readiness |
+| **Dark mode** | Tema claro/escuro persistido em localStorage, ativado via Tailwind CSS `dark:` classes |
+| **Sidebar colapsável** | Navegação lateral retrátil (estilo ChatLLM) com ícones + labels, botão de recolher/expandir |
 
 ---
 
@@ -90,15 +92,19 @@ app/
 - **Python 3.11+** · **FastAPI 0.115** · **Uvicorn**
 - **ChromaDB 0.5** — vector store para embeddings
 - **PostgreSQL 16** — metadados de repositórios, usuários e sessões
-- **sentence-transformers 3.3** — modelo `all-MiniLM-L6-v2` (384 dim) por padrão
+- **OpenAI `text-embedding-3-small`** (1536 dim) via `OPENAI_API_KEY` — padrão de produção
+- **sentence-transformers `all-MiniLM-L6-v2`** (384 dim) — fallback local sem chave
+- **tree-sitter** — parsing AST de 15 linguagens (Python, JS, TS, Java, Go, Rust, C, C++, C#, Ruby, PHP, Kotlin, Scala, Shell/Bash + Swift fallback texto)
 - **GitPython 3.1** — clone e análise de repositórios
 - **radon 6.0** — métricas de complexidade ciclomática
-- **OpenAI SDK 1.59** — integração com LLM (Abacus AI / OpenAI-compatible)
+- **Abacus AI SDK / OpenAI SDK 1.59** — integração multi-provider com LLM
 
 ### Frontend
 - **React 18** · **TypeScript 5.8** · **Vite 6**
+- **Tailwind CSS** (CDN Play) com `dark:` classes e `darkMode: 'class'`
+- **react-syntax-highlighter** — blocos de código com tema `vscDarkPlus` estilo VS Code
 - **Vitest 3** · **@testing-library/react**
-- 7 abas: Repositório, Chat, Tour Guiado, Grafo, Histórico, Métricas, Operacional
+- Sidebar lateral colapsável + dark mode persistido em `localStorage`
 
 ### Infraestrutura
 - **Docker Compose** — orquestra todos os serviços
@@ -111,10 +117,11 @@ app/
 ### Com Docker Compose (recomendado)
 
 ```bash
-# Copie e configure as variáveis de ambiente
-cp backend/.env.example backend/.env
-# Edite backend/.env com suas credenciais (LLM_API_KEY, etc.)
+# 1. Copie o arquivo de exemplo e configure suas credenciais
+cp .env.example .env
+# Edite .env com suas chaves (LLM_API_KEY, OPENAI_API_KEY, POSTGRES_PASSWORD, ADMIN_PASSWORD)
 
+# 2. Suba todos os serviços
 docker compose up --build
 ```
 
@@ -122,7 +129,7 @@ docker compose up --build
 |---|---|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000 |
-| Docs interativos | http://localhost:8000/docs |
+| Docs interativos (Swagger) | http://localhost:8000/docs |
 | ChromaDB | http://localhost:8001 |
 
 ### Desenvolvimento local
@@ -139,18 +146,24 @@ npm install
 npm run dev
 ```
 
-### Variáveis de ambiente relevantes
+### Variáveis de ambiente
 
 | Variável | Descrição | Padrão |
 |---|---|---|
-| `POSTGRES_DSN` | URI de conexão PostgreSQL | — |
-| `CHROMA_HOST` | Host do ChromaDB | `localhost` |
-| `CHROMA_PORT` | Porta do ChromaDB | `8000` |
-| `LLM_API_KEY` | Chave da API do LLM | — |
-| `LLM_API_BASE_URL` | URL base do LLM (Abacus AI, etc.) | — |
-| `LLM_MODEL` | Modelo a usar | — |
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL (**obrigatória**) | — |
+| `ADMIN_EMAIL` | E-mail do usuário admin seed | `admin` |
+| `ADMIN_PASSWORD` | Senha do admin (**obrigatória**) | — |
+| `LLM_PROVIDER` | Provider do LLM (`abacus`\|`openai`\|`anthropic`) | `abacus` |
+| `LLM_API_KEY` | Chave de API do LLM | — |
+| `LLM_MODEL` | Modelo LLM (ex: `CLAUDE_V3_5_SONNET`) | — |
+| `OPENAI_API_KEY` | Chave OpenAI para embeddings | — |
+| `EMBEDDING_PROVIDER` | Provider de embeddings (`local`\|`openai`) | `local` |
 | `EMBEDDING_MODEL` | Modelo de embeddings | `all-MiniLM-L6-v2` |
-| `ALLOW_LOCAL_REPOS` | Permite clonar paths locais | `false` |
+| `EMBEDDING_DIM` | Dimensão dos embeddings | `384` |
+| `EMBEDDING_MAX_WORKERS` | Workers paralelos (OpenAI) | `4` |
+| `ALLOW_LOCAL_REPOS` | Permite clonar paths locais | `true` |
+
+> Veja [.env.example](.env.example) para a lista completa com comentários.
 
 ---
 
@@ -220,7 +233,12 @@ npm --prefix frontend test
 
 ## Documentos do projeto
 
-- [PROPOSTA_v1.md](PROPOSTA_v1.md) — Proposta inicial, problema, solução e arquitetura preliminar
-- [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md) — Registro de uso de IA, economicidade e prompts notáveis
-- [backend/ARCHITECTURE.md](backend/ARCHITECTURE.md) — Decisões arquiteturais, padrões SOLID e exemplos de código
+| Documento | Descrição |
+|---|---|
+| [README.md](README.md) | Visão geral, stack e instruções rápidas (este arquivo) |
+| [COMO_FUNCIONA.md](COMO_FUNCIONA.md) | Como o sistema funciona por dentro — arquitetura, fluxos e decisões |
+| [COMO_RODAR.md](COMO_RODAR.md) | Guia passo a passo para rodar do zero |
+| [PROPOSTA_v1.md](PROPOSTA_v1.md) | Proposta inicial, problema, solução e arquitetura preliminar |
+| [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md) | Registro de uso de IA, economicidade e prompts notáveis |
+| [backend/ARCHITECTURE.md](backend/ARCHITECTURE.md) | Decisões arquiteturais, padrões SOLID e exemplos de código |
 
