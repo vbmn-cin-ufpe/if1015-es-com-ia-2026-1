@@ -108,36 +108,35 @@ class ModuleScoringService:
         return scored_modules[:top_k]
 
     def _discover_modules(self, repo_root: Path) -> dict[str, list[Path]]:
-        """Discover Python modules in the repository.
-        
-        Returns:
-            Dict mapping module names to list of files
+        """Discover source modules in the repository (all supported languages).
+
+        Groups files by their parent directory.  Root-level files become their
+        own single-file module.  Excluded directories are skipped.
         """
+        from app.services.language_registry import all_languages
+
+        _EXCLUDED = {".git", "venv", ".venv", "__pycache__", "node_modules", "dist", "build", "vendor"}
+        extensions = {ext for spec in all_languages() for ext in spec.extensions}
+
         modules: dict[str, list[Path]] = {}
-        
-        # Find all Python files
-        for py_file in repo_root.rglob("*.py"):
-            # Skip excluded directories
-            if any(part in py_file.parts for part in [".git", "venv", ".venv", "__pycache__", "node_modules"]):
+
+        for f in repo_root.rglob("*"):
+            if not f.is_file():
                 continue
-            
-            # Determine module name
+            if any(part in _EXCLUDED for part in f.parts):
+                continue
+            if f.suffix.lower() not in extensions:
+                continue
+
             try:
-                relative = py_file.relative_to(repo_root)
-                parts = relative.parts[:-1]  # Exclude filename
-                
-                if parts:
-                    module_name = "/".join(parts)
-                else:
-                    # Root-level file
-                    module_name = py_file.stem
-                
-                if module_name not in modules:
-                    modules[module_name] = []
-                modules[module_name].append(py_file)
+                relative = f.relative_to(repo_root)
+                parts = relative.parts[:-1]  # directory path without filename
+                module_name = "/".join(parts) if parts else f.stem
             except ValueError:
                 continue
-        
+
+            modules.setdefault(module_name, []).append(f)
+
         return modules
 
 

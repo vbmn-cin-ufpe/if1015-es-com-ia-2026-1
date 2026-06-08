@@ -1,4 +1,15 @@
-"""Dependency graph extraction and assembly services."""
+"""Dependency graph extraction and assembly services.
+
+Uses tree-sitter for multi-language import parsing.
+Python's built-in `ast` module is kept as a high-fidelity fallback for Python
+(since radon is already a project dependency and ast gives exact symbol names).
+
+Design:
+  - DependencyExtractorService is the single public interface (unchanged signature).
+  - _extract_imports_ts()  — generic tree-sitter path (all languages)
+  - _extract_imports_py()  — Python-specific fallback via ast (more accurate)
+  - OCP: new languages need only an entry in LanguageRegistry; no code changes here.
+"""
 
 import ast
 import logging
@@ -6,78 +17,170 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from app.services.language_registry import detect_language, parse_file
+
 logger = logging.getLogger(__name__)
 
+_EXCLUDED = {".git", "venv", ".venv", "__pycache__", "node_modules", "dist", "build", "vendor"}
+
+
+def _path_to_module(file_path: Path, repo_root: Path) -> str:
+    """Convert a file path to a dotted or slash-delimited module identifier."""
+    try:
+        relative = file_path.relative_to(repo_root)
+        parts = list(relative.parts)
+        if parts[-1] == "__init__.py":
+            parts = parts[:-1]
+        else:
+            parts[-1] = parts[-1].rsplit(".", 1)[0]  # strip extension
+        return ".".join(parts)
+    except ValueError:
+        return file_path.stem
+
+
+def _is_internal(module_name: str, repo_root: Path) -> bool:
+    """Check whether a module name refers to something inside the repository."""
+    # Dotted name: check if first component exists as a directory or file
+    top = module_name.split(".")[0].split("/")[0]
+    return (repo_root / top).exists() or (repo_root / f"{top}.py").exists()
+
+
+# ---------------------------------------------------------------------------
+# Python-specific extraction via ast (precise symbol names)
+# ---------------------------------------------------------------------------
+
+def _extract_imports_py(file_path: Path, repo_root: Path) -> list[dict[str, str]]:
+    """Extract import edges from a Python file using the builtin ast module."""
+    try:
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+        tree = ast.parse(content)
+    except (SyntaxError, UnicodeDecodeError):
+        return []
+
+    source = _path_to_module(file_path, repo_root)
+    edges: list[dict[str, str]] = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                dep_type = "internal" if _is_internal(alias.name, repo_root) else "external"
+                edges.append({"source": source, "target": alias.name, "type": dep_type})
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                dep_type = "internal" if _is_internal(node.module, repo_root) else "external"
+                edges.append({"source": source, "target": node.module, "type": dep_type})
+
+    return edges
+
+
+# ---------------------------------------------------------------------------
+# Generic tree-sitter extraction (all other languages)
+# ---------------------------------------------------------------------------
+
+def _text_of(node: Any) -> str:
+    """Extract text content from a tree-sitter node."""
+    try:
+        return node.text.decode("utf-8", errors="ignore")
+    except Exception:
+        return ""
+
+
+def _extract_imports_ts(file_path: Path, repo_root: Path) -> list[dict[str, str]]:
+    """Extract import edges from any tree-sitter-supported file."""
+    result = parse_file(file_path)
+    if result is None:
+        return []
+
+    tree, lang_name = result
+    source = _path_to_module(file_path, repo_root)
+    edges: list[dict[str, str]] = []
+
+    def _walk(node: Any) -> None:
+        # Collect string literals that are direct children of import nodes
+        if node.type in ("import_statement", "import_from_statement",
+                         "import_declaration", "use_declaration",
+                         "import_spec", "import_require_clause"):
+            for child in node.children:
+                raw = _text_of(child).strip().strip('"\'`')
+                if raw and not raw.startswith(("(", ")", "{", "}", ",", ";")):
+                    dep_type = "external" if raw.startswith((".", "/")) is False and "/" not in raw.split("/")[0] else "internal"
+                    # Heuristic: relative paths ("./" "../") are internal
+                    if raw.startswith((".", "/")):
+                        dep_type = "internal"
+                    edges.append({"source": source, "target": raw, "type": dep_type})
+        for child in node.children:
+            _walk(child)
+
+    _walk(tree.root_node)
+    return edges
+
+
+# ---------------------------------------------------------------------------
+# Public service (unchanged external interface)
+# ---------------------------------------------------------------------------
 
 class DependencyExtractorService:
-    """Parses Python imports and builds raw dependency edges."""
+    """Parses source imports and builds raw dependency edges.
+
+    Supports Python (via ast) and all other languages registered in
+    LanguageRegistry (via tree-sitter).  The external API is unchanged.
+    """
 
     def extract_file_dependencies(
         self, file_path: Path, repo_root: Path
     ) -> list[dict[str, str]]:
-        """Extract import dependencies from a single Python file.
+        """Extract import dependencies from a single source file.
 
         Returns:
-            List of edges: [{"source": "module.path", "target": "other.module", "type": "internal"|"external"}]
+            List of edges: [{"source": "mod.path", "target": "other.mod", "type": "internal"|"external"}]
         """
-        try:
-            content = file_path.read_text(encoding="utf-8", errors="ignore")
-            tree = ast.parse(content)
-        except (SyntaxError, UnicodeDecodeError):
+        spec = detect_language(file_path)
+        if spec is None:
             return []
 
-        source_module = self._path_to_module(file_path, repo_root)
-        edges: list[dict[str, str]] = []
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    dep_type = "internal" if self._is_internal(alias.name, repo_root) else "external"
-                    edges.append({"source": source_module, "target": alias.name, "type": dep_type})
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    dep_type = "internal" if self._is_internal(node.module, repo_root) else "external"
-                    edges.append({"source": source_module, "target": node.module, "type": dep_type})
-
-        return edges
+        if spec.name == "python":
+            return _extract_imports_py(file_path, repo_root)
+        return _extract_imports_ts(file_path, repo_root)
 
     def extract_repository_dependencies(
         self, repo_root: Path, include_external: bool = False
     ) -> list[dict[str, str]]:
-        """Extract all dependency edges from a repository.
+        """Extract all dependency edges from a repository (all supported languages).
 
         Args:
-            repo_root: Root path of the repository
-            include_external: Whether to include external (3rd party) imports
+            repo_root: Root path of the repository.
+            include_external: Whether to include 3rd-party import edges.
 
         Returns:
-            List of all dependency edges
+            List of all dependency edges.
         """
         all_edges: list[dict[str, str]] = []
 
-        for py_file in repo_root.rglob("*.py"):
-            if any(part in py_file.parts for part in [".git", "venv", ".venv", "__pycache__", "node_modules"]):
+        for f in repo_root.rglob("*"):
+            if not f.is_file():
                 continue
-            file_edges = self.extract_file_dependencies(py_file, repo_root)
-            all_edges.extend(file_edges)
+            if any(part in _EXCLUDED for part in f.parts):
+                continue
+            spec = detect_language(f)
+            if spec is None:
+                continue
+            all_edges.extend(self.extract_file_dependencies(f, repo_root))
 
         if not include_external:
             all_edges = [e for e in all_edges if e["type"] == "internal"]
 
         return all_edges
 
+    # ------------------------------------------------------------------
+    # Helpers used by GraphOrchestrationService (unchanged signatures)
+    # ------------------------------------------------------------------
+
     def _path_to_module(self, file_path: Path, repo_root: Path) -> str:
-        """Convert file path to a dotted module path."""
-        try:
-            relative = file_path.relative_to(repo_root)
-            parts = list(relative.parts)
-            if parts[-1] == "__init__.py":
-                parts = parts[:-1]
-            else:
-                parts[-1] = parts[-1].replace(".py", "")
-            return ".".join(parts)
-        except ValueError:
-            return file_path.stem
+        return _path_to_module(file_path, repo_root)
+
+    def _is_internal(self, module_name: str, repo_root: Path) -> bool:
+        return _is_internal(module_name, repo_root)
+
 
     def _is_internal(self, module_name: str, repo_root: Path) -> bool:
         """Check if a module is internal to the repository."""
