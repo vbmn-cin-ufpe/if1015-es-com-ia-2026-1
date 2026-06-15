@@ -194,7 +194,7 @@ resource "azurerm_container_app" "chroma" {
 # lifecycle.ignore_changes evita que o Terraform reverta a imagem após o CI/CD atualizar.
 
 resource "azurerm_container_app" "backend" {
-  name                         = "${var.prefix}-backend"
+  name                         = "${var.prefix}-api"
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.main.name
   revision_mode                = "Single"
@@ -381,7 +381,7 @@ resource "azurerm_container_app" "backend" {
 # DEPOIS de ter a URL do backend via `terraform output`.
 
 resource "azurerm_container_app" "frontend" {
-  name                         = "${var.prefix}-frontend"
+  name                         = "${var.prefix}"
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.main.name
   revision_mode                = "Single"
