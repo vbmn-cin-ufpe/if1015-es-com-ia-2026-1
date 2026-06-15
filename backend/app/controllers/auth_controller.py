@@ -3,45 +3,38 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.domain.enums import Plan
+from app.middleware.auth_middleware import AuthenticatedUser, require_auth
 from app.services.auth_service import AuthService, OnboardingSessionService
 
 router = APIRouter(tags=["auth"])
 
-# Singleton services (in production these would be injected via DI)
-_auth_service = AuthService()
+# Singleton services (lazy-loaded from dependencies to avoid circular imports)
 _session_service = OnboardingSessionService()
 
 
+def _auth() -> AuthService:
+    from app.dependencies import get_auth_service_instance
+    return get_auth_service_instance()
+
+
+# Alias for backward compatibility (used by main.py seed_admin_user)
 def get_auth_service() -> AuthService:
-    return _auth_service
+    return _auth()
 
 
-def get_session_service() -> OnboardingSessionService:
-    return _session_service
-
-
-def get_current_user(authorization: str = Header(default="")) -> str:
-    """Extract and validate user from Authorization header."""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
-    token = authorization[7:]
-    user_id = _auth_service.validate_token(token)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return user_id
-
-
-# --- Auth Models ---
+# ── Request / Response models ─────────────────────────────────────────────────
 
 class SignupRequest(BaseModel):
-    email: str = Field(min_length=1)
-    password: str = Field(min_length=6)
+    email: EmailStr
+    password: str = Field(min_length=8)
+    plan: str = "free"
 
 
 class SigninRequest(BaseModel):
-    email: str = Field(min_length=1)
+    email: EmailStr
     password: str = Field(min_length=1)
 
 
@@ -49,6 +42,33 @@ class AuthResponse(BaseModel):
     user_id: str
     email: str
     token: str
+    role: str
+    plan: str
+    email_verified: bool
+
+
+class MeResponse(BaseModel):
+    user_id: str
+    email: str
+    role: str
+    plan: str
+    email_verified: bool
+    repos_indexed_count: int
+    questions_asked_count: int
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
+    new_password: str = Field(min_length=8)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
 
 
 class SessionCreateRequest(BaseModel):
@@ -77,14 +97,14 @@ class CheckpointResponse(BaseModel):
     timestamp: str
 
 
-# --- Auth Endpoints ---
+# ── Auth endpoints ────────────────────────────────────────────────────────────
 
-@router.post("/api/auth/signup", response_model=AuthResponse)
+@router.post("/api/auth/signup", response_model=AuthResponse, status_code=201)
 def signup(payload: SignupRequest) -> AuthResponse:
-    """Register a new user."""
-    auth = get_auth_service()
+    """Register a new user. Sends a verification email."""
     try:
-        result = auth.signup(payload.email, payload.password)
+        plan = Plan(payload.plan) if payload.plan in Plan._value2member_map_ else Plan.FREE
+        result = _auth().signup(payload.email, payload.password, plan)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return AuthResponse(**result)
@@ -92,10 +112,9 @@ def signup(payload: SignupRequest) -> AuthResponse:
 
 @router.post("/api/auth/signin", response_model=AuthResponse)
 def signin(payload: SigninRequest) -> AuthResponse:
-    """Authenticate a user."""
-    auth = get_auth_service()
+    """Authenticate with email + password."""
     try:
-        result = auth.signin(payload.email, payload.password)
+        result = _auth().signin(payload.email, payload.password)
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
     return AuthResponse(**result)
@@ -103,141 +122,126 @@ def signin(payload: SigninRequest) -> AuthResponse:
 
 @router.post("/api/auth/signout")
 def signout(authorization: str = Header(default="")) -> dict[str, str]:
-    """Sign out (invalidate token)."""
+    """Revoke the current JWT."""
     if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing token")
+        raise HTTPException(status_code=401, detail="Token ausente")
     token = authorization[7:]
-    auth = get_auth_service()
-    auth.signout(token)
+    _auth().signout(token)
     return {"status": "signed_out"}
 
 
-# --- Session Endpoints ---
+@router.get("/api/auth/me", response_model=MeResponse)
+def me(user: AuthenticatedUser = Depends(require_auth)) -> MeResponse:
+    """Return the authenticated user's profile and quota."""
+    return MeResponse(
+        user_id=user.user_id,
+        email=user.email,
+        role=user.role.value,
+        plan=user.plan.value,
+        email_verified=user.email_verified,
+        repos_indexed_count=user.repos_indexed_count,
+        questions_asked_count=user.questions_asked_count,
+    )
+
+
+@router.get("/api/auth/verify-email")
+def verify_email(token: str) -> dict[str, Any]:
+    """Click-through email verification link."""
+    ok = _auth().verify_email(token)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Token de verificação inválido ou expirado")
+    return {"verified": True, "message": "E-mail confirmado com sucesso!"}
+
+
+@router.post("/api/auth/resend-verification")
+def resend_verification(payload: ResendVerificationRequest) -> dict[str, str]:
+    """Resend the account verification email."""
+    _auth().resend_verification(payload.email)
+    return {"status": "sent"}
+
+
+@router.post("/api/auth/forgot-password")
+def forgot_password(payload: ForgotPasswordRequest) -> dict[str, str]:
+    """Request a 6-digit password-reset code via email."""
+    _auth().forgot_password(payload.email)
+    # Always 200 — do not reveal whether the email exists
+    return {"status": "sent", "message": "Se esse e-mail existir, você receberá um código em breve."}
+
+
+@router.post("/api/auth/reset-password")
+def reset_password(payload: ResetPasswordRequest) -> dict[str, str]:
+    """Reset password using the 6-digit code received by email."""
+    try:
+        ok = _auth().reset_password(payload.email, payload.code, payload.new_password)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not ok:
+        raise HTTPException(status_code=400, detail="Código inválido, expirado ou e-mail não encontrado")
+    return {"status": "ok", "message": "Senha redefinida com sucesso!"}
+
+
+# ── Session endpoints (unchanged) ─────────────────────────────────────────────
 
 @router.post("/api/sessions", response_model=SessionResponse)
 def create_session(
     payload: SessionCreateRequest,
-    user_id: str = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_auth),
 ) -> SessionResponse:
-    """Create a new onboarding session."""
-    svc = get_session_service()
-    session = svc.create_session(user_id=user_id, repository_id=payload.repository_id)
-    return SessionResponse(
-        id=session.id,
-        user_id=session.user_id,
-        repository_id=session.repository_id,
-        status=session.status,
-        started_at=session.started_at,
-        updated_at=session.updated_at,
-    )
+    session = _session_service.create_session(user_id=user.user_id, repository_id=payload.repository_id)
+    return SessionResponse(id=session.id, user_id=session.user_id, repository_id=session.repository_id,
+                           status=session.status, started_at=session.started_at, updated_at=session.updated_at)
 
 
 @router.get("/api/sessions", response_model=list[SessionResponse])
-def list_sessions(user_id: str = Depends(get_current_user)) -> list[SessionResponse]:
-    """List all sessions for the authenticated user."""
-    svc = get_session_service()
-    sessions = svc.list_sessions(user_id)
+def list_sessions(user: AuthenticatedUser = Depends(require_auth)) -> list[SessionResponse]:
     return [
-        SessionResponse(
-            id=s.id,
-            user_id=s.user_id,
-            repository_id=s.repository_id,
-            status=s.status,
-            started_at=s.started_at,
-            updated_at=s.updated_at,
-        )
-        for s in sessions
+        SessionResponse(id=s.id, user_id=s.user_id, repository_id=s.repository_id,
+                        status=s.status, started_at=s.started_at, updated_at=s.updated_at)
+        for s in _session_service.list_sessions(user.user_id)
     ]
 
 
 @router.post("/api/sessions/{session_id}/resume", response_model=SessionResponse)
-def resume_session(
-    session_id: str,
-    user_id: str = Depends(get_current_user),
-) -> SessionResponse:
-    """Resume a paused session."""
-    svc = get_session_service()
-    session = svc.resume_session(session_id)
-    if not session or session.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=session.id,
-        user_id=session.user_id,
-        repository_id=session.repository_id,
-        status=session.status,
-        started_at=session.started_at,
-        updated_at=session.updated_at,
-    )
+def resume_session(session_id: str, user: AuthenticatedUser = Depends(require_auth)) -> SessionResponse:
+    session = _session_service.resume_session(session_id)
+    if not session or session.user_id != user.user_id:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+    return SessionResponse(id=session.id, user_id=session.user_id, repository_id=session.repository_id,
+                           status=session.status, started_at=session.started_at, updated_at=session.updated_at)
 
 
 @router.post("/api/sessions/{session_id}/close", response_model=SessionResponse)
-def close_session(
-    session_id: str,
-    user_id: str = Depends(get_current_user),
-) -> SessionResponse:
-    """Close a session."""
-    svc = get_session_service()
-    session = svc.close_session(session_id)
-    if not session or session.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return SessionResponse(
-        id=session.id,
-        user_id=session.user_id,
-        repository_id=session.repository_id,
-        status=session.status,
-        started_at=session.started_at,
-        updated_at=session.updated_at,
-    )
+def close_session(session_id: str, user: AuthenticatedUser = Depends(require_auth)) -> SessionResponse:
+    session = _session_service.close_session(session_id)
+    if not session or session.user_id != user.user_id:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+    return SessionResponse(id=session.id, user_id=session.user_id, repository_id=session.repository_id,
+                           status=session.status, started_at=session.started_at, updated_at=session.updated_at)
 
 
-@router.post(
-    "/api/sessions/{session_id}/checkpoints", response_model=CheckpointResponse
-)
+@router.post("/api/sessions/{session_id}/checkpoints", response_model=CheckpointResponse)
 def save_checkpoint(
     session_id: str,
     payload: CheckpointRequest,
-    user_id: str = Depends(get_current_user),
+    user: AuthenticatedUser = Depends(require_auth),
 ) -> CheckpointResponse:
-    """Save a progress checkpoint."""
-    svc = get_session_service()
-    session = svc.get_session(session_id)
-    if not session or session.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    cp = svc.save_checkpoint(session_id, payload.feature, payload.checkpoint_payload)
+    session = _session_service.get_session(session_id)
+    if not session or session.user_id != user.user_id:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
+    cp = _session_service.save_checkpoint(session_id, payload.feature, payload.checkpoint_payload)
     if not cp:
-        raise HTTPException(status_code=400, detail="Failed to save checkpoint")
-
-    return CheckpointResponse(
-        id=cp.id,
-        session_id=cp.session_id,
-        feature=cp.feature,
-        checkpoint_payload=cp.checkpoint_payload,
-        timestamp=cp.timestamp,
-    )
+        raise HTTPException(status_code=400, detail="Falha ao salvar checkpoint")
+    return CheckpointResponse(id=cp.id, session_id=cp.session_id, feature=cp.feature,
+                              checkpoint_payload=cp.checkpoint_payload, timestamp=cp.timestamp)
 
 
-@router.get(
-    "/api/sessions/{session_id}/checkpoints", response_model=list[CheckpointResponse]
-)
-def get_checkpoints(
-    session_id: str,
-    user_id: str = Depends(get_current_user),
-) -> list[CheckpointResponse]:
-    """Get all checkpoints for a session."""
-    svc = get_session_service()
-    session = svc.get_session(session_id)
-    if not session or session.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    checkpoints = svc.get_checkpoints(session_id)
+@router.get("/api/sessions/{session_id}/checkpoints", response_model=list[CheckpointResponse])
+def get_checkpoints(session_id: str, user: AuthenticatedUser = Depends(require_auth)) -> list[CheckpointResponse]:
+    session = _session_service.get_session(session_id)
+    if not session or session.user_id != user.user_id:
+        raise HTTPException(status_code=404, detail="Sessão não encontrada")
     return [
-        CheckpointResponse(
-            id=cp.id,
-            session_id=cp.session_id,
-            feature=cp.feature,
-            checkpoint_payload=cp.checkpoint_payload,
-            timestamp=cp.timestamp,
-        )
-        for cp in checkpoints
+        CheckpointResponse(id=cp.id, session_id=cp.session_id, feature=cp.feature,
+                           checkpoint_payload=cp.checkpoint_payload, timestamp=cp.timestamp)
+        for cp in _session_service.get_checkpoints(session_id)
     ]
