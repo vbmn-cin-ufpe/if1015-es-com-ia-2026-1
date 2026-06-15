@@ -128,6 +128,32 @@ dist
 # yarn v3
 .pnp.*
 .yarn/*
+
+# ── Terraform ─────────────────────────────────────────────────────────────────
+
+# Arquivos de variáveis com segredos — NUNCA subir para o git
+infra/envs/staging.tfvars
+infra/envs/prod.tfvars
+infra/terraform.tfvars
+infra/**/*.tfvars
+# Exceção: o arquivo de exemplo (sem valores reais) DEVE ir para o git
+!infra/envs/staging.tfvars.example
+!infra/envs/prod.tfvars.example
+!infra/terraform.tfvars.example
+
+# Estado local do Terraform (contém valores de outputs, inclusive segredos)
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/terraform.tfstate.d/
+infra/tfplan
+
+# Arquivos de override locais
+infra/override.tf
+infra/override.tf.json
+infra/*_override.tf
+infra/*_override.tf.json
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
@@ -138,5 +164,81 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-
 .history/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+
+# Bytecode e cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Distribuição / empacotamento
+*.egg-info/
+dist/
+build/
+*.egg
+MANIFEST
+
+# Pytest e cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+junit.xml
+
+# Linters e type checkers
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# Ambientes virtuais Python
+.venv/
+venv/
+env/
+ENV/
+
+# ── Dados de runtime e volumes Docker ─────────────────────────────────────────
+
+# Volumes locais do docker-compose (postgres, chroma)
+postgres_data/
+chroma_data/
+pgdata/
+
+# Uploads e arquivos gerados
+uploads/
+*.dump
+*.sql.bak
+
+# Logs de aplicação
+*.log
+logs/
+
+# ── Arquivos temporários e IDE ─────────────────────────────────────────────────
+
+# Arquivos temporários de edição
+*.tmp
+*.new
+*.bak
+*.swp
+*.swo
+*~
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
