@@ -1,0 +1,44 @@
+# ── Prod — recursos ligeiramente maiores que staging ──────────────────────────
+# Custo estimado para 3 dias ligado: ~$8–12 total
+# Ambos os ambientes juntos por 3 dias: ~$13–20 (bem dentro dos $50 de cota)
+#
+# Diferenças em relação ao staging:
+#   - min_replicas=1 (sem cold start em prod)
+#   - backend 1.0 vCPU + 2Gi (mais estável para demonstração)
+#   - chroma_storage 50GB (para indexar repos maiores)
+
+prefix      = "codecompass"
+environment = "prod"
+location    = "brazilsouth"
+
+# ── PostgreSQL ────────────────────────────────────────────────────────────────
+postgres_admin_login    = "pgadmin"
+postgres_admin_password = "TROQUE_PROD_Pass1_Forte!"   # senha diferente da staging!
+postgres_sku            = "B_Standard_B1ms"              # mesmo SKU — suficiente para demo
+postgres_storage_mb     = 32768
+
+# ── Aplicação ─────────────────────────────────────────────────────────────────
+admin_email    = "admin@codecompass.com"
+admin_password = "TROQUE_ADMIN_Prod1_Forte!"            # senha diferente da staging!
+jwt_secret     = "TROQUE_JWT_SECRET_PROD_minimo_32_chars_diferente_staging!!"
+
+# ── LLM ───────────────────────────────────────────────────────────────────────
+llm_provider = "abacus"
+llm_api_key  = "SUA_CHAVE_ABACUS_AQUI"
+llm_model    = "CLAUDE_V3_5_SONNET"
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+embedding_provider    = "openai"
+openai_api_key        = "sk-SUA_CHAVE_OPENAI_AQUI"
+embedding_model       = "text-embedding-3-small"
+embedding_dim         = "1536"
+embedding_max_workers = "4"
+
+# ── Escalonamento — 1 réplica fixa (sem cold start) ──────────────────────────
+backend_min_replicas = 1
+backend_max_replicas = 3
+backend_cpu          = 1.0
+backend_memory       = "2Gi"
+
+# ── ChromaDB ──────────────────────────────────────────────────────────────────
+chroma_storage_gb = 50

@@ -1,0 +1,45 @@
+# ── Staging — recursos mínimos para projeto acadêmico ─────────────────────────
+# Custo estimado para 3 dias ligado: ~$5–8 total
+#
+# Estratégia de custo:
+#   - scale-to-zero (min_replicas=0): Container Apps só cobram quando recebem requisições
+#   - PostgreSQL B1ms: menor SKU disponível (~$0.018/h)
+#   - Backend 0.5 vCPU + 1Gi: suficiente para demonstração
+
+prefix      = "codecompass"
+environment = "staging"
+location    = "brazilsouth"
+
+# ── PostgreSQL ────────────────────────────────────────────────────────────────
+postgres_admin_login    = "pgadmin"
+postgres_admin_password = "TROQUE_STAGING_Pass1!"   # mín: maiúscula + número + símbolo
+postgres_sku            = "B_Standard_B1ms"          # ~$14/mês → ~$1.4 por 3 dias
+postgres_storage_mb     = 32768
+
+# ── Aplicação ─────────────────────────────────────────────────────────────────
+admin_email    = "admin@codecompass.com"
+admin_password = "TROQUE_ADMIN_Staging1!"
+jwt_secret     = "TROQUE_JWT_SECRET_STAGING_minimo_32_chars_aqui!!"
+
+# ── LLM ───────────────────────────────────────────────────────────────────────
+llm_provider = "abacus"
+llm_api_key  = "SUA_CHAVE_ABACUS_AQUI"
+llm_model    = "CLAUDE_V3_5_SONNET"
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+embedding_provider = "openai"
+openai_api_key     = "sk-SUA_CHAVE_OPENAI_AQUI"
+embedding_model    = "text-embedding-3-small"
+embedding_dim      = "1536"
+embedding_max_workers = "2"
+
+# ── Escalonamento — scale-to-zero para economizar ─────────────────────────────
+# min=0: container para quando não há tráfego → zero custo em idle
+# Atenção: primeiro request após idle tem ~3s de cold start
+backend_min_replicas = 0
+backend_max_replicas = 1
+backend_cpu          = 0.5
+backend_memory       = "1Gi"
+
+# ── ChromaDB ──────────────────────────────────────────────────────────────────
+chroma_storage_gb = 10
