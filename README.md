@@ -26,6 +26,10 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 Captura de tela fase MVP
 <img width="1402" height="697" alt="image" src="https://github.com/user-attachments/assets/37b86ac0-b3a1-43fc-a00c-914fb198ae99" />
 
+Captura de tela da fase Atual
+<img width="1702" height="951" alt="image" src="https://github.com/user-attachments/assets/f9396dce-0879-401b-adfc-386824efbbaf" />
+
+
 
 ---
 
