@@ -35,6 +35,13 @@ services:
       # Admin seed
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      # JWT auth
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
+      # Azure Communication Services email (optional in dev — emails logged to console)
+      AZURE_EMAIL_CONNECTION_STRING: ${AZURE_EMAIL_CONNECTION_STRING:-}
+      AZURE_EMAIL_FROM: ${AZURE_EMAIL_FROM:-donotreply@codecompass.dev}
     ports:
       - "8000:8000"
     depends_on:
