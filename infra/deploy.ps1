@@ -207,10 +207,10 @@ Write-Step "Passo 4/4 — Atualizando Container Apps no Azure"
 # Descobre os nomes dos container apps no resource group
 $apps = az containerapp list --resource-group $RG_NAME | ConvertFrom-Json
 
-$backendApp  = ($apps | Where-Object { $_.name -like "*backend*" }).name
-$frontendApp = ($apps | Where-Object { $_.name -like "*frontend*" }).name
+$backendApp  = ($apps | Where-Object { $_.name -like "*-api" }).name
+$frontendApp = ($apps | Where-Object { $_.name -notlike "*-api" -and $_.name -notlike "*-chroma" }).name
 
-if (-not $backendApp)  { throw "Container App do backend não encontrado no Resource Group $RG_NAME" }
+if (-not $backendApp)  { throw "Container App da API não encontrado no Resource Group $RG_NAME" }
 if (-not $frontendApp) { throw "Container App do frontend não encontrado no Resource Group $RG_NAME" }
 
 Write-Host "Atualizando backend: $backendApp"  -ForegroundColor Yellow
