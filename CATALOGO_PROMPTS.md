@@ -599,3 +599,220 @@ as implementações concretas.
 | PROMPT-004 | Relatório de Qualidade    | `GET /api/metrics/{repo_id}/report`      | Baixa (semanal)      | 1.0    |
 | PROMPT-005 | Classificação de Commits  | Interno — pipeline de indexação          | Baixa (1x por repo)  | 2.0    |
 | PROMPT-006 | Análise de Nó do Grafo    | `GET /api/graph/{repo_id}/module/{path}` | Média (por clique)   | 1.0    |
+| PROMPT-007 | Análise de Branch         | `POST /api/repos/{id}/analyze-branch`    | Média (on-demand)    | 1.0    |
+| PROMPT-008 | Gerador de Documentação   | `POST /api/repos/{id}/generate-doc`      | Baixa (on-demand)    | 1.0    |
+| PROMPT-009 | Interpretação de Drift    | `POST /api/repos/{id}/graph/diff/interpret` | Baixa (on-demand) | 1.0    |
+
+---
+
+## Registro #007
+
+### Identificação
+
+- **ID:** PROMPT-007
+- **Nome:** Análise de Branch com Avaliação de Risco
+- **Versão:** 1.0
+- **Responsável:** Arthur Luis de Farias Alves (alfa@cin.ufpe.br)
+- **Data:** 2026-06-05
+
+### Objetivo
+
+> Analisar as mudanças de uma feature branch em relação à base, calcular risk score com base nos arquivos alterados (complexidade + acoplamento), e gerar um resumo em linguagem natural com os principais riscos e impactos. Ajuda devs a revisar o que mudou antes de fazer merge.
+
+### Contexto de uso
+
+> Invocado pelo `BranchAnalysisService.analyze()` no endpoint `POST /api/repos/{id}/analyze-branch`. Recebe `branch_name` e `base_branch`. Frequência: on-demand, tipicamente antes de um PR review.
+
+### Template do prompt
+
+```
+[SYSTEM]
+Você é um engenheiro de software sênior experiente em code review e análise de risco.
+Analise as mudanças de branch e forneça insights acionáveis e objetivos.
+Responda em português.
+
+[USER]
+Analise as mudanças da branch '{branch}' em relação a '{base_branch}' no repositório '{repo_name}'.
+
+Arquivos alterados ({files_changed} total):
+{changed_files_list}
+
+Risk score calculado: {risk_score:.0f}/100
+(baseado em complexidade ciclomática média e acoplamento dos arquivos alterados)
+
+Forneça:
+1. Resumo das mudanças em 2-3 frases
+2. Principais riscos identificados
+3. Módulos mais críticos tocados
+4. Recomendação de merge (safe/review/caution)
+```
+
+### Parâmetros
+
+| Parâmetro           | Tipo   | Descrição                        | Exemplo                            |
+| ------------------- | ------ | -------------------------------- | ---------------------------------- |
+| `branch`            | string | Nome da feature branch           | `"feature/add-webhook-support"`    |
+| `base_branch`       | string | Branch base para comparação      | `"main"`                           |
+| `repo_name`         | string | Nome do repositório              | `"codecompass"`                    |
+| `files_changed`     | int    | Total de arquivos alterados      | `12`                               |
+| `changed_files_list`| string | Lista dos arquivos com métricas  | `"main.py (complexity: 8, in: 5)"` |
+| `risk_score`        | float  | Score 0-100 calculado            | `67.0`                             |
+
+### Avaliação de qualidade
+
+- **Taxa de sucesso estimada:** 83%
+- **Casos onde falha:** Branches com apenas mudanças de docs/tests — risk score baixo mas LLM pode super-estimar risco
+- **Estratégia de mitigação:** Filtrar arquivos `.md` e `test_*` do risk score antes de chamar o LLM
+
+---
+
+## Registro #008
+
+### Identificação
+
+- **ID:** PROMPT-008
+- **Nome:** Gerador de Documentação de Módulo
+- **Versão:** 1.0
+- **Responsável:** Getulio Junqueira de Queiroz Lima (gjql@cin.ufpe.br)
+- **Data:** 2026-06-05
+
+### Objetivo
+
+> Gerar documentação automática (no formato README.md) para um módulo específico, combinando análise estática do código indexado com o histórico de commits. Útil para projetos sem documentação ou com docs desatualizadas.
+
+### Contexto de uso
+
+> Invocado pelo `DocGeneratorService.generate()` no endpoint `POST /api/repos/{id}/generate-doc`. Recebe `module_path`. Frequência: on-demand pelo dev ou tech lead.
+
+### Template do prompt
+
+```
+[SYSTEM]
+Você é um escritor técnico especializado em documentação de software.
+Gere documentação clara, precisa e útil para desenvolvedores.
+Responda em português brasileiro com formatação Markdown.
+
+[USER]
+Gere um README.md detalhado para o módulo '{module_path}' do repositório '{repo_name}'.
+
+Código-fonte (chunks mais relevantes):
+{code_chunks}
+
+Histórico recente de commits:
+{recent_commits}
+
+Métricas do módulo:
+- Complexidade ciclomática média: {avg_complexity:.1f}
+- Linhas de código: {loc}
+- Linguagem: {language}
+
+Inclua no README gerado:
+1. Descrição e propósito do módulo
+2. Responsabilidades principais
+3. Como usar (exemplo de código se aplicável)
+4. Dependências e integrações
+5. Notas de manutenção (baseado no histórico de mudanças)
+```
+
+### Avaliação de qualidade
+
+- **Taxa de sucesso estimada:** 79%
+- **Casos onde falha:** Módulos muito pequenos (< 30 linhas) — documentação superficial; código gerado não pode ser testado pelo LLM
+- **Estratégia de mitigação:** Limitar invocação a módulos com `loc >= 30`; incluir instruções explícitas para basear o conteúdo apenas no código fornecido
+
+---
+
+## Registro #009
+
+### Identificação
+
+- **ID:** PROMPT-009
+- **Nome:** Interpretação de Drift Arquitetural
+- **Versão:** 1.0
+- **Responsável:** Victor Barros de Miranda Neves (vbmn@cin.ufpe.br)
+- **Data:** 2026-06-15
+
+### Objetivo
+
+> Interpretar em linguagem natural o resultado de uma comparação entre dois snapshots do grafo de dependências (drift report). Transforma dados estruturados (nós adicionados/removidos, arestas adicionadas/removidas, drift score) em um diagnóstico legível sobre o que mudou arquiteturalmente e o que isso implica.
+
+### Contexto de uso
+
+> Invocado pelo endpoint `POST /api/repos/{id}/graph/diff/interpret` em `dependency_graph_controller.py`. É chamado quando o usuário clica em "Interpretar com IA" após visualizar o diff de dois snapshots no `DriftTab.tsx`. Frequência: on-demand, geralmente 1x por sessão de análise de drift.
+
+### Template do prompt
+
+```
+[SYSTEM]
+Você é um arquiteto de software experiente especializado em análise de evolução de
+sistemas. Analise as mudanças estruturais de dependências e forneça insights sobre
+impactos e riscos. Responda SEMPRE em português brasileiro.
+
+[USER]
+Analise o drift arquitetural do repositório '{repo_name}' entre dois snapshots.
+
+Resumo das mudanças estruturais:
+- Drift score: {drift_score:.1f}% ({drift_label})
+- Nós adicionados: {added_nodes} módulos novos
+- Nós removidos: {removed_nodes} módulos deletados
+- Arestas adicionadas: {added_edges} novas dependências
+- Arestas removidas: {removed_edges} dependências removidas
+
+Detalhes das mudanças:
+{diff_details}
+
+Forneça uma interpretação de 3-5 parágrafos cobrindo:
+1. O que mudou estruturalmente e o nível de impacto
+2. Riscos ou melhorias arquiteturais detectadas
+3. Módulos que merecem atenção especial
+4. Recomendação geral para o time
+```
+
+### Parâmetros
+
+| Parâmetro       | Tipo   | Descrição                             | Exemplo                           |
+| --------------- | ------ | ------------------------------------- | --------------------------------- |
+| `repo_name`     | string | Nome do repositório                   | `"codecompass"`                   |
+| `drift_score`   | float  | Percentual de elementos alterados     | `23.4`                            |
+| `drift_label`   | string | Rótulo qualitativo do drift           | `"moderate"`, `"high"`, `"low"`   |
+| `added_nodes`   | int    | Quantidade de novos módulos           | `3`                               |
+| `removed_nodes` | int    | Quantidade de módulos removidos       | `1`                               |
+| `added_edges`   | int    | Quantidade de novas dependências      | `7`                               |
+| `removed_edges` | int    | Quantidade de dependências removidas  | `2`                               |
+| `diff_details`  | string | Listagem dos elementos alterados      | `"+ webhook_controller.py\n+ ..."` |
+
+### Exemplo de execução
+
+**Input:** drift_score 18.5%, 2 nós adicionados, 0 removidos, 5 arestas adicionadas
+
+**Output obtido:**
+
+```
+A evolução arquitetural registrada entre os dois snapshots indica uma expansão controlada
+do sistema, com drift score de 18.5% classificado como moderado. Foram adicionados dois
+novos módulos (webhook_controller e watchlist_controller) e cinco novas dependências,
+sem remoção de módulos existentes — sinal de crescimento aditivo.
+
+Os novos módulos se integram à camada de controllers com dependências para repositórios
+de infraestrutura, seguindo o padrão hexagonal já estabelecido. As arestas adicionadas
+são majoritariamente de controllers para adapters, o que é esperado e saudável.
+
+Ponto de atenção: o webhook_controller passou a depender diretamente do ingestion_service,
+criando acoplamento entre a camada de entrada externa e o pipeline de processamento.
+Considerar se essa dependência deveria ser mediada por um port/interface.
+
+Recomendação: o crescimento está dentro de parâmetros normais. Revisar o acoplamento
+do webhook_controller antes do próximo sprint.
+```
+
+### Avaliação de qualidade
+
+- **Taxa de sucesso estimada:** 87%
+- **Casos onde falha:** Drift score muito baixo (< 5%) — interpretação tende a ser trivial; drift score muito alto (> 50%) — análise pode ser superficial por excesso de mudanças
+- **Estratégia de mitigação:** Para drift < 5%, retornar mensagem padrão sem chamar o LLM ("Mudanças mínimas detectadas — sem impacto arquitetural relevante"); para drift > 50%, incluir aviso explícito no prompt sobre mudança significativa
+
+### Histórico de versões
+
+| Versão | Mudança        | Motivo                                               |
+| ------ | -------------- | ---------------------------------------------------- |
+| 1.0    | Versão inicial | Implementação do endpoint de interpretação de drift  |

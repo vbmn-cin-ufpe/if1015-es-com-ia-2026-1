@@ -401,7 +401,103 @@ Fase de polimento de UX, segurança e documentação do projeto.
 ---
 
 ## Fase: Ressonância (Aulas 30-32)
-[Mesma estrutura — A preencher]
+
+Fase de expansão com features avançadas de análise arquitetural, auditoria, integração contínua e observabilidade colaborativa.
+
+### Onde a IA ajudou
+
+- **Detecção de Drift Arquitetural:** A IA implementou `ArchitectureDriftService.compare()` que compara dois snapshots do grafo de dependências (nós e arestas), calcula `drift_score` como percentual de elementos alterados, e expõe endpoints REST para listagem de snapshots e cálculo de diff. Adicionalmente, implementou endpoint `POST /api/repos/{id}/graph/diff/interpret` que alimenta o diff num prompt e retorna interpretação em português via LLM.
+- **Audit Log automático:** A IA implementou `AuditRepository` com tabela PostgreSQL `audit_log` e fallback in-memory, mais middleware em `main.py` que intercepta respostas de mutação (POST/PATCH/DELETE com status < 400) e registra user_id, e-mail, ação, resource_type, IP e timestamp sem código adicional nos controllers.
+- **Webhooks GitHub:** A IA implementou CRUD de webhooks com segredos HMAC gerados via `secrets.token_hex(32)`, receiver que verifica assinatura `X-Hub-Signature-256` com `hmac.compare_digest()` (timing-safe), e disparo de re-indexação automática ao receber push event.
+- **Watchlist e Notificações:** A IA implementou `WatchlistRepository` com constraint UNIQUE(user_id, repository_id, module_path) e `NotificationService.notify_on_reindex()` que detecta módulos alterados pós-indexação e envia e-mails para subscribers.
+- **Frontend Phase 4 completo:** A IA gerou `DriftTab.tsx` (seleção de snapshots por data com `closestSnapshot()`, comparação com animação, botão "Interpretar com IA" com resultado em card violeta), `WatchlistTab.tsx` (watch/unwatch por módulo, lista completa), e expandiu `AdminTab.tsx` com seções de Auditoria e Webhooks.
+- **Fix de auth global:** A IA refatorou `frontend/src/infrastructure/http.ts` para injetar automaticamente o Bearer token via `useAuthStore.getState().token` em todas as chamadas HTTP, eliminando "Token de autenticação ausente" em todas as abas.
+- **Debug de erros Babel/JSX:** A IA localizou e removeu bloco JSX duplicado em `AdminTab.tsx` que causava "Unexpected token (280:7)" no parser Babel.
+- **Fix de tema claro:** A IA reescreveu `AuditLogSection` e `WebhookSection` usando o padrão `bg-white dark:bg-gray-800` consistente com as demais seções do AdminTab, corrigindo ilegibilidade no tema claro.
+
+### Onde a IA não ajudou (ou atrapalhou)
+
+- **Contexto longo após compactação:** Ao retomar a sessão após compactação do contexto, foi necessário re-explorar o estado dos arquivos para não repetir implementações já feitas.
+- **Inserções parciais de código:** Algumas inserções de blocos JSX resultaram em código duplicado (ex: `export const http` duplicado), exigindo operações de limpeza adicionais.
+- **Dificuldade com rebuild Docker:** O backend precisou ser completamente reconstruído (~10 min por PyTorch) para incluir as rotas da Fase 4 — a IA não consegue antecipar esse custo de tempo.
+
+### Prompts notáveis desta fase
+
+- "Crie a fase 4 do projeto completa com drift arquitetural, audit log, webhooks e watchlist"
+- "adiciona a parte de selecionar datas no DriftTab e um botão de interpretar com ia"
+- "corrige o bug do token de autenticação ausente em todas as abas"
+- "corrige o tema claro no AuditLog e Webhooks — ta tudo branco e ilegível"
+- "Agora analise todos os prompts de ontem e hoje, uso de LLM, gastos de tokens e arquivos e features criados e atualiza os arquivos .MD que estão na raiz do projeto."
+
+### Decisões tomadas sem IA
+
+- **Ordem de implementação:** Backend completo antes do frontend da Fase 4
+- **Gradiente de cores por tab:** Teal/cyan para Drift, violet/purple para Watchlist — escolhas visuais do usuário
+- **Re-build forçado do Docker:** Decisão de usar `docker compose up --build` para garantir atualização de rotas
+
+### Registro de economicidade desta fase
+
+#### Camada 1 — Consumo de IA
+
+| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+|---|---|---|---|---|
+| Backend: AuditRepository + middleware | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
+| Backend: WebhookRepository + controller (HMAC) | GitHub Copilot / Claude Sonnet 4.6 | ~28.000 | ~22.000 | ~$0.41 |
+| Backend: WatchlistRepository + NotificationService | GitHub Copilot / Claude Sonnet 4.6 | ~22.000 | ~18.000 | ~$0.33 |
+| Backend: ArchitectureDriftService + snapshots + diff | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~25.000 | ~$0.47 |
+| Backend: /graph/diff/interpret (LLM endpoint) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.20 |
+| Frontend: DriftTab.tsx (seleção por data + IA) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~30.000 | ~$0.56 |
+| Frontend: WatchlistTab.tsx | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
+| Frontend: AdminTab.tsx (AuditLogSection + WebhookSection) | GitHub Copilot / Claude Sonnet 4.6 | ~35.000 | ~25.000 | ~$0.48 |
+| Frontend: App.tsx wiring + http.ts global auth | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~12.000 | ~$0.24 |
+| Debugging (Babel error, duplicate http, light theme) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~18.000 | ~$0.39 |
+| Atualização de documentação MD | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~20.000 | ~$0.44 |
+| **Total da fase** | | **~310.000** | **~220.000** | **~$4.26** |
+
+> **Nota:** Preços de referência: Claude Sonnet 4.6 ~$3/M tokens input, ~$15/M tokens output (junho 2026).
+
+#### Camada 2 — Esforço humano real (auto-declarado)
+
+| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
+|---|---|---|---|---|
+| Backend Fase 4 completo | [Membro] (pleno) | 1.5h | 0.5h | Rebuild Docker ~10 min |
+| Frontend Fase 4 (3 componentes novos) | [Membro] (pleno) | 1.5h | 0.7h | Múltiplos erros de build |
+| Debug e correções (3 bugs) | [Membro] (pleno) | 0.5h | 0.3h | Babel, auth, tema claro |
+| Atualização documentação MD | [Membro] (pleno) | 0.3h | 0.5h | Revisão de textos |
+| **Total da fase** | | **3.8h** | **2.0h** | **5.8h total de esforço humano** |
+
+#### Camada 3 — Estimativa contrafactual
+
+| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+|---|---|---|---|---|
+| AuditRepository + middleware + endpoint admin | Sênior | 8.0h | R$ 115 | R$ 920 |
+| WebhookRepository + HMAC + CRUD + receiver | Sênior | 10.0h | R$ 115 | R$ 1.150 |
+| WatchlistRepository + NotificationService | Sênior | 8.0h | R$ 115 | R$ 920 |
+| ArchitectureDriftService + snapshots API | Sênior | 10.0h | R$ 115 | R$ 1.150 |
+| LLM interpretation endpoint | Pleno | 3.0h | R$ 75 | R$ 225 |
+| DriftTab.tsx (seleção por data + IA) | Pleno | 8.0h | R$ 75 | R$ 600 |
+| WatchlistTab.tsx | Pleno | 5.0h | R$ 75 | R$ 375 |
+| AdminTab.tsx (Auditoria + Webhooks) | Pleno | 8.0h | R$ 75 | R$ 600 |
+| Wiring + global auth fix | Pleno | 3.0h | R$ 75 | R$ 225 |
+| Documentação MD (5 arquivos) | Pleno | 4.0h | R$ 75 | R$ 300 |
+| **Total da fase** | | **67.0h** | | **R$ 6.465** |
+
+### Análise parcial de economicidade (esta fase)
+
+- **Custo real com IA:** ~$4.26 USD (~R$ 23.43 a R$5.50/USD) + 5.8h de trabalho humano
+- **Custo humano das 5.8h (perfil médio pleno):** ~R$ 435 (5.8h × R$75 média)
+- **Custo total com IA:** ~R$ 458
+- **Custo contrafactual sem IA:** ~R$ 6.465
+- **Razão de economicidade:** 14.1x (cada R$1 gasto com IA equivaleu a ~R$14.10 sem IA)
+- **Saving estimado:** ~R$ 6.007 (92.9%)
+
+### Lições aprendidas
+
+- Injeção de auth em camada de infraestrutura (`http.ts`) é superior a passar headers manualmente em cada serviço — elimina toda uma classe de bugs
+- HMAC com `hmac.compare_digest()` (timing-safe) é obrigatório para validação de webhooks — comparação direta de strings é vulnerável a timing attacks
+- Middleware de auditoria deve ser construído como camada cross-cutting e não lógica em cada controller — muito mais manutenível
+- Compactação de contexto em sessões longas requer session memory estruturada para não perder estado de decisões anteriores
+- `secrets.token_hex(32)` (256 bits) é o padrão adequado para geração de segredos HMAC — `uuid4` não tem entropia suficiente
 
 ---
 
@@ -427,8 +523,8 @@ Fase de polimento de UX, segurança e documentação do projeto.
 | Exposição | ~186.000 | ~266.000 | ~$22.74 | ~R$ 125.07 |
 | Composição | ~88.000 | ~65.000 | ~$1.11 | ~R$ 6.11 |
 | Ensaio | ~92.000 | ~84.000 | ~$1.56 | ~R$ 8.58 |
-| Ressonância | | | | |
-| **Total parcial** | **~304.000** | **~388.000** | **~$24.93** | **~R$ 137.12** |
+| Ressonância | ~310.000 | ~220.000 | ~$4.26 | ~R$ 23.43 |
+| **Total** | **~706.000** | **~692.000** | **~$30.75** | **~R$ 169.13** |
 
 #### Custo contrafactual humano (total do projeto)
 | Fase | Horas totais estimadas | Custo humano estimado (R$) |
@@ -436,16 +532,16 @@ Fase de polimento de UX, segurança e documentação do projeto.
 | Pré-proposta | 31.0h | R$ 2.775 |
 | Exposição | 136.0h | R$ 13.960 |
 | Composição | 19.0h | R$ 1.985 |
-| Ensaio | | |
-| Ressonância | | |
-| **Total parcial** | **186.0h** | **R$ 18.720** |
+| Ensaio | 27.0h | R$ 2.465 |
+| Ressonância | 67.0h | R$ 6.465 |
+| **Total** | **280.0h** | **R$ 27.650** |
 
 #### Análise comparativa
-- **Custo total com IA (R$):** [A calcular ao final]
-- **Custo total estimado sem IA (R$):** [A calcular ao final]
-- **Razão de economicidade:** [custo sem IA / custo com IA]
-- **Saving estimado (R$):** [diferença absoluta]
-- **Saving estimado (%):** [diferença percentual]
+- **Custo total com IA (R$):** ~R$ 169 (IA) + ~R$ 1.260 (trabalho humano nas sessões) = **~R$ 1.429**
+- **Custo total estimado sem IA (R$):** ~R$ 27.650
+- **Razão de economicidade:** **~19.4x** (custo sem IA / custo com IA)
+- **Saving estimado (R$):** ~R$ 26.221
+- **Saving estimado (%):** ~94.8%
 
 > **Atenção às limitações desta análise:**
 > (1) O contrafactual é uma estimativa subjetiva — há viés de retrospecto.
