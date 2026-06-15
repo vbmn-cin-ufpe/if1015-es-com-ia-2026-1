@@ -17,47 +17,68 @@ class TimelineService:
         decisions: list[CommitDecision],
         module_path: str | None = None,
         category: str | None = None,
+        search: str | None = None,
         limit: int = 50,
-    ) -> list[dict[str, Any]]:
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
         """Build an ordered timeline of decisions.
 
         Args:
             decisions: Classified commit decisions
             module_path: Filter by module (optional)
             category: Filter by category (optional)
+            search: Text search on summary and modules (optional)
             limit: Max entries to return
+            offset: Pagination offset
 
         Returns:
-            Ordered list of timeline entries (newest first)
+            Tuple of (ordered list of timeline entries, total count before pagination)
         """
         filtered = decisions
 
         if module_path:
             filtered = [
-                d for d in filtered if module_path in d.touched_modules
+                d for d in filtered if any(
+                    module_path.lower() in m.lower()
+                    for m in ([d.touched_modules] if isinstance(d.touched_modules, str) else d.touched_modules)
+                ) or module_path.lower() in d.summary.lower()
             ]
 
         if category:
             filtered = [d for d in filtered if d.category == category]
 
+        if search:
+            q = search.lower()
+            filtered = [
+                d for d in filtered
+                if q in d.summary.lower()
+                or q in d.commit_id.lower()
+                or q in getattr(d, "author", "").lower()
+                or any(q in m.lower() for m in (d.touched_modules if isinstance(d.touched_modules, list) else [d.touched_modules]))
+            ]
+
         # Sort by timestamp descending
         filtered.sort(key=lambda d: d.timestamp, reverse=True)
 
+        total = len(filtered)
+        page = filtered[offset: offset + limit]
+
         entries = []
-        for idx, decision in enumerate(filtered[:limit]):
+        for idx, decision in enumerate(page):
             entries.append({
                 "id": str(uuid4()),
-                "position": idx + 1,
+                "position": offset + idx + 1,
                 "commit_id": decision.commit_id,
                 "repository_id": decision.repository_id,
                 "timestamp": decision.timestamp,
+                "author": getattr(decision, "author", ""),
                 "category": decision.category,
                 "confidence": decision.confidence,
                 "summary": decision.summary,
                 "touched_modules": decision.touched_modules,
             })
 
-        return entries
+        return entries, total
 
 
 class WhyExplanationService:

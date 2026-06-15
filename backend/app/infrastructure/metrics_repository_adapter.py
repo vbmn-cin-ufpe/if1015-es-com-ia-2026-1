@@ -204,3 +204,46 @@ class FeedbackRepositoryAdapter:
         except Exception as exc:
             logger.error("Failed to get feedback: %s", exc)
             return [f for f in self._feedback if f.repository_id == repository_id]
+
+    def get_all_feedback(
+        self,
+        from_ts: str | None = None,
+        to_ts: str | None = None,
+        limit: int = 200,
+    ) -> list[ResponseFeedback]:
+        """Return feedback across ALL repositories (admin use)."""
+        if self._conn is None:
+            result = list(self._feedback)
+            if from_ts:
+                result = [f for f in result if f.timestamp >= from_ts]
+            if to_ts:
+                result = [f for f in result if f.timestamp <= to_ts]
+            return sorted(result, key=lambda f: f.timestamp, reverse=True)[:limit]
+        try:
+            with self._conn.cursor() as cur:
+                query = (
+                    "SELECT id, repository_id, response_id, usefulness_score, "
+                    "correctness_score, comment, timestamp "
+                    "FROM response_feedback WHERE 1=1"
+                )
+                params: list[Any] = []
+                if from_ts:
+                    query += " AND timestamp >= %s"
+                    params.append(from_ts)
+                if to_ts:
+                    query += " AND timestamp <= %s"
+                    params.append(to_ts)
+                query += " ORDER BY timestamp DESC LIMIT %s"
+                params.append(limit)
+                cur.execute(query, params)
+                return [
+                    ResponseFeedback(
+                        id=r[0], repository_id=r[1], response_id=r[2],
+                        usefulness_score=r[3], correctness_score=r[4],
+                        comment=r[5], timestamp=r[6],
+                    )
+                    for r in cur.fetchall()
+                ]
+        except Exception as exc:
+            logger.error("Failed to get all feedback: %s", exc)
+            return []

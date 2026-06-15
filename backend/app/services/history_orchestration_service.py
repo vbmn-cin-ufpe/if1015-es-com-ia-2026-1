@@ -34,6 +34,10 @@ class HistoryService:
     ) -> list[CommitDecision]:
         """Ensure decisions are available (ingest + classify if needed)."""
         decisions = self.decision_repository.get_decisions(repository_id)
+        # Re-ingest if missing or if cached decisions lack the author field
+        if decisions and not getattr(decisions[0], "author", ""):
+            self.decision_repository.delete_decisions(repository_id)
+            decisions = []
         if decisions:
             return decisions
 
@@ -52,13 +56,23 @@ class HistoryService:
         repo_root: Path,
         module_path: str | None = None,
         category: str | None = None,
+        search: str | None = None,
         limit: int = 50,
-    ) -> list[dict[str, Any]]:
-        """Get decision timeline for a repository."""
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Get decision timeline for a repository. Returns (entries, total)."""
         decisions = self._ensure_decisions(repository_id, repo_root)
         return self.timeline_service.build_timeline(
-            decisions, module_path=module_path, category=category, limit=limit
+            decisions, module_path=module_path, category=category,
+            search=search, limit=limit, offset=offset,
         )
+
+    def clear_cache(self, repository_id: str) -> int:
+        """Delete cached decisions so the next call re-ingests from git. Returns deleted count."""
+        decisions = self.decision_repository.get_decisions(repository_id)
+        count = len(decisions)
+        self.decision_repository.delete_decisions(repository_id)
+        return count
 
     def explain_why(
         self,

@@ -41,6 +41,15 @@ class PostgresAdapter:
                     )
                     """
                 )
+                # Idempotent additions for Phase 3 progress tracking
+                cur.execute(
+                    "alter table repositories add column if not exists "
+                    "progress_pct int not null default 0"
+                )
+                cur.execute(
+                    "alter table repositories add column if not exists "
+                    "current_step text not null default ''"
+                )
             conn.commit()
 
     def create_repository(self, repository_id: str, repository_url: str, status: str) -> RepositoryRecord:
@@ -109,7 +118,8 @@ class PostgresAdapter:
                 with conn.cursor() as cur:
                     cur.execute(
                         """
-                        select repository_id, repository_url, status, stats, error_message, created_at::text, updated_at::text
+                        select repository_id, repository_url, status, stats, error_message,
+                               created_at::text, updated_at::text, progress_pct, current_step
                           from repositories
                          where repository_id=%s
                         """,
@@ -126,6 +136,57 @@ class PostgresAdapter:
                         error_message=row[4],
                         created_at=row[5],
                         updated_at=row[6],
+                        progress_pct=row[7] if row[7] is not None else 0,
+                        current_step=row[8] or "",
                     )
         with self._lock:
             return self._memory.get(repository_id)
+
+    def list_repositories(self) -> list[RepositoryRecord]:
+        """Return all repository records ordered by creation time (newest first)."""
+        if self._db_enabled:
+            with psycopg.connect(self._dsn) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        select repository_id, repository_url, status, stats, error_message,
+                               created_at::text, updated_at::text, progress_pct, current_step
+                          from repositories
+                         order by created_at desc
+                        """
+                    )
+                    return [
+                        RepositoryRecord(
+                            repository_id=row[0],
+                            repository_url=row[1],
+                            status=row[2],
+                            stats=row[3] or {},
+                            error_message=row[4],
+                            created_at=row[5],
+                            updated_at=row[6],
+                            progress_pct=row[7] if row[7] is not None else 0,
+                            current_step=row[8] or "",
+                        )
+                        for row in cur.fetchall()
+                    ]
+        with self._lock:
+            return sorted(self._memory.values(), key=lambda r: r.created_at, reverse=True)
+
+    def update_progress(self, repository_id: str, pct: int, step: str) -> None:
+        """Update ingestion progress fields for real-time queue monitoring."""
+        now = self._now()
+        if self._db_enabled:
+            with psycopg.connect(self._dsn) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "update repositories set progress_pct=%s, current_step=%s, "
+                        "updated_at=%s where repository_id=%s",
+                        (pct, step, now, repository_id),
+                    )
+                conn.commit()
+            return
+        with self._lock:
+            rec = self._memory.get(repository_id)
+            if rec:
+                rec.progress_pct = pct
+                rec.current_step = step

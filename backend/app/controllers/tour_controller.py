@@ -117,3 +117,74 @@ def list_tours(
 router.include_router(_tours_router)
 router.include_router(_repos_router)
 
+
+# ── Novice tour ────────────────────────────────────────────────────────────────
+
+_novice_router = APIRouter(prefix="/api/tours")
+
+
+@_novice_router.post("/generate/novice", response_model=TourResponse)
+def generate_novice_tour(
+    payload: GenerateTourRequest,
+    tour_service: TourGenerationService = Depends(get_tour_service),
+) -> TourResponse:
+    """Generate a tour optimised for someone new to the project.
+
+    Uses low complexity_weight and high coupling_weight so that well-connected
+    but simple entry-point modules come first — easier to read, yet central.
+    The description and title reflect the novice framing.
+    """
+    from app.dependencies import get_metadata_adapter
+    from app.infrastructure.settings import get_settings
+
+    try:
+        metadata = get_metadata_adapter()
+        settings = get_settings()
+
+        repo_record = metadata.get_repository(payload.repository_id)
+        if not repo_record:
+            raise HTTPException(status_code=404, detail="Repository not found")
+        if repo_record.status != "completed":
+            raise HTTPException(status_code=400, detail="Repository must be indexed first")
+
+        repo_path = _resolve_repo_path(
+            payload.repository_id, repo_record.repository_url, settings.repo_workspace
+        )
+        if not repo_path.exists():
+            raise HTTPException(status_code=404, detail="Repository files not found on disk")
+
+        # Novice weights: coupling first (entry points), then churn, minimal complexity penalty
+        tour_data = tour_service.generate_tour(
+            repository_id=payload.repository_id,
+            repo_root=repo_path,
+            top_k=payload.top_k,
+            complexity_weight=0.15,   # low — don't penalise simple files
+            churn_weight=0.25,
+            coupling_weight=0.60,     # high — prefer well-connected modules
+        )
+
+        # Patch title & description for novice context
+        tour_data["title"] = f"Tour para Novatos: {repo_record.repository_url}"
+        tour_data["description"] = (
+            f"Os {tour_data['step_count']} módulos mais acessíveis para quem está "
+            "começando no projeto — priorizados por conectividade e facilidade de leitura."
+        )
+        for step in tour_data.get("steps", []):
+            step["rationale"] = (
+                "Módulo indicado para novatos: bem conectado ao restante do sistema, "
+                "tornando-o um bom ponto de entrada para entender o fluxo geral. "
+                + step.get("rationale", "")
+            )
+
+        return TourResponse(**tour_data)
+
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+router.include_router(_novice_router)
+

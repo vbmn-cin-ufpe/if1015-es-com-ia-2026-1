@@ -20,12 +20,14 @@ def get_timeline(
     repository_id: str,
     module_path: str | None = None,
     category: str | None = None,
+    search: str | None = None,
     limit: int = 50,
+    offset: int = 0,
     history_service=Depends(get_history_service),
 ) -> TimelineResponse:
     """Retrieve the decision timeline for a repository.
 
-    Optional filters: module_path, category. Results ordered newest-first.
+    Optional filters: module_path, category, search (text). Results ordered newest-first.
     """
     from app.dependencies import get_metadata_adapter
     from app.infrastructure.settings import get_settings
@@ -50,21 +52,34 @@ def get_timeline(
     else:
         repo_path = Path(repo_url).expanduser().resolve()
 
-    entries = history_service.get_timeline(
+    entries, total = history_service.get_timeline(
         repository_id=repository_id,
         repo_root=repo_path,
         module_path=module_path,
         category=category,
+        search=search,
         limit=limit,
+        offset=offset,
     )
 
     return TimelineResponse(
         repository_id=repository_id,
         module_path=module_path,
         category=category,
-        total=len(entries),
+        total=total,
+        offset=offset,
         entries=[TimelineEntry(**e) for e in entries],
     )
+
+
+@router.delete("/{repository_id}/history/cache")
+def clear_history_cache(
+    repository_id: str,
+    history_service=Depends(get_history_service),
+) -> dict:
+    """Delete cached commit decisions so the next timeline call re-ingests from git (full history)."""
+    deleted = history_service.clear_cache(repository_id)
+    return {"deleted": deleted, "message": f"Cache cleared ({deleted} decisions). Next request will re-ingest full history."}
 
 
 @router.post("/{repository_id}/history/why", response_model=WhyResponse)

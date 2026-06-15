@@ -21,6 +21,8 @@ class RepositoryRecord:
     error_message: str | None
     created_at: str
     updated_at: str
+    progress_pct: int = 0
+    current_step: str = ""
 
 
 class RepositoryMetadataPort(Protocol):
@@ -42,6 +44,10 @@ class RepositoryMetadataPort(Protocol):
         error_message: str | None = None,
     ) -> None:
         """Update repository indexing status."""
+        ...
+
+    def update_progress(self, repository_id: str, pct: int, step: str) -> None:
+        """Update fine-grained ingestion progress (0-100) and current step label."""
         ...
 
 

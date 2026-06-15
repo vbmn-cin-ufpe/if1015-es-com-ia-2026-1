@@ -25,7 +25,7 @@ class ChatService:
         if repo.status != "completed":
             raise ValueError("repository is not indexed yet")
 
-        chunks = self._retrieval.retrieve(repository_id=repository_id, question=question, top_k=5)
+        chunks = self._retrieval.retrieve(repository_id=repository_id, question=question, top_k=8)
         answer = self._llm.generate_answer(question=question, context_chunks=chunks)
         sources = [
             ChatSource(
