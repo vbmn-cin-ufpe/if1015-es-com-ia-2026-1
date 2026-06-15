@@ -63,7 +63,7 @@ class GraphService:
         If no snapshot is persisted and repo_root is provided, generates a new one.
         """
         graph = self.graph_repository.get_graph(repository_id, snapshot_id)
-        if graph:
+        if graph and graph.get("node_count", 0) > 0:
             return graph
 
         # If repo_root provided, generate on-the-fly
@@ -83,3 +83,63 @@ class GraphService:
         if not graph:
             return None
         return self.assembler.get_module_details(graph, module_path)
+
+    def get_impact_analysis(
+        self,
+        repository_id: str,
+        module_path: str,
+        max_depth: int = 5,
+        snapshot_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """BFS traversal: find all modules that depend (directly or transitively)
+        on *module_path*.  Returns affected list sorted by distance.
+        """
+        graph = self.graph_repository.get_graph(repository_id, snapshot_id)
+        if not graph:
+            return None
+
+        # Build reverse adjacency: target -> list[source]  (who imports me?)
+        reverse: dict[str, list[str]] = {}
+        for edge in graph.get("edges", []):
+            src = edge.get("source", "")
+            tgt = edge.get("target", "")
+            if src and tgt:
+                reverse.setdefault(tgt, []).append(src)
+
+        # BFS from module_path through the reverse graph
+        from collections import deque
+        visited: dict[str, int] = {}  # module -> distance
+        queue: deque[tuple[str, int]] = deque([(module_path, 0)])
+        while queue:
+            node, depth = queue.popleft()
+            if node in visited:
+                continue
+            visited[node] = depth
+            if depth < max_depth:
+                for parent in reverse.get(node, []):
+                    if parent not in visited:
+                        queue.append((parent, depth + 1))
+
+        # Build node label map
+        label_map = {n["module_path"]: n["label"] for n in graph.get("nodes", [])}
+
+        affected = [
+            {
+                "module_path": mp,
+                "label": label_map.get(mp, mp.split(".")[-1]),
+                "distance": dist,
+                "direct": dist == 1,
+            }
+            for mp, dist in sorted(visited.items(), key=lambda x: x[1])
+            if mp != module_path
+        ]
+
+        # Node count for the origin module
+        origin_label = label_map.get(module_path, module_path.split(".")[-1])
+        return {
+            "module_path": module_path,
+            "label": origin_label,
+            "affected_count": len(affected),
+            "max_depth_reached": max_depth,
+            "affected": affected,
+        }

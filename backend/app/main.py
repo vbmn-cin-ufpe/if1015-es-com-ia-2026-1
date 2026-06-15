@@ -14,6 +14,15 @@ from app.controllers.metrics_controller import router as metrics_router
 from app.controllers.ops_controller import router as ops_router
 from app.controllers.repo_controller import router as repo_router
 from app.controllers.tour_controller import router as tour_router
+from app.controllers.search_controller import router as search_router
+from app.controllers.admin_controller import router as admin_router
+from app.controllers.hotspot_controller import router as hotspot_router
+from app.controllers.branch_controller import router as branch_router
+from app.controllers.doc_controller import router as doc_router
+from app.controllers.tech_debt_controller import router as tech_debt_router
+from app.controllers.report_controller import router as report_router
+from app.controllers.webhook_controller import router as webhook_router
+from app.controllers.watchlist_controller import router as watchlist_router
 from app.infrastructure.logging_config import configure_logging
 from app.infrastructure.settings import get_settings
 from app.services.observability_service import (
@@ -70,6 +79,56 @@ async def observability_middleware(request: Request, call_next):
     return response
 
 
+# ── Audit middleware (write operations only) ──────────────────────────────────
+
+_AUDIT_METHODS = {"POST", "PATCH", "PUT", "DELETE"}
+_AUDIT_EXCLUDE = {"/health", "/api/chat/ask", "/api/webhooks"}
+
+
+@app.middleware("http")
+async def audit_middleware(request: Request, call_next):
+    """Record write operations in the audit log (best-effort, never blocks requests)."""
+    response = await call_next(request)
+    if (
+        request.method in _AUDIT_METHODS
+        and response.status_code < 400
+        and not any(request.url.path.startswith(p) for p in _AUDIT_EXCLUDE)
+    ):
+        try:
+            from app.dependencies import get_settings_cached
+            from app.infrastructure.audit_repository import AuditRepository
+
+            auth_header = request.headers.get("authorization", "")
+            user_id, user_email = "", ""
+            if auth_header.startswith("Bearer "):
+                from app.middleware.auth_middleware import _get_auth_service
+                svc = _get_auth_service()
+                claims = svc.validate_token(auth_header[7:])
+                if claims:
+                    user_id = claims.user_id
+                    user_email = claims.email
+
+            parts = request.url.path.strip("/").split("/")
+            resource_type = parts[1] if len(parts) > 1 else "unknown"
+            resource_id = parts[2] if len(parts) > 2 else ""
+
+            action = f"{resource_type}.{request.method.lower()}"
+            ip = request.client.host if request.client else ""
+
+            AuditRepository(get_settings_cached()).record(
+                user_id=user_id,
+                user_email=user_email,
+                action=action,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                ip=ip,
+            )
+        except Exception:
+            pass  # audit must never break the request
+
+    return response
+
+
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(repo_router)
@@ -79,6 +138,15 @@ app.include_router(graph_router)
 app.include_router(history_router)
 app.include_router(metrics_router)
 app.include_router(ops_router)
+app.include_router(search_router)
+app.include_router(admin_router)
+app.include_router(hotspot_router)
+app.include_router(branch_router)
+app.include_router(doc_router)
+app.include_router(tech_debt_router)
+app.include_router(report_router)
+app.include_router(webhook_router)
+app.include_router(watchlist_router)
 
 
 @app.on_event("startup")

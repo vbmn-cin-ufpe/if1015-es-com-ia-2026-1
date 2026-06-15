@@ -131,6 +131,8 @@ class LanguageSpec:
     branch_node_types: tuple[str, ...]  # node types that add 1 to complexity
     import_node_types: tuple[str, ...]  # node types that represent imports
     comment_prefixes: tuple[str, ...]   # for line-comment detection fallback
+    ts_language_fn: str = "language"    # function name to call in ts_module
+    import_regex: str = ""              # regex fallback (group 1 = module path)
 
     @property
     def glob_patterns(self) -> list[str]:
@@ -159,6 +161,8 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["python"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["python"]),
     comment_prefixes=("#",),
+    # Python is handled by ast module; regex only as last resort
+    import_regex=r'^\s*(?:import|from)\s+([\w.]+)',
 ))
 
 _register(LanguageSpec(
@@ -169,6 +173,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["javascript"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["javascript"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'(?:from\s+|require\s*\(\s*)[`"\']([^`"\']+)[`"\']',
 ))
 
 _register(LanguageSpec(
@@ -176,9 +181,11 @@ _register(LanguageSpec(
     display_name="TypeScript",
     extensions=(".ts", ".tsx"),
     ts_module="tree_sitter_typescript",
+    ts_language_fn="language_typescript",
     branch_node_types=tuple(_BRANCH_NODE_TYPES["typescript"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["typescript"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'(?:from\s+|require\s*\(\s*)[`"\']([^`"\']+)[`"\']',
 ))
 
 _register(LanguageSpec(
@@ -189,6 +196,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["java"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["java"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*import\s+(?:static\s+)?([\w.]+)(?:\.\*)?\s*;',
 ))
 
 _register(LanguageSpec(
@@ -199,6 +207,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["go"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["go"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'(?:import\s+"([^"]+)"|^\t"([^"]+)")',
 ))
 
 _register(LanguageSpec(
@@ -209,6 +218,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["rust"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["rust"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*use\s+([\w:]+(?:::[\w{},\s*]+)*)',
 ))
 
 # ── Tier 2: additional commercial languages ──────────────────────────────────
@@ -221,6 +231,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["c"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["c"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*#include\s+[<"]([\w./]+)[>"]',
 ))
 
 _register(LanguageSpec(
@@ -231,6 +242,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["cpp"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["cpp"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*#include\s+[<"]([\w./]+)[>"]',
 ))
 
 _register(LanguageSpec(
@@ -241,6 +253,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["csharp"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["csharp"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*using\s+(?:static\s+)?([\w.]+)\s*;',
 ))
 
 _register(LanguageSpec(
@@ -251,6 +264,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["ruby"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["ruby"]),
     comment_prefixes=("#",),
+    import_regex=r'^\s*require(?:_relative)?\s+["\']([^"\']+)["\']',
 ))
 
 _register(LanguageSpec(
@@ -261,6 +275,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["php"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["php"]),
     comment_prefixes=("//", "#", "/*"),
+    import_regex=r'(?:require|include)(?:_once)?\s*["\']([^"\']+)["\']',
 ))
 
 _register(LanguageSpec(
@@ -271,6 +286,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["kotlin"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["kotlin"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*import\s+([\w.*]+)',
 ))
 
 _register(LanguageSpec(
@@ -281,6 +297,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["swift"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["swift"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*import\s+([\w.]+)',
 ))
 
 _register(LanguageSpec(
@@ -291,6 +308,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["scala"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["scala"]),
     comment_prefixes=("//", "/*"),
+    import_regex=r'^\s*import\s+([\w.]+)',
 ))
 
 _register(LanguageSpec(
@@ -301,6 +319,7 @@ _register(LanguageSpec(
     branch_node_types=tuple(_BRANCH_NODE_TYPES["bash"]),
     import_node_types=tuple(_IMPORT_NODE_TYPES["bash"]),
     comment_prefixes=("#",),
+    import_regex=r'(?:^|\s)(?:source|\.)[ \t]+([^\s;#]+)',
 ))
 
 
@@ -362,8 +381,9 @@ def _get_ts_language(lang_name: str) -> Any | None:
         from tree_sitter import Language as TSLanguage
 
         module = importlib.import_module(spec.ts_module)
-        # tree-sitter-* packages expose a `language()` function
-        return TSLanguage(module.language())
+        # Use the configured function name (e.g. language_typescript for TS)
+        fn = getattr(module, spec.ts_language_fn)
+        return TSLanguage(fn())
     except Exception as exc:
         logger.warning("tree-sitter grammar unavailable for %s: %s", lang_name, exc)
         return None

@@ -11,6 +11,7 @@ import {
     ThinkingDots,
     EmptyState,
     ErrorBanner,
+    Icon,
     btnSecondary,
     inputCls,
 } from "../ui";
@@ -24,13 +25,13 @@ interface Props {
 type NodePos = GraphNode & { x: number; y: number; vx: number; vy: number };
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const BOX_W = 168;
-const BOX_H = 52;
-const FORCE_ITERS = 260;
-const REPULSE = 9000;
-const ATTRACT = 0.045;
-const DAMPING = 0.78;
-const GRAVITY = 0.025;
+const BOX_W = 176;
+const BOX_H = 56;
+const FORCE_ITERS = 500;
+const REPULSE = 260000;
+const ATTRACT = 0.0025;
+const DAMPING = 0.72;
+const GRAVITY = 0.0015;
 
 // ── Force-directed layout ────────────────────────────────────────────────────
 function forceLayout(
@@ -39,17 +40,31 @@ function forceLayout(
 ): NodePos[] {
     const n = nodes.length;
     if (n === 0) return [];
-    const CANVAS = Math.max(900, n * 130);
+
+    // Use a larger canvas and grid-based initial placement to avoid overlap
+    const cols = Math.ceil(Math.sqrt(n * 1.6));
+    const cellW = Math.max(BOX_W + 440, 640);
+    const cellH = Math.max(BOX_H + 380, 460);
+    const CANVAS = Math.max(2400, cols * cellW + 500);
     const cx = CANVAS / 2;
     const cy = CANVAS / 2;
 
-    const pos: NodePos[] = nodes.map((node, i) => {
-        const angle = (2 * Math.PI * i) / n;
-        const r = Math.min(cx * 0.38, 320);
+    // Sort by degree descending so hubs start near center
+    const sorted = [...nodes].sort(
+        (a, b) => b.metrics.total_degree - a.metrics.total_degree,
+    );
+
+    const pos: NodePos[] = sorted.map((node, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const rows = Math.ceil(n / cols);
+        const gridW = cols * cellW;
+        const gridH = rows * cellH;
+        const jitter = (Math.random() - 0.5) * 40;
         return {
             ...node,
-            x: cx + r * Math.cos(angle),
-            y: cy + r * Math.sin(angle),
+            x: cx - gridW / 2 + col * cellW + cellW / 2 + jitter,
+            y: cy - gridH / 2 + row * cellH + cellH / 2 + jitter,
             vx: 0,
             vy: 0,
         };
@@ -58,41 +73,33 @@ function forceLayout(
     const byId = new Map(pos.map((p) => [p.id, p]));
 
     for (let iter = 0; iter < FORCE_ITERS; iter++) {
-        const cool = 1 - iter / FORCE_ITERS;
+        const cool = Math.pow(1 - iter / FORCE_ITERS, 1.5);
 
         // Repulsion
         for (let i = 0; i < n; i++) {
             for (let j = i + 1; j < n; j++) {
-                const a = pos[i],
-                    b = pos[j];
-                const dx = b.x - a.x,
-                    dy = b.y - a.y;
-                const d = Math.sqrt(dx * dx + dy * dy) || 0.1;
-                const f = (REPULSE / (d * d)) * cool;
-                const fx = (dx / d) * f,
-                    fy = (dy / d) * f;
-                a.vx -= fx;
-                a.vy -= fy;
-                b.vx += fx;
-                b.vy += fy;
+                const a = pos[i], b = pos[j];
+                const dx = b.x - a.x, dy = b.y - a.y;
+                const d2 = dx * dx + dy * dy;
+                const d = Math.sqrt(d2) || 0.1;
+                // Stronger repulsion when very close
+                const f = (REPULSE / d2) * cool * (d < BOX_W * 2 ? 4 : 1);
+                const fx = (dx / d) * f, fy = (dy / d) * f;
+                a.vx -= fx; a.vy -= fy;
+                b.vx += fx; b.vy += fy;
             }
         }
 
         // Attraction along edges
         for (const e of edges) {
-            const s = byId.get(e.source),
-                t = byId.get(e.target);
+            const s = byId.get(e.source), t = byId.get(e.target);
             if (!s || !t) continue;
-            const dx = t.x - s.x,
-                dy = t.y - s.y;
+            const dx = t.x - s.x, dy = t.y - s.y;
             const d = Math.sqrt(dx * dx + dy * dy) || 0.1;
             const f = d * ATTRACT * cool;
-            const fx = (dx / d) * f,
-                fy = (dy / d) * f;
-            s.vx += fx;
-            s.vy += fy;
-            t.vx -= fx;
-            t.vy -= fy;
+            const fx = (dx / d) * f, fy = (dy / d) * f;
+            s.vx += fx; s.vy += fy;
+            t.vx -= fx; t.vy -= fy;
         }
 
         // Gravity toward center
@@ -103,14 +110,8 @@ function forceLayout(
             p.vy *= DAMPING;
             p.x += p.vx;
             p.y += p.vy;
-            p.x = Math.max(
-                BOX_W / 2 + 16,
-                Math.min(CANVAS - BOX_W / 2 - 16, p.x),
-            );
-            p.y = Math.max(
-                BOX_H / 2 + 16,
-                Math.min(CANVAS - BOX_H / 2 - 16, p.y),
-            );
+            p.x = Math.max(BOX_W / 2 + 20, Math.min(CANVAS - BOX_W / 2 - 20, p.x));
+            p.y = Math.max(BOX_H / 2 + 20, Math.min(CANVAS - BOX_H / 2 - 20, p.y));
         }
     }
 
@@ -351,39 +352,51 @@ export function GraphTab({ repositoryId, status }: Props) {
             {/* Controls bar */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 px-4 py-3">
                 <div className="flex gap-3 items-center flex-wrap">
-                    <input
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        placeholder="Filtrar módulos…"
-                        className={`${inputCls} max-w-xs`}
-                    />
-                    <button onClick={loadGraph} className={btnSecondary}>
-                        ↻ Recarregar
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <Icon name="magnifying-glass" className="text-xs" />
+                        </span>
+                        <input
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            placeholder="Filtrar módulos…"
+                            className={`${inputCls} max-w-xs pl-8`}
+                        />
+                    </div>
+                    <button onClick={loadGraph} className={btnSecondary} title="Recarregar grafo">
+                        <Icon name="arrows-rotate" /> Recarregar
                     </button>
                     <button
-                        onClick={() => {
-                            setPan({ x: 0, y: 0 });
-                            setZoom(1);
-                        }}
+                        onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }}
                         className={btnSecondary}
+                        title="Centralizar visão"
                     >
-                        ⊙ Centralizar
+                        <Icon name="crosshairs" /> Centralizar
+                    </button>
+                    <button
+                        onClick={() => { setPan({ x: 0, y: 0 }); setZoom(0.5); }}
+                        className={btnSecondary}
+                        title="Visão geral (zoom out)"
+                    >
+                        <Icon name="maximize" /> Visão geral
                     </button>
                     <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
-                        Scroll = zoom · Arrastar = mover
+                        <Icon name="scroll" className="mr-1" />zoom ·
+                        <Icon name="hand" className="mx-1" />mover ·
+                        <Icon name="arrow-pointer" className="mx-1" />detalhes
                     </span>
                     <div className="flex gap-3 ml-auto text-xs text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-rose-500 bg-rose-50 dark:bg-rose-950" />
-                            Hub
+                            <Icon name="star" className="text-rose-400 text-xs" /> Hub (&gt;60%)
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-orange-400 bg-orange-50 dark:bg-orange-950" />
-                            Intermediário
+                            <Icon name="circle-half-stroke" className="text-orange-400 text-xs" /> Intermediário
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-green-500 bg-green-50 dark:bg-green-950" />
-                            Folha
+                            <Icon name="leaf" className="text-green-500 text-xs" /> Folha
                         </span>
                     </div>
                 </div>
@@ -697,11 +710,14 @@ export function GraphTab({ repositoryId, status }: Props) {
                     {/* Selected hint */}
                     {selectedId && (
                         <div className="absolute top-3 left-3 bg-orange-50 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-700 rounded-lg px-3 py-1.5 text-xs text-orange-700 dark:text-orange-300 shadow-sm">
-                            🎯 <strong>{outOf.size + intoOf.size}</strong>{" "}
+                            <Icon name="arrow-pointer" className="mr-1" />
+                            <strong>{outOf.size + intoOf.size}</strong>{" "}
                             conexão{outOf.size + intoOf.size !== 1 ? "ões" : ""}{" "}
                             diretas &nbsp;·&nbsp;
                             <span className="opacity-60">
-                                ↗ {outOf.size} saída · ↙ {intoOf.size} entrada
+                                <Icon name="arrow-up-right-from-square" className="mr-0.5" />{outOf.size} saída
+                                 · 
+                                <Icon name="arrow-down-left" className="mr-0.5" />{intoOf.size} entrada
                             </span>
                         </div>
                     )}
@@ -729,77 +745,84 @@ export function GraphTab({ repositoryId, status }: Props) {
                                             </p>
                                         </div>
                                         <button
-                                            onClick={() => {
-                                                setSelectedId(null);
-                                                setDetail(null);
-                                            }}
+                                            onClick={() => { setSelectedId(null); setDetail(null); }}
                                             className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none shrink-0"
                                         >
                                             ×
                                         </button>
                                     </div>
+                                    {/* Degree metrics */}
                                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                                         <div className="bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900 rounded-lg p-2.5">
                                             <p className="font-bold text-rose-700 dark:text-rose-300 text-lg leading-tight">
                                                 {detail.metrics.in_degree}
                                             </p>
-                                            <p className="text-rose-500 dark:text-rose-400 mt-0.5">
-                                                ↙ Entrada
-                                            </p>
+                                            <p className="text-rose-500 dark:text-rose-400 mt-0.5">↙ Entrada</p>
                                         </div>
                                         <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 rounded-lg p-2.5">
                                             <p className="font-bold text-indigo-700 dark:text-indigo-300 text-lg leading-tight">
                                                 {detail.metrics.out_degree}
                                             </p>
-                                            <p className="text-indigo-500 dark:text-indigo-400 mt-0.5">
-                                                ↗ Saída
-                                            </p>
+                                            <p className="text-indigo-500 dark:text-indigo-400 mt-0.5">↗ Saída</p>
                                         </div>
                                         <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 rounded-lg p-2.5">
                                             <p className="font-bold text-gray-700 dark:text-gray-300 text-lg leading-tight">
                                                 {detail.metrics.total_degree}
                                             </p>
-                                            <p className="text-gray-500 dark:text-gray-400 mt-0.5">
-                                                Total
-                                            </p>
+                                            <p className="text-gray-500 dark:text-gray-400 mt-0.5">Total</p>
                                         </div>
                                     </div>
+                                    {/* Centrality bar */}
+                                    {maxDeg > 0 && (
+                                        <div className="mt-3">
+                                            <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                                <span className="flex items-center gap-1">
+                                                    <Icon name="star" className="text-yellow-400" /> Centralidade (in-degree)
+                                                </span>
+                                                <span>{Math.round((detail.metrics.in_degree / maxDeg) * 100)}%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-green-400 via-orange-400 to-rose-500"
+                                                    style={{ width: `${Math.round((detail.metrics.in_degree / maxDeg) * 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </Card>
 
                                 {detail.inbound_dependencies.length > 0 && (
-                                    <Card
-                                        title={`↙ Quem usa este módulo (${detail.inbound_dependencies.length})`}
-                                    >
-                                        <div className="space-y-1 max-h-52 overflow-y-auto">
-                                            {detail.inbound_dependencies.map(
-                                                (d, i) => (
-                                                    <p
-                                                        key={i}
-                                                        className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-2 py-1.5 rounded-md"
-                                                    >
-                                                        {d.source}
-                                                    </p>
-                                                ),
-                                            )}
+                                    <Card title="">
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                            <Icon name="arrow-down-to-bracket" className="text-indigo-400" />
+                                            Quem usa este módulo
+                                            <span className="ml-auto text-gray-400 font-normal">{detail.inbound_dependencies.length}</span>
+                                        </p>
+                                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                                            {detail.inbound_dependencies.map((d, i) => (
+                                                <p key={i} className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-2 py-1.5 rounded-md">
+                                                    {d.source.split("/").pop() ?? d.source}
+                                                    <span className="opacity-40 block text-gray-400 text-xs truncate">{d.source}</span>
+                                                </p>
+                                            ))}
                                         </div>
                                     </Card>
                                 )}
 
                                 {detail.outbound_dependencies.length > 0 && (
-                                    <Card
-                                        title={`↗ Módulos que este usa (${detail.outbound_dependencies.length})`}
-                                    >
-                                        <div className="space-y-1 max-h-52 overflow-y-auto">
-                                            {detail.outbound_dependencies.map(
-                                                (d, i) => (
-                                                    <p
-                                                        key={i}
-                                                        className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 px-2 py-1.5 rounded-md"
-                                                    >
-                                                        {d.target}
-                                                    </p>
-                                                ),
-                                            )}
+                                    <Card title="">
+                                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                            <Icon name="arrow-up-from-bracket" className="text-orange-400" />
+                                            Módulos que este usa
+                                            <span className="ml-auto text-gray-400 font-normal">{detail.outbound_dependencies.length}</span>
+                                        </p>
+                                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                                            {detail.outbound_dependencies.map((d, i) => (
+                                                <p key={i} className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 px-2 py-1.5 rounded-md">
+                                                    {d.target.split("/").pop() ?? d.target}
+                                                    <span className="opacity-40 block text-gray-400 text-xs truncate">{d.target}</span>
+                                                </p>
+                                            ))}
                                         </div>
                                     </Card>
                                 )}
@@ -811,23 +834,23 @@ export function GraphTab({ repositoryId, status }: Props) {
 
             {/* Footer stats */}
             <div className="flex gap-6 text-sm text-gray-500 dark:text-gray-400 px-1">
-                <span>
-                    🔷{" "}
+                <span className="flex items-center gap-1.5">
+                    <Icon name="cubes" className="text-indigo-400" />
                     <strong className="text-gray-700 dark:text-gray-300">
                         {graph.node_count}
                     </strong>{" "}
                     módulos
                 </span>
-                <span>
-                    →{" "}
+                <span className="flex items-center gap-1.5">
+                    <Icon name="arrow-right-arrow-left" className="text-indigo-400" />
                     <strong className="text-gray-700 dark:text-gray-300">
                         {graph.edge_count}
                     </strong>{" "}
                     dependências
                 </span>
                 {filterSet && (
-                    <span>
-                        🔍{" "}
+                    <span className="flex items-center gap-1.5">
+                        <Icon name="magnifying-glass" className="text-indigo-400" />
                         <strong className="text-gray-700 dark:text-gray-300">
                             {filterSet.size}
                         </strong>{" "}

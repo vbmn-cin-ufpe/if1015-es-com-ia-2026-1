@@ -203,7 +203,7 @@ if1015-es-com-ia-2026-1/
 │   │   ├── main.py           ← Entry point FastAPI
 │   │   ├── ports.py          ← Interfaces (Protocol) — Dependency Inversion
 │   │   ├── dependencies.py   ← Container DI via FastAPI Depends
-│   │   ├── controllers/      ← 9 routers HTTP
+│   │   ├── controllers/      ← 11 routers HTTP
 │   │   │   ├── auth_controller.py
 │   │   │   ├── chat_controller.py
 │   │   │   ├── repo_controller.py
@@ -212,8 +212,11 @@ if1015-es-com-ia-2026-1/
 │   │   │   ├── history_controller.py
 │   │   │   ├── metrics_controller.py
 │   │   │   ├── ops_controller.py
-│   │   │   └── health_controller.py
-│   │   ├── services/         ← 20 serviços de negócio (sem deps externas)
+│   │   │   ├── health_controller.py
+│   │   │   ├── admin_controller.py
+│   │   │   ├── watchlist_controller.py
+│   │   │   └── webhook_controller.py
+│   │   ├── services/         ← 22 serviços de negócio (sem deps externas)
 │   │   │   ├── chat_service.py
 │   │   │   ├── repo_service.py
 │   │   │   ├── ingestion_service.py
@@ -222,8 +225,10 @@ if1015-es-com-ia-2026-1/
 │   │   │   ├── chunking_service.py
 │   │   │   ├── tour_service.py
 │   │   │   ├── dependency_graph_service.py
+│   │   │   ├── architecture_drift_service.py
 │   │   │   ├── commit_history_service.py
 │   │   │   ├── metrics_aggregation_service.py
+│   │   │   ├── notification_service.py
 │   │   │   └── ... (outros)
 │   │   └── infrastructure/   ← Adaptadores externos
 │   │       ├── settings.py
@@ -231,6 +236,9 @@ if1015-es-com-ia-2026-1/
 │   │       ├── postgres_adapter.py
 │   │       ├── chroma_adapter.py
 │   │       ├── git_client.py
+│   │       ├── audit_repository.py
+│   │       ├── webhook_repository.py
+│   │       ├── watchlist_repository.py
 │   │       └── ... (outros)
 │   └── tests/
 │       ├── unit/
@@ -265,10 +273,121 @@ App.tsx
     ├── GraphTab     → grafo de dependências
     ├── HistoryTab   → timeline de commits
     ├── MetricsTab   → dashboard de qualidade
-    └── OpsTab       → health + operacional
+    ├── OpsTab       → health + operacional
+    ├── DriftTab     → detecção de drift arquitetural + interpretação IA
+    ├── WatchlistTab → subscrição a módulos para notificações
+    └── AdminTab     → painel admin (usuários, planos, uso, auditoria, webhooks)
 ```
 
 **Dark mode:** Tailwind `darkMode: 'class'` — ao ativar, adiciona `dark` ao `<html>`. Todos os componentes usam pares de classes como `bg-white dark:bg-gray-800`.
+
+---
+
+## Fluxo 5 — Detecção de Drift Arquitetural
+
+```
+GET /api/repos/{id}/graph/snapshots
+    → lista de SnapshotMeta: { id, created_at, nodes_count, edges_count }
+
+GET /api/repos/{id}/graph/diff?snapshot_a=X&snapshot_b=Y
+    │
+    ├─ ArchitectureDriftService.compare(snapshot_a, snapshot_b)
+    │       → calcula set difference de nós e arestas
+    │       → drift_score = (added + removed) / total_elements * 100
+    │
+    └─ Retorna: DriftReport {
+           drift_score, added_nodes, removed_nodes,
+           added_edges, removed_edges, node_changes[], edge_changes[]
+       }
+
+POST /api/repos/{id}/graph/diff/interpret
+    │
+    ├─ Computa diff (mesma lógica acima)
+    ├─ Monta pseudo-chunk com estatísticas do diff
+    ├─ LlmClient.generate_answer(prompt de interpretação)
+    └─ Retorna: { interpretation: string } — em português
+```
+
+**Como os snapshots são criados:** A cada re-indexação bem-sucedida, `ingestion_service.py` salva o estado atual do grafo no PostgreSQL com timestamp. Snapshots podem ser selecionados por data no `DriftTab.tsx` via `closestSnapshot(dateStr)`.
+
+---
+
+## Fluxo 6 — Webhooks GitHub
+
+```
+POST /api/webhooks/github/{webhook_id}
+    │
+    ├─ Recebe: headers X-Hub-Signature-256 + body JSON
+    │
+    ├─ WebhookRepository.get(webhook_id)
+    │       → recupera record com secret HMAC
+    │
+    ├─ Verificação HMAC-SHA256:
+    │       hmac.new(secret.encode(), body, sha256).hexdigest()
+    │       hmac.compare_digest(expected, received)  ← timing-safe
+    │       → 401 se inválido
+    │
+    ├─ Filtra eventos: apenas "push" com ref matching branch configurada
+    │
+    ├─ WebhookRepository.touch(webhook_id) → atualiza last_triggered_at
+    │
+    └─ RepoService.trigger_reindex(repository_id) → dispara indexação em background
+```
+
+**Segurança:** O segredo HMAC é gerado com `secrets.token_hex(32)` (256 bits) e retornado **apenas na criação** — não é possível recuperá-lo depois. O `hmac.compare_digest()` evita timing attacks.
+
+---
+
+## Fluxo 7 — Watchlist e Notificações
+
+```
+POST /api/repos/{id}/watch  { module_path: "app/services" }
+    │
+    └─ WatchlistRepository.watch(user_id, repo_id, module_path)
+           → INSERT com UNIQUE constraint (evita duplicatas)
+
+# Durante re-indexação:
+NotificationService.notify_on_reindex(repo_id, old_graph, new_graph)
+    │
+    ├─ Detecta módulos com mudanças (set difference de nós/arestas)
+    │
+    ├─ WatchlistRepository.list_for_repo(repo_id)
+    │       → todos os subscribers do repositório
+    │
+    ├─ Para cada módulo alterado, filtra subscribers do módulo
+    │
+    └─ EmailGateway.send(subscriber_email, "Mudança detectada em {module_path}")
+```
+
+---
+
+## Fluxo 8 — Audit Log Automático
+
+```
+# Middleware em main.py — executa após CADA resposta bem-sucedida
+async def audit_middleware(request, call_next):
+    │
+    ├─ response = await call_next(request)
+    │
+    ├─ Se método em {POST, PATCH, PUT, DELETE}
+    │   AND response.status_code < 400
+    │   AND path NÃO em {/health, /api/chat/ask, /api/webhooks}:
+    │
+    │       AuditRepository.record(
+    │           user_id   = JWT claim "sub"
+    │           user_email = JWT claim "email"
+    │           action    = "{METHOD} {path}"
+    │           resource_type = primeiro segmento do path
+    │           ip        = request.client.host
+    │           timestamp = datetime.utcnow()
+    │       )
+    │
+    └─ return response (sem modificar)
+```
+
+**Por que excluir `/api/chat/ask`?** Perguntas do chat são volume alto e não representam mutações de recurso — incluí-las inflaria o audit log desnecessariamente.
+
+---
 
 ---
 
@@ -278,6 +397,9 @@ App.tsx
 |---|---|
 | Senhas de usuário | Hashing bcrypt via `auth_service.py` — nunca armazenadas em texto plano |
 | Chaves de API | Exclusivamente via variáveis de ambiente (nunca hardcoded) |
+| Autenticação JWT | Bearer token em todas as chamadas HTTP — injetado globalmente via `bearerHeaders()` no `http.ts` |
+| Verificação de webhooks | HMAC-SHA256 com `hmac.compare_digest()` (timing-safe) — segredo retornado apenas na criação |
+| Segredos HMAC | Gerados com `secrets.token_hex(32)` (256 bits de entropia) |
 | Admin seed | `ADMIN_PASSWORD` obrigatória no `.env` — sem senha padrão |
 | PostgreSQL | `POSTGRES_PASSWORD` obrigatória — sem senha padrão |
 | `.env` no git | Protegido por `.gitignore` (linha 69) |

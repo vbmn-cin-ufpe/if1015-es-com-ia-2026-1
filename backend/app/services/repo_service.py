@@ -118,6 +118,7 @@ class RepoService:
             )
 
             # ── 6. Complete ───────────────────────────────────────────────
+            total_bytes = sum(f.stat().st_size for f in source_files if f.exists())
             stats = {
                 "source_files": len(source_files),
                 "languages": lang_counts,
@@ -125,10 +126,17 @@ class RepoService:
                 "vectors": len(vectors),
                 "python_files": lang_counts.get("python", 0),
                 "elapsed_seconds": round(time.perf_counter() - t0, 1),
+                "total_size_kb": round(total_bytes / 1024, 1),
+                "repository_url": repository_url,
+                "repo_name": repository_url.rstrip("/").split("/")[-1] if "/" in repository_url else repository_url,
             }
             self._metadata.update_repository_status(
                 repository_id=repository_id, status="completed", stats=stats
             )
+            try:
+                self._metadata.update_progress(repository_id, 100, "completed")
+            except Exception:
+                pass
             logger.info(
                 "[%s] completed | total=%.1fs | stats=%s",
                 repository_id, time.perf_counter() - t0, stats,
@@ -168,21 +176,42 @@ class RepoService:
             raise ValueError("repository not found")
         return RepositoryStatusResponse(
             repository_id=record.repository_id,
+            repository_url=record.repository_url,
             index_status=record.status,
             stats=record.stats,
             error_message=record.error_message,
+            created_at=record.created_at,
+            updated_at=record.updated_at,
         )
 
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
+    # Stage → (status_label, progress_pct)
+    _STAGE_PROGRESS: dict[str, tuple[str, int]] = {
+        "cloning":   ("cloning",   10),
+        "detecting": ("detecting", 25),
+        "chunking":  ("chunking",  40),
+        "embedding": ("embedding", 70),
+        "storing":   ("storing",   90),
+        "completed": ("completed", 100),
+        "failed":    ("failed",    0),
+    }
+
     def _set_status(self, repository_id: str, status: str) -> None:
-        """Update repository status and emit a stage-level log line."""
+        """Update repository status + progress percentage and emit a stage log line."""
         logger.info("[%s] stage → %s", repository_id, status)
+        pct, step = self._STAGE_PROGRESS.get(status, (0, status))[1], status
         self._metadata.update_repository_status(
             repository_id=repository_id, status=status, stats={}
         )
+        # Best-effort progress update (adapter may not support it yet)
+        try:
+            stage_info = self._STAGE_PROGRESS.get(status, (status, 0))
+            self._metadata.update_progress(repository_id, stage_info[1], status)
+        except Exception:
+            pass
 
     def _validate_repository_ref(self, repository_ref: str) -> None:
         value = repository_ref.strip()

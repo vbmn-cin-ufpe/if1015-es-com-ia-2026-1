@@ -17,9 +17,12 @@ class RepositoryIndexResponse(BaseModel):
 
 class RepositoryStatusResponse(BaseModel):
     repository_id: str
+    repository_url: str = ""
     index_status: str
     stats: dict[str, Any]
     error_message: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class ChatAskRequest(BaseModel):
@@ -146,6 +149,7 @@ class TimelineEntry(BaseModel):
     commit_id: str
     repository_id: str
     timestamp: str
+    author: str = ""
     category: str
     confidence: float
     summary: str
@@ -157,6 +161,7 @@ class TimelineResponse(BaseModel):
     module_path: str | None = None
     category: str | None = None
     total: int
+    offset: int = 0
     entries: list[TimelineEntry]
 
 

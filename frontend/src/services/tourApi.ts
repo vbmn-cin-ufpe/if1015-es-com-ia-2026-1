@@ -6,11 +6,24 @@ export interface TourStepMetrics {
   coupling: Record<string, unknown>
 }
 
+export interface TourFileDetail {
+  path: string
+  name: string
+  commits: number
+  dependencies: number
+  complexity: number
+  loc: number
+}
+
 export interface TourStep {
   step_number: number
   module_name: string
   title: string
   score: number
+  score_breakdown?: { complexity: number; churn: number; coupling: number }
+  file_count?: number
+  files?: string[]
+  file_details?: TourFileDetail[]
   rationale: string
   metrics: TourStepMetrics
   recommendations: string[]
@@ -74,5 +87,15 @@ export async function getTour(tourId: string): Promise<TourResponse> {
 
 export async function listTours(repositoryId: string): Promise<TourListResponse> {
   return await httpGet<TourListResponse>(`/api/repos/${repositoryId}/tours`)
+}
+
+export async function generateNoviceTour(
+  repositoryId: string,
+  topK = 5,
+): Promise<TourResponse> {
+  return await httpPost<TourResponse>("/api/tours/generate/novice", {
+    repository_id: repositoryId,
+    top_k: topK,
+  })
 }
 

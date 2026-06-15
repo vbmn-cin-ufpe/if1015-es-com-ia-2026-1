@@ -1,9 +1,24 @@
-import { http } from "../infrastructure/http";
+import { httpGet, httpPost } from "../infrastructure/http";
+
+// ── Response types ─────────────────────────────────────────────────────────
 
 export interface AuthResponse {
   user_id: string;
   email: string;
   token: string;
+  role: string;
+  plan: string;
+  email_verified: boolean;
+}
+
+export interface MeResponse {
+  user_id: string;
+  email: string;
+  role: string;
+  plan: string;
+  email_verified: boolean;
+  repos_indexed_count: number;
+  questions_asked_count: number;
 }
 
 export interface SessionInfo {
@@ -23,77 +38,86 @@ export interface Checkpoint {
   timestamp: string;
 }
 
-export async function signup(email: string, password: string): Promise<AuthResponse> {
-  return http.post("/api/auth/signup", { email, password });
+// ── Auth endpoints ──────────────────────────────────────────────────────────
+
+function authHeaders(token: string) {
+  return { Authorization: `Bearer ${token}` };
 }
 
-export async function signin(email: string, password: string): Promise<AuthResponse> {
-  return http.post("/api/auth/signin", { email, password });
+export async function signup(
+  email: string,
+  password: string,
+  plan = "free",
+): Promise<AuthResponse> {
+  return httpPost("/api/auth/signup", { email, password, plan });
+}
+
+export async function signin(
+  email: string,
+  password: string,
+): Promise<AuthResponse> {
+  return httpPost("/api/auth/signin", { email, password });
 }
 
 export async function signout(token: string): Promise<void> {
-  await http.post("/api/auth/signout", {}, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  await httpPost("/api/auth/signout", {}, { headers: authHeaders(token) });
 }
 
-export async function createSession(
-  token: string,
-  repositoryId: string
-): Promise<SessionInfo> {
-  return http.post(
-    "/api/sessions",
-    { repository_id: repositoryId },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+export async function getMe(token: string): Promise<MeResponse> {
+  return httpGet("/api/auth/me", { headers: authHeaders(token) });
+}
+
+export async function verifyEmail(token: string): Promise<{ verified: boolean; message: string }> {
+  return httpGet(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  await httpPost("/api/auth/resend-verification", { email });
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await httpPost("/api/auth/forgot-password", { email });
+}
+
+export async function resetPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+): Promise<void> {
+  await httpPost("/api/auth/reset-password", { email, code, new_password: newPassword });
+}
+
+// ── Session endpoints ───────────────────────────────────────────────────────
+
+export async function createSession(token: string, repositoryId: string): Promise<SessionInfo> {
+  return httpPost("/api/sessions", { repository_id: repositoryId }, { headers: authHeaders(token) });
 }
 
 export async function listSessions(token: string): Promise<SessionInfo[]> {
-  return http.get("/api/sessions", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  return httpGet("/api/sessions", { headers: authHeaders(token) });
 }
 
-export async function resumeSession(
-  token: string,
-  sessionId: string
-): Promise<SessionInfo> {
-  return http.post(
-    `/api/sessions/${sessionId}/resume`,
-    {},
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+export async function resumeSession(token: string, sessionId: string): Promise<SessionInfo> {
+  return httpPost(`/api/sessions/${sessionId}/resume`, {}, { headers: authHeaders(token) });
 }
 
-export async function closeSession(
-  token: string,
-  sessionId: string
-): Promise<SessionInfo> {
-  return http.post(
-    `/api/sessions/${sessionId}/close`,
-    {},
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+export async function closeSession(token: string, sessionId: string): Promise<SessionInfo> {
+  return httpPost(`/api/sessions/${sessionId}/close`, {}, { headers: authHeaders(token) });
 }
 
 export async function saveCheckpoint(
   token: string,
   sessionId: string,
   feature: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
 ): Promise<Checkpoint> {
-  return http.post(
+  return httpPost(
     `/api/sessions/${sessionId}/checkpoints`,
     { feature, checkpoint_payload: payload },
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: authHeaders(token) },
   );
 }
 
-export async function getCheckpoints(
-  token: string,
-  sessionId: string
-): Promise<Checkpoint[]> {
-  return http.get(`/api/sessions/${sessionId}/checkpoints`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function getCheckpoints(token: string, sessionId: string): Promise<Checkpoint[]> {
+  return httpGet(`/api/sessions/${sessionId}/checkpoints`, { headers: authHeaders(token) });
 }

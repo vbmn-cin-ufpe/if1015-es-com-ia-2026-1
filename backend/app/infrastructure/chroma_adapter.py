@@ -24,6 +24,7 @@ class ChromaAdapter:
                 self._client = chromadb.HttpClient(
                     host=self._settings.chroma_host,
                     port=self._settings.chroma_port,
+                    ssl=self._settings.chroma_ssl,
                 )
             except Exception:
                 self._client = None

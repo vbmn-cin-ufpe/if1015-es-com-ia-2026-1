@@ -129,6 +129,27 @@ Na interface, clique em **🔐 Entrar** (canto superior direito) e use as creden
    - `"Como criar um novo endpoint na API?"`
 3. A resposta vem com referências aos arquivos do repositório consultados
 
+### 5.4 Explorar funcionalidades avançadas
+
+| Aba | O que faz | Pré-requisito |
+|-----|----------|---------------|
+| **Drift Arq.** | Compara snapshots do grafo de dependências entre re-indexações | Pelo menos 2 indexações do mesmo repo |
+| **Watchlist** | Subscreve módulos para receber notificações por e-mail | Estar logado |
+| **Admin** | Gerencia usuários, planos, audit log e webhooks | Estar logado como admin |
+
+### 5.5 Configurar Webhooks GitHub (opcional)
+
+Para receber push events do GitHub e disparar re-indexação automática:
+
+1. No painel **Admin → Webhooks**, clique em **Adicionar Webhook**
+2. Selecione o repositório e preencha a branch (ex: `main`)
+3. **Copie o segredo gerado** — ele só é exibido uma vez
+4. No GitHub, vá em **Settings → Webhooks → Add webhook**:
+   - Payload URL: `https://seu-domínio/api/webhooks/github/{webhook_id}`
+   - Content type: `application/json`
+   - Secret: cole o segredo copiado
+   - Eventos: `Just the push event`
+
 ---
 
 ## Solução de problemas comuns

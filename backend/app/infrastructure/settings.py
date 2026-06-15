@@ -8,6 +8,7 @@ class Settings:
     postgres_dsn: str | None
     chroma_host: str
     chroma_port: int
+    chroma_ssl: bool        # True para Azure Container Apps (HTTPS interno); False para Docker local
     chroma_collection_prefix: str
     supabase_url: str | None
     supabase_anon_key: str | None
@@ -38,6 +39,14 @@ class Settings:
     # Admin seed
     admin_email: str
     admin_password: str
+    # JWT
+    jwt_secret: str
+    jwt_expiry_hours: int
+    # App public URL (used in email links)
+    app_base_url: str
+    # Azure Communication Services email
+    azure_email_conn_str: str | None
+    azure_email_from: str
 
 
 def _as_bool(value: str | None, default: bool) -> bool:
@@ -52,6 +61,7 @@ def get_settings() -> Settings:
         postgres_dsn=os.getenv("POSTGRES_DSN"),
         chroma_host=os.getenv("CHROMA_HOST", "localhost"),
         chroma_port=int(os.getenv("CHROMA_PORT", "8001")),
+        chroma_ssl=_as_bool(os.getenv("CHROMA_SSL"), False),
         chroma_collection_prefix=os.getenv("CHROMA_COLLECTION_PREFIX", "codecompass"),
         supabase_url=os.getenv("SUPABASE_URL"),
         supabase_anon_key=os.getenv("SUPABASE_ANON_KEY"),
@@ -82,4 +92,12 @@ def get_settings() -> Settings:
         # Admin seed
         admin_email=os.getenv("ADMIN_EMAIL", "admin"),
         admin_password=os.getenv("ADMIN_PASSWORD", ""),
+        # JWT
+        jwt_secret=os.getenv("JWT_SECRET", "change-me-in-production-use-a-long-random-string"),
+        jwt_expiry_hours=int(os.getenv("JWT_EXPIRY_HOURS", "24")),
+        # App public URL
+        app_base_url=os.getenv("APP_BASE_URL", "http://localhost:5173"),
+        # Azure Communication Services
+        azure_email_conn_str=os.getenv("AZURE_EMAIL_CONNECTION_STRING"),
+        azure_email_from=os.getenv("AZURE_EMAIL_FROM", "donotreply@codecompass.dev"),
     )

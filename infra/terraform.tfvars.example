@@ -1,0 +1,35 @@
+# Copie este arquivo para terraform.tfvars e preencha os valores.
+# NUNCA comite o terraform.tfvars no git — ele contém segredos!
+
+# ── Identificação ─────────────────────────────────────────────────────────────
+prefix      = "codecompass"
+environment = "prod"
+location    = "brazilsouth"
+
+# ── PostgreSQL ────────────────────────────────────────────────────────────────
+postgres_admin_login    = "pgadmin"
+postgres_admin_password = "TROQUE_POR_SENHA_FORTE_Com1Numero!"
+postgres_sku            = "B_Standard_B1ms"
+
+# ── Aplicação ─────────────────────────────────────────────────────────────────
+admin_email    = "admin@seudominio.com"
+admin_password = "TROQUE_POR_SENHA_ADMIN"
+jwt_secret     = "TROQUE_POR_STRING_ALEATORIA_COM_MINIMO_32_CHARS_AQUI"
+
+# ── LLM ───────────────────────────────────────────────────────────────────────
+llm_provider = "abacus"
+llm_api_key  = "SUA_CHAVE_ABACUS_OU_OPENAI_OU_ANTHROPIC"
+llm_model    = "CLAUDE_V3_5_SONNET"
+
+# ── Embeddings ────────────────────────────────────────────────────────────────
+# "openai" é 18.7x mais rápido que "local" para indexação
+embedding_provider = "openai"
+openai_api_key     = "sk-SUA_CHAVE_OPENAI_PARA_EMBEDDINGS"
+embedding_model    = "text-embedding-3-small"
+embedding_dim      = "1536"
+
+# ── Escalonamento ─────────────────────────────────────────────────────────────
+backend_min_replicas = 1
+backend_max_replicas = 3
+backend_cpu          = 1.0
+backend_memory       = "2Gi"

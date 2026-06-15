@@ -60,6 +60,7 @@ class CommitDecision:
     commit_id: str
     repository_id: str
     timestamp: str
+    author: str
     category: str
     confidence: float
     summary: str
@@ -73,35 +74,24 @@ class CommitIngestionService:
         self,
         repo_root: Path,
         repository_id: str,
-        max_commits: int = 200,
-        since_months: int = 6,
+        max_commits: int = 5000,
     ) -> list[CommitRecord]:
         """Read commit history from a git repository.
 
         Args:
             repo_root: Path to the repository root
             repository_id: Repository identifier
-            max_commits: Maximum number of commits to ingest
-            since_months: How many months back to look
+            max_commits: Maximum number of commits to ingest (default 5000 = full history)
 
         Returns:
             List of CommitRecord objects
         """
         try:
-            since_date = datetime.now().strftime("%Y-%m-%d")
-            # Calculate date N months ago
-            from datetime import timedelta
-
-            since_date = (datetime.now() - timedelta(days=since_months * 30)).strftime(
-                "%Y-%m-%d"
-            )
-
-            # Get commits with files changed
+            # Get commits with files changed — no date limit, full history
             result = subprocess.run(
                 [
                     "git",
                     "log",
-                    f"--since={since_date}",
                     f"-n{max_commits}",
                     "--pretty=format:%H|%an|%aI|%s",
                     "--name-only",
@@ -178,18 +168,33 @@ class CommitIngestionService:
 
         return commits
 
+    # Source file extensions considered as "modules"
+    _SOURCE_EXTENSIONS = {
+        ".py", ".ts", ".tsx", ".js", ".mjs", ".jsx",
+        ".cs", ".java", ".go", ".rs", ".rb", ".php",
+        ".kt", ".swift", ".scala", ".cpp", ".cc", ".c",
+    }
+    # Paths/prefixes to ignore when building module names
+    _EXCLUDE_PREFIXES = {
+        "node_modules", ".git", "dist", "build", "vendor",
+        "__pycache__", ".venv", "venv", "target", "bin", "obj",
+    }
+
     def _extract_modules(self, files: list[str]) -> list[str]:
-        """Extract module paths from list of changed files."""
+        """Extract module paths from list of changed files (all source languages)."""
         modules: set[str] = set()
         for filepath in files:
-            if not filepath.endswith(".py"):
+            p = Path(filepath)
+            if p.suffix.lower() not in self._SOURCE_EXTENSIONS:
                 continue
-            parts = Path(filepath).parts
+            parts = p.parts
+            # Skip if any part is an excluded directory
+            if any(part in self._EXCLUDE_PREFIXES for part in parts):
+                continue
             if len(parts) > 1:
-                # Use parent directory as module
-                module = ".".join(parts[:-1])
+                module = "/".join(parts[:-1]) + "/" + p.stem
             else:
-                module = Path(filepath).stem
+                module = p.stem
             modules.add(module)
         return sorted(modules)
 
@@ -230,6 +235,7 @@ class DecisionClassificationService:
             commit_id=commit.commit_id,
             repository_id=commit.repository_id,
             timestamp=commit.timestamp,
+            author=commit.author,
             category=best_category,
             confidence=confidence,
             summary=commit.message[:200],

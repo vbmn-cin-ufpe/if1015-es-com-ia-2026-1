@@ -51,6 +51,22 @@ class ModuleScoringService:
         coupling_analyzer = CouplingAnalyzer()
         coupling_metrics = coupling_analyzer.analyze_module_coupling(module_files, repo_root)
         
+        # Per-file metrics (commits + dependencies)
+        file_details: list[dict[str, Any]] = []
+        for f in sorted(module_files, key=lambda p: p.name)[:20]:
+            rel = str(f.relative_to(repo_root)).replace("\\", "/")
+            file_churn = churn_analyzer.analyze_file_churn(f)
+            file_coupling = coupling_analyzer.analyze_file_coupling(f, repo_root)
+            file_complexity = self.complexity_analyzer.analyze_file(f)
+            file_details.append({
+                "path": rel,
+                "name": f.name,
+                "commits": file_churn,
+                "dependencies": file_coupling["total_imports"],
+                "complexity": round(file_complexity.get("complexity", 0), 1),
+                "loc": file_complexity.get("loc", 0),
+            })
+        
         # Normalize scores (simple min-max style, can be improved)
         complexity_score = min(complexity_metrics["avg_complexity"] / 10.0, 1.0)
         churn_score = min(churn_metrics["avg_commits_per_file"] / 20.0, 1.0)
@@ -69,6 +85,12 @@ class ModuleScoringService:
             "complexity_score": complexity_score,
             "churn_score": churn_score,
             "coupling_score": coupling_score,
+            "file_count": len(module_files),
+            "files": sorted(
+                str(f.relative_to(repo_root)).replace("\\", "/")
+                for f in module_files[:20]
+            ),
+            "file_details": file_details,
             "metrics": {
                 "complexity": complexity_metrics,
                 "churn": churn_metrics,
@@ -115,7 +137,17 @@ class ModuleScoringService:
         """
         from app.services.language_registry import all_languages
 
-        _EXCLUDED = {".git", "venv", ".venv", "__pycache__", "node_modules", "dist", "build", "vendor"}
+        # Directories that contain non-production code and should be ignored
+        _EXCLUDED = {
+            ".git", "venv", ".venv", "__pycache__", "node_modules",
+            "dist", "build", "vendor",
+            # Non-source directories — samples, tests, fixtures, docs
+            "sample", "samples", "example", "examples", "e2e",
+            "test", "tests", "__tests__", "spec", "specs",
+            "fixture", "fixtures", "mock", "mocks",
+            "benchmark", "benchmarks", "docs", "doc",
+            "scripts", "tools", "hack", "ci", ".github",
+        }
         extensions = {ext for spec in all_languages() for ext in spec.extensions}
 
         modules: dict[str, list[Path]] = {}
@@ -199,6 +231,14 @@ class TourGenerationService:
                 "module_name": module_data["module_name"],
                 "title": f"Module: {module_data['module_name']}",
                 "score": module_data["score"],
+                "score_breakdown": {
+                    "complexity": round(module_data["complexity_score"], 3),
+                    "churn": round(module_data["churn_score"], 3),
+                    "coupling": round(module_data["coupling_score"], 3),
+                },
+                "file_count": module_data["file_count"],
+                "files": module_data["files"],
+                "file_details": module_data["file_details"],
                 "rationale": self._generate_rationale(module_data),
                 "metrics": module_data["metrics"],
                 "recommendations": self._generate_recommendations(module_data),
@@ -311,48 +351,111 @@ class TourGenerationService:
     def _generate_rationale(self, module_data: dict[str, Any]) -> str:
         """Generate explanation for why this module is critical."""
         reasons = []
-        
+
         complexity = module_data["metrics"]["complexity"]
         churn = module_data["metrics"]["churn"]
         coupling = module_data["metrics"]["coupling"]
-        
-        if complexity["avg_complexity"] > 5:
+        module_name = module_data["module_name"]
+
+        avg_cc = complexity.get("avg_complexity", 0)
+        if avg_cc > 7:
             reasons.append(
-                f"High complexity (avg {complexity['avg_complexity']:.1f}) indicates intricate logic"
+                f"Alta complexidade ciclomática (média {avg_cc:.1f}) — este módulo contém lógica "
+                f"intrincada que novos desenvolvedores precisam entender com cuidado"
             )
-        
-        if churn["total_commits"] > 10:
+        elif avg_cc > 3:
             reasons.append(
-                f"Frequent changes ({churn['total_commits']} commits) suggest active development"
+                f"Complexidade moderada (média {avg_cc:.1f}) — envolve fluxos de controle não triviais"
             )
-        
-        if coupling["unique_dependencies"] > 5:
+
+        total_commits = churn.get("total_commits", 0)
+        if total_commits > 30:
             reasons.append(
-                f"Many dependencies ({coupling['unique_dependencies']}) indicate central role"
+                f"Alto volume de mudanças ({total_commits} commits) — ponto ativo de evolução do sistema"
             )
-        
+        elif total_commits > 10:
+            reasons.append(
+                f"Modificado frequentemente ({total_commits} commits) — área de desenvolvimento ativo"
+            )
+
+        unique_deps = coupling.get("unique_dependencies", 0)
+        if unique_deps > 8:
+            reasons.append(
+                f"Hub de dependências ({unique_deps} módulos dependentes) — mudanças aqui afetam "
+                f"grande parte do sistema"
+            )
+        elif unique_deps > 3:
+            reasons.append(
+                f"Acoplado a {unique_deps} outros módulos — papel integrador na arquitetura"
+            )
+
+        path_lower = module_name.lower()
+        if any(kw in path_lower for kw in ["core", "kernel", "base", "common", "shared"]):
+            reasons.append("Nome indica módulo núcleo compartilhado por múltiplos subsistemas")
+        elif any(kw in path_lower for kw in ["service", "services"]):
+            reasons.append("Camada de serviços — contém regras de negócio centrais")
+        elif any(kw in path_lower for kw in ["controller", "controllers", "router", "routes"]):
+            reasons.append("Camada de controle — ponto de entrada das requisições")
+        elif any(kw in path_lower for kw in ["module", "modules"]):
+            reasons.append("Módulo de composição — organiza e conecta dependências do sistema")
+
         if not reasons:
-            reasons.append("Important module in the codebase architecture")
-        
+            reasons.append(
+                f"Módulo '{module_name}' identificado como relevante pela combinação de "
+                f"complexidade, frequência de mudanças e acoplamento"
+            )
+
         return ". ".join(reasons) + "."
 
     def _generate_recommendations(self, module_data: dict[str, Any]) -> list[str]:
         """Generate recommendations for understanding this module."""
         recommendations = []
-        
+
         complexity = module_data["metrics"]["complexity"]
         coupling = module_data["metrics"]["coupling"]
-        
-        recommendations.append(f"Start by reviewing the main entry points")
-        
-        if complexity["avg_complexity"] > 7:
-            recommendations.append("Pay attention to complex functions - they handle critical logic")
-        
-        if coupling["unique_dependencies"] > 3:
+        module_name = module_data["module_name"]
+        path_lower = module_name.lower()
+
+        if any(kw in path_lower for kw in ["controller", "router", "routes", "handler"]):
             recommendations.append(
-                f"Understand dependencies: {', '.join(coupling['dependency_list'][:3])}"
+                "Comece pelos métodos públicos do controller — eles expõem a API do módulo"
             )
-        
-        recommendations.append("Look for tests to understand expected behavior")
-        
+        elif any(kw in path_lower for kw in ["service", "services"]):
+            recommendations.append(
+                "Identifique os métodos públicos do serviço e as interfaces que ele implementa"
+            )
+        elif any(kw in path_lower for kw in ["module", "modules"]):
+            recommendations.append(
+                "Leia o arquivo de módulo principal para entender quais providers e imports são registrados"
+            )
+        else:
+            recommendations.append(
+                "Localize o arquivo de entrada principal (index, main ou __init__) e leia os exports"
+            )
+
+        avg_cc = complexity.get("avg_complexity", 0)
+        if avg_cc > 7:
+            recommendations.append(
+                "As funções com maior complexidade ciclomática merecem atenção especial — "
+                "mapeie todos os caminhos de execução possíveis"
+            )
+        elif avg_cc > 4:
+            recommendations.append(
+                "Trace os fluxos condicionais principais para entender quando cada comportamento é ativado"
+            )
+
+        dep_list = coupling.get("dependency_list", [])
+        unique_deps = coupling.get("unique_dependencies", 0)
+        if unique_deps > 3 and dep_list:
+            dep_sample = ", ".join(f"`{d}`" for d in dep_list[:3])
+            recommendations.append(
+                f"Entenda primeiro as dependências-chave: {dep_sample} — "
+                f"elas fornecem o contexto necessário para este módulo"
+            )
+
+        recommendations.append(
+            "Procure os arquivos de teste associados (.spec, .test ou pasta __tests__) — "
+            "eles documentam os comportamentos esperados com exemplos concretos"
+        )
+
         return recommendations

@@ -35,11 +35,25 @@ class DecisionRepositoryAdapter:
                         commit_id TEXT NOT NULL,
                         repository_id TEXT NOT NULL,
                         timestamp TEXT NOT NULL,
+                        author TEXT NOT NULL DEFAULT '',
                         category TEXT NOT NULL,
                         confidence DOUBLE PRECISION NOT NULL,
                         summary TEXT NOT NULL,
                         touched_modules TEXT NOT NULL DEFAULT '[]'
                     )
+                    """
+                )
+                # Add author column if the table already exists without it
+                cur.execute(
+                    """
+                    DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name='commit_decisions' AND column_name='author'
+                        ) THEN
+                            ALTER TABLE commit_decisions ADD COLUMN author TEXT NOT NULL DEFAULT '';
+                        END IF;
+                    END $$;
                     """
                 )
                 cur.execute(
@@ -66,9 +80,9 @@ class DecisionRepositoryAdapter:
                     cur.execute(
                         """
                         INSERT INTO commit_decisions
-                            (id, commit_id, repository_id, timestamp, category,
+                            (id, commit_id, repository_id, timestamp, author, category,
                              confidence, summary, touched_modules)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (id) DO NOTHING
                         """,
                         (
@@ -76,6 +90,7 @@ class DecisionRepositoryAdapter:
                             d.commit_id,
                             repository_id,
                             d.timestamp,
+                            getattr(d, "author", ""),
                             d.category,
                             d.confidence,
                             d.summary,
@@ -95,7 +110,7 @@ class DecisionRepositoryAdapter:
         try:
             with self._conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, commit_id, repository_id, timestamp, category, "
+                    "SELECT id, commit_id, repository_id, timestamp, author, category, "
                     "confidence, summary, touched_modules "
                     "FROM commit_decisions WHERE repository_id = %s "
                     "ORDER BY timestamp DESC",
@@ -107,13 +122,29 @@ class DecisionRepositoryAdapter:
                         commit_id=r[1],
                         repository_id=r[2],
                         timestamp=r[3],
-                        category=r[4],
-                        confidence=r[5],
-                        summary=r[6],
-                        touched_modules=json.loads(r[7]),
+                        author=r[4],
+                        category=r[5],
+                        confidence=r[6],
+                        summary=r[7],
+                        touched_modules=json.loads(r[8]),
                     )
                     for r in cur.fetchall()
                 ]
         except Exception as exc:
             logger.error("Failed to get decisions: %s", exc)
             return self._decisions.get(repository_id, [])
+
+    def delete_decisions(self, repository_id: str) -> None:
+        """Delete all decisions for a repository (used to force re-ingestion)."""
+        self._decisions.pop(repository_id, None)
+        if self._conn is None:
+            return
+        try:
+            with self._conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM commit_decisions WHERE repository_id = %s",
+                    (repository_id,),
+                )
+            self._conn.commit()
+        except Exception as exc:
+            logger.error("Failed to delete decisions: %s", exc)
