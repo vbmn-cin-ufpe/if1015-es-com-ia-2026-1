@@ -1,4 +1,6 @@
 import { type ReactNode } from "react";
+import { motion } from "framer-motion";
+import { fadeUp, fadeUpTransition, scaleIn, scaleInTransition } from "../../animations";
 
 // ── Icon (Font Awesome 6 wrapper) ────────────────────────────────────────────
 
@@ -11,9 +13,11 @@ export function Icon({
     className?: string;
     regular?: boolean;
 }) {
+    const brandsIcons = ["github", "twitter", "facebook", "google", "linkedin", "youtube", "instagram", "discord", "slack", "npm", "python", "js-square", "react"];
+    const prefix = brandsIcons.includes(name) ? "fa-brands" : regular ? "fa-regular" : "fa-solid";
     return (
         <i
-            className={`${regular ? "fa-regular" : "fa-solid"} fa-${name} ${className}`}
+            className={`${prefix} fa-${name} ${className}`}
             aria-hidden="true"
         />
     );
@@ -42,7 +46,11 @@ export function Card({
     className?: string;
 }) {
     return (
-        <div
+        <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            transition={fadeUpTransition}
             className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 ${className}`}
         >
             {title && (
@@ -51,7 +59,7 @@ export function Card({
                 </h2>
             )}
             {children}
-        </div>
+        </motion.div>
     );
 }
 
@@ -82,11 +90,15 @@ export function Badge({ status }: { status: string }) {
         STATUS_COLORS[status.toLowerCase()] ??
         "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     return (
-        <span
+        <motion.span
+            variants={scaleIn}
+            initial="hidden"
+            animate="show"
+            transition={scaleInTransition}
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}
         >
             {status.toUpperCase()}
-        </span>
+        </motion.span>
     );
 }
 
@@ -101,10 +113,12 @@ export function ProgressBar({
 }) {
     const pct = Math.min(100, Math.round((value / max) * 100));
     return (
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div
-                className="bg-indigo-600 dark:bg-indigo-400 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${pct}%` }}
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <motion.div
+                className="bg-indigo-600 dark:bg-indigo-400 h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
             />
         </div>
     );

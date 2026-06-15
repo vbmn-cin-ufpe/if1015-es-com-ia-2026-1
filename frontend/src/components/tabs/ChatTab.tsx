@@ -1,12 +1,22 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect, useRef } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { askQuestion, type ChatAskResponse } from "../../services/chatApi";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    slideInRight, slideInLeft, chatBubbleTransition,
+    staggerContainer, scaleIn, scaleInTransition,
+    fadeUp, fadeUpTransition,
+} from "../../animations";
+import { askQuestion } from "../../services/chatApi";
+import { submitAnswerFeedback } from "../../services/chatFeedbackApi";
+import { useChatStore } from "../../store";
+import { useAuthStore } from "../../store/authStore";
 import {
     Card,
     ThinkingDots,
     EmptyState,
     btnPrimary,
+    btnSecondary,
     inputCls,
     Icon,
 } from "../ui";
@@ -337,42 +347,87 @@ function renderInline(text: string): React.ReactNode {
 
 const THINKING_LABELS = [
     "Buscando trechos relevantes…",
-    "Analisando o contexto…",
-    "Consultando o LLM…",
-    "Formulando resposta…",
+    "Analisando o contexto do código…",
+    "Consultando o modelo de linguagem…",
+    "Formulando resposta detalhada…",
+    "Organizando informações…",
+];
+
+const THINKING_ICONS = [
+    "magnifying-glass",
+    "brain",
+    "microchip",
+    "pen-nib",
+    "list-check",
 ];
 
 // ── ChatTab ──────────────────────────────────────────────────────────────────
 
 export function ChatTab({ repositoryId, status }: Props) {
-    const [question, setQuestion] = useState("");
-    const [chat, setChat] = useState<ChatAskResponse | null>(null);
-    const [lastQuestion, setLastQuestion] = useState("");
+    // ── Zustand store ──────────────────────────────────────────────────────
+    const { input, history, setInput, addEntry, resetForRepo, clearHistory } =
+        useChatStore();
+    const token = useAuthStore((s) => s.token) ?? "";
+
+    // ── Local (transient) state ────────────────────────────────────────────
     const [loading, setLoading] = useState(false);
     const [thinkLabel, setThinkLabel] = useState(THINKING_LABELS[0]);
+    const [thinkIcon, setThinkIcon] = useState(THINKING_ICONS[0]);
     const [error, setError] = useState("");
+    // Track per-entry feedback: entry.id → "up" | "down"
+    const [feedbackSent, setFeedbackSent] = useState<Record<string, "up" | "down">>({});
+
+    // Auto-scroll ref
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    // When repo changes, clear old history
+    useEffect(() => {
+        if (repositoryId) resetForRepo(repositoryId);
+    }, [repositoryId]);
+
+    // Scroll to bottom on new message
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [history.length, loading]);
 
     async function onAsk(e: FormEvent) {
         e.preventDefault();
-        if (!repositoryId || !question.trim()) return;
+        if (!repositoryId || !input.trim()) return;
         setError("");
         setLoading(true);
-        setChat(null);
-        setLastQuestion(question.trim());
+        const q = input.trim();
+        setInput("");
 
         let idx = 0;
         const interval = setInterval(() => {
             idx = (idx + 1) % THINKING_LABELS.length;
             setThinkLabel(THINKING_LABELS[idx]);
+            setThinkIcon(THINKING_ICONS[idx]);
         }, 1800);
 
         try {
-            setChat(await askQuestion(repositoryId, question.trim()));
+            const response = await askQuestion(repositoryId, q, token);
+            addEntry(q, response, repositoryId);
         } catch {
             setError("Falha ao consultar o modelo. Tente novamente.");
+            setInput(q); // restore input on error
         } finally {
             clearInterval(interval);
             setLoading(false);
+        }
+    }
+
+    async function handleFeedback(entryId: string, thumbsUp: boolean) {
+        if (feedbackSent[entryId]) return; // already sent
+        try {
+            await submitAnswerFeedback({
+                response_id: entryId,
+                repository_id: repositoryId,
+                thumbs_up: thumbsUp,
+            });
+            setFeedbackSent((prev) => ({ ...prev, [entryId]: thumbsUp ? "up" : "down" }));
+        } catch {
+            // silent — feedback is best-effort
         }
     }
 
@@ -389,119 +444,271 @@ export function ChatTab({ repositoryId, status }: Props) {
     }
 
     return (
-        <div className="space-y-4">
-            <Card title="Perguntar sobre o código">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                    Faça perguntas em linguagem natural sobre qualquer aspecto
-                    do repositório indexado.
-                </p>
-                <form onSubmit={onAsk} className="flex gap-3">
-                    <input
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="Ex: Como funciona o serviço de autenticação? Quais são os principais módulos?"
-                        disabled={loading}
-                        className={`${inputCls} flex-1`}
-                    />
-                    <button
-                        type="submit"
-                        disabled={loading || !question.trim()}
-                        className={btnPrimary}
-                    >
-                        {loading ? (
-                            <>
-                                <Icon name="spinner" className="animate-spin" />{" "}
-                                Pensando…
-                            </>
-                        ) : (
-                            <>
-                                <Icon name="paper-plane" /> Perguntar
-                            </>
-                        )}
-                    </button>
-                </form>
-                {error && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                        {error}
-                    </p>
-                )}
-            </Card>
-
-            {loading && (
-                <Card>
-                    <div className="flex flex-col items-center justify-center py-8 gap-4">
-                        <ThinkingDots label={thinkLabel} />
-                        <div className="flex gap-1.5 mt-2">
-                            {THINKING_LABELS.map((l, i) => (
-                                <div
-                                    key={i}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                                        l === thinkLabel
-                                            ? "w-8 bg-indigo-500"
-                                            : "w-2 bg-gray-200 dark:bg-gray-700"
-                                    }`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                </Card>
-            )}
-
-            {chat && !loading && (
-                <Card>
-                    {/* Question */}
-                    <div className="flex gap-3 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-                        <span className="shrink-0 w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-sm font-bold">
-                            <Icon name="user" />
-                        </span>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 font-medium pt-0.5">
-                            {lastQuestion}
+        <div className="flex flex-col gap-0 h-full" style={{ minHeight: "calc(100vh - 120px)" }}>
+            {/* ── Header ──────────────────────────────────────────────────── */}
+            <div className="bg-white dark:bg-gray-800 rounded-t-xl shadow-sm border border-gray-200 dark:border-gray-700 border-b-0">
+                <div className="flex items-center gap-3 px-6 py-4">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                        <Icon name="comments" className="text-lg" />
+                    </span>
+                    <div className="flex-1">
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Chat sobre o código</h2>
+                        <p className="text-xs text-gray-400">
+                            {history.length > 0
+                                ? `${history.length} pergunta${history.length !== 1 ? "s" : ""} nesta sessão`
+                                : "Faça perguntas em linguagem natural sobre o repositório"}
                         </p>
                     </div>
+                    {history.length > 0 && (
+                        <button
+                            onClick={clearHistory}
+                            className={`${btnSecondary} text-xs`}
+                            title="Limpar conversa"
+                        >
+                            <Icon name="trash" /> Limpar
+                        </button>
+                    )}
+                </div>
+            </div>
 
-                    {/* Answer */}
-                    <div className="flex gap-3">
-                        <span className="shrink-0 w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-sm">
-                            <Icon name="compass" />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                                Resposta
-                            </p>
-                            <MarkdownText text={chat.answer} />
+            {/* ── Conversation area ──────────────────────────────────────── */}
+            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900/50 border-x border-gray-200 dark:border-gray-700 px-6 py-4 space-y-6" style={{ maxHeight: "calc(100vh - 260px)" }}>
+
+                {/* Empty state */}
+                {history.length === 0 && !loading && (
+                    <motion.div
+                        variants={fadeUp}
+                        initial="hidden"
+                        animate="show"
+                        transition={fadeUpTransition}
+                        className="flex flex-col items-center justify-center py-16 gap-4 text-gray-400"
+                    >
+                        <motion.span
+                            initial={{ scale: 0.7, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                            className="flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-400"
+                        >
+                            <Icon name="comments" className="text-3xl" />
+                        </motion.span>
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nenhuma pergunta ainda</p>
+                            <p className="text-xs text-gray-400 mt-1">Use o campo abaixo para perguntar sobre o código</p>
                         </div>
-                    </div>
+                        <motion.div
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="show"
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 w-full max-w-lg"
+                        >
+                            {[
+                                "Como funciona o serviço de autenticação?",
+                                "Quais são os principais módulos?",
+                                "Explique o fluxo de dados da aplicação",
+                                "Quais padrões de design são usados?",
+                            ].map((suggestion) => (
+                                <motion.button
+                                    key={suggestion}
+                                    variants={scaleIn}
+                                    transition={scaleInTransition}
+                                    whileHover={{ y: -2, scale: 1.02 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => setInput(suggestion)}
+                                    className="text-left text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 px-3 py-2 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                                >
+                                    <Icon name="lightbulb" className="mr-1 text-indigo-400" />
+                                    {suggestion}
+                                </motion.button>
+                            ))}
+                        </motion.div>
+                    </motion.div>
+                )}
 
-                    {/* Sources */}
-                    {chat.sources.length > 0 && (
-                        <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
-                            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
-                                <Icon name="paperclip" className="mr-1" />{" "}
-                                {chat.sources.length} fonte(s) consultada(s)
-                            </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                {chat.sources.map((src) => (
-                                    <div
-                                        key={src.chunk_id}
-                                        className="flex items-center gap-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-gray-600 dark:text-gray-400"
-                                    >
-                                        <Icon
-                                            name="file-code"
-                                            className="text-indigo-400 shrink-0"
-                                        />
-                                        <span className="truncate">
-                                            {src.file_path}
+                {/* Chat history */}
+                <AnimatePresence initial={false}>
+                {history.map((entry) => (
+                    <motion.div
+                        key={entry.id}
+                        initial="hidden"
+                        animate="show"
+                        className="space-y-3"
+                    >
+                        {/* Question bubble */}
+                        <motion.div
+                            variants={slideInRight}
+                            transition={chatBubbleTransition}
+                            className="flex gap-3 justify-end"
+                        >
+                            <div className="max-w-[80%] bg-indigo-600 dark:bg-indigo-500 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
+                                <p className="text-sm leading-relaxed">{entry.question}</p>
+                                <p className="text-[10px] text-indigo-200 mt-1 text-right">
+                                    {new Date(entry.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                            </div>
+                            <span className="shrink-0 w-8 h-8 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center text-sm self-end">
+                                <Icon name="user" />
+                            </span>
+                        </motion.div>
+
+                        {/* Answer bubble */}
+                        <motion.div
+                            variants={slideInLeft}
+                            transition={{ ...chatBubbleTransition, delay: 0.08 }}
+                            className="flex gap-3"
+                        >
+                            <span className="shrink-0 w-8 h-8 rounded-full bg-emerald-500 dark:bg-emerald-600 text-white flex items-center justify-center text-sm self-start mt-1">
+                                <Icon name="compass" />
+                            </span>
+                            <div className="flex-1 min-w-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        <Icon name="robot" /> CodeCompass AI
+                                    </span>
+                                </div>
+                                <MarkdownText text={entry.response.answer} />
+
+                                {/* Sources */}
+                                {entry.response.sources.length > 0 && (
+                                    <details className="mt-4">
+                                        <summary className="cursor-pointer text-xs text-gray-400 hover:text-indigo-500 flex items-center gap-1.5 select-none">
+                                            <Icon name="database" className="text-indigo-400" />
+                                            {entry.response.sources.length} fonte{entry.response.sources.length !== 1 ? "s" : ""} consultada{entry.response.sources.length !== 1 ? "s" : ""}
+                                            <Icon name="chevron-down" className="text-[10px]" />
+                                        </summary>
+                                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                            {entry.response.sources.map((src, i) => (
+                                                <div
+                                                    key={src.chunk_id}
+                                                    className="flex items-center gap-2 text-xs font-mono bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-gray-600 dark:text-gray-400"
+                                                >
+                                                    <span className="shrink-0 w-4 h-4 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-500 flex items-center justify-center text-[9px] font-bold">
+                                                        {i + 1}
+                                                    </span>
+                                                    <Icon name="file-code" className="text-indigo-400 shrink-0" />
+                                                    <span className="truncate flex-1">{src.file_path}</span>
+                                                    <span className="text-gray-300 dark:text-gray-600 shrink-0">:{src.start_line}</span>
+                                                    {src.score > 0 && (
+                                                        <span className="shrink-0 text-[9px] px-1 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 border border-emerald-200 dark:border-emerald-800">
+                                                            {(src.score * 100).toFixed(0)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </details>
+                                )}
+
+                                {/* Feedback thumbs */}
+                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                    <span className="text-[11px] text-gray-400">Esta resposta foi útil?</span>
+                                    {feedbackSent[entry.id] ? (
+                                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                            <Icon name={feedbackSent[entry.id] === "up" ? "thumbs-up" : "thumbs-down"} />
+                                            Obrigado pelo feedback!
                                         </span>
-                                        <span className="text-gray-400 shrink-0">
-                                            :{src.start_line}
-                                        </span>
-                                    </div>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => handleFeedback(entry.id, true)}
+                                                className="text-gray-400 hover:text-emerald-500 transition-colors p-1 rounded"
+                                                title="Resposta útil"
+                                            >
+                                                <Icon name="thumbs-up" regular />
+                                            </button>
+                                            <button
+                                                onClick={() => handleFeedback(entry.id, false)}
+                                                className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded"
+                                                title="Resposta não útil"
+                                            >
+                                                <Icon name="thumbs-down" regular />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                ))}
+                </AnimatePresence>
+
+                {/* Loading indicator (inline) */}
+                <AnimatePresence>
+                {loading && (
+                    <motion.div
+                        key="loading-bubble"
+                        variants={slideInLeft}
+                        initial="hidden"
+                        animate="show"
+                        exit={{ opacity: 0, x: -12 }}
+                        transition={chatBubbleTransition}
+                        className="flex gap-3"
+                    >
+                        <span className="shrink-0 w-8 h-8 rounded-full bg-emerald-500 dark:bg-emerald-600 text-white flex items-center justify-center text-sm animate-pulse">
+                            <Icon name={thinkIcon} />
+                        </span>
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm">
+                            <ThinkingDots label={thinkLabel} />
+                            <div className="flex gap-1.5 mt-3">
+                                {THINKING_LABELS.map((l, i) => (
+                                    <motion.div
+                                        key={i}
+                                        animate={{ width: l === thinkLabel ? 24 : 6, opacity: l === thinkLabel ? 1 : 0.4 }}
+                                        transition={{ duration: 0.4 }}
+                                        className={`h-1 rounded-full ${l === thinkLabel ? "bg-indigo-500" : "bg-gray-200 dark:bg-gray-700"}`}
+                                    />
                                 ))}
                             </div>
                         </div>
-                    )}
-                </Card>
-            )}
+                    </motion.div>
+                )}
+                </AnimatePresence>
+
+                <div ref={bottomRef} />
+            </div>
+
+            {/* ── Input bar ──────────────────────────────────────────────── */}
+            <div className="bg-white dark:bg-gray-800 rounded-b-xl border border-gray-200 dark:border-gray-700 border-t border-t-gray-100 dark:border-t-gray-700 px-4 py-3 shadow-sm">
+                {error && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mb-2 flex items-center gap-1.5">
+                        <Icon name="triangle-exclamation" />{error}
+                    </p>
+                )}
+                <form onSubmit={onAsk} className="flex gap-3">
+                    <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <Icon name="code" />
+                        </span>
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    if (!loading && input.trim()) onAsk(e as unknown as FormEvent);
+                                }
+                            }}
+                            placeholder="Pergunte sobre o código… (Enter para enviar)"
+                            disabled={loading}
+                            className={`${inputCls} pl-9`}
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={loading || !input.trim()}
+                        className={btnPrimary}
+                    >
+                        {loading ? (
+                            <><Icon name="spinner" className="animate-spin" /> Pensando…</>
+                        ) : (
+                            <><Icon name="paper-plane" /> Enviar</>
+                        )}
+                    </button>
+                </form>
+                <p className="text-[10px] text-gray-400 mt-1.5 text-right">
+                    <Icon name="floppy-disk" className="mr-1 text-indigo-300" />
+                    Histórico salvo nesta sessão — persiste ao trocar de aba
+                </p>
+            </div>
         </div>
     );
 }

@@ -1,11 +1,18 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+﻿import { FormEvent, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+    fadeUp, fadeUpTransition,
+    staggerContainer,
+    scaleIn, scaleInTransition,
+} from "../../animations";
+import { useAuthStore } from "../../store/authStore";
 import {
     indexRepository,
     getRepositoryStatus,
     type RepoStatusResponse,
 } from "../../services/repoApi";
 import {
-    Card,
     Badge,
     ProgressBar,
     ThinkingDots,
@@ -15,7 +22,8 @@ import {
     Icon,
 } from "../ui";
 
-// Map backend status → progress percentage (real stages, not simulated)
+// â”€â”€ constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 const STATUS_PROGRESS: Record<string, number> = {
     queued: 5,
     cloning: 20,
@@ -38,14 +46,131 @@ const STATUS_LABEL: Record<string, string> = {
     failed: "Falha na indexação",
 };
 
-const LANG_ICONS: Record<string, string> = {
-    python: "🐍",
-    javascript: "🟨",
-    typescript: "🔷",
-    java: "☕",
-    go: "🐹",
-    rust: "🦀",
+/** Lang name â†’ [tailwind bg, tailwind text] */
+const LANG_STYLE: Record<string, [string, string]> = {
+    python:     ["bg-blue-100 dark:bg-blue-900/40",    "text-blue-700 dark:text-blue-300"],
+    javascript: ["bg-yellow-100 dark:bg-yellow-900/40","text-yellow-700 dark:text-yellow-300"],
+    typescript: ["bg-cyan-100 dark:bg-cyan-900/40",    "text-cyan-700 dark:text-cyan-300"],
+    java:       ["bg-orange-100 dark:bg-orange-900/40","text-orange-700 dark:text-orange-300"],
+    go:         ["bg-sky-100 dark:bg-sky-900/40",      "text-sky-700 dark:text-sky-300"],
+    rust:       ["bg-red-100 dark:bg-red-900/40",      "text-red-700 dark:text-red-300"],
+    kotlin:     ["bg-violet-100 dark:bg-violet-900/40","text-violet-700 dark:text-violet-300"],
+    swift:      ["bg-pink-100 dark:bg-pink-900/40",    "text-pink-700 dark:text-pink-300"],
+    csharp:     ["bg-green-100 dark:bg-green-900/40",  "text-green-700 dark:text-green-300"],
+    cpp:        ["bg-indigo-100 dark:bg-indigo-900/40","text-indigo-700 dark:text-indigo-300"],
+    c:          ["bg-indigo-100 dark:bg-indigo-900/40","text-indigo-700 dark:text-indigo-300"],
+    ruby:       ["bg-rose-100 dark:bg-rose-900/40",    "text-rose-700 dark:text-rose-300"],
+    php:        ["bg-violet-100 dark:bg-violet-900/40","text-violet-700 dark:text-violet-300"],
 };
+
+/** Feature cards for navigation after completion */
+const FEATURE_CARDS = [
+    {
+        route: "/chat",
+        icon: "comments",
+        label: "Chat",
+        desc: "Faça perguntas em linguagem natural sobre qualquer parte do repositório",
+        color: "indigo",
+    },
+    {
+        route: "/tour",
+        icon: "route",
+        label: "Tour guiado",
+        desc: "Guia automático de onboarding pelos módulos mais importantes",
+        color: "emerald",
+    },
+    {
+        route: "/graph",
+        icon: "diagram-project",
+        label: "Grafo de dependências",
+        desc: "Mapa visual das dependências entre os módulos do projeto",
+        color: "violet",
+    },
+    {
+        route: "/history",
+        icon: "clock-rotate-left",
+        label: "Histórico de commits",
+        desc: "Linha do tempo de mudanças e evolução do repositório",
+        color: "amber",
+    },
+    {
+        route: "/metrics",
+        icon: "chart-bar",
+        label: "Métricas",
+        desc: "Complexidade, acoplamento e outras métricas de qualidade",
+        color: "rose",
+    },
+] as const;
+
+const COLOR_MAP: Record<string, string> = {
+    indigo: "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400",
+    emerald: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400",
+    violet: "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 hover:border-violet-400",
+    amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:border-amber-400",
+    rose: "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 hover:border-rose-400",
+};
+const ICON_COLOR_MAP: Record<string, string> = {
+    indigo: "text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/50",
+    emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50",
+    violet: "text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/50",
+    amber: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50",
+    rose: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/50",
+};
+const LABEL_COLOR_MAP: Record<string, string> = {
+    indigo: "text-indigo-800 dark:text-indigo-200",
+    emerald: "text-emerald-800 dark:text-emerald-200",
+    violet: "text-violet-800 dark:text-violet-200",
+    amber: "text-amber-800 dark:text-amber-200",
+    rose: "text-rose-800 dark:text-rose-200",
+};
+
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function formatDate(iso?: string | null): string {
+    if (!iso) return "—";
+    try {
+        return new Intl.DateTimeFormat("pt-BR", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit",
+        }).format(new Date(iso));
+    } catch {
+        return iso;
+    }
+}
+
+function formatSize(kb?: number | null): string {
+    if (kb == null) return "—";
+    if (kb < 1024) return `${kb.toFixed(0)} KB`;
+    return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+function extractRepoName(url?: string | null): string {
+    if (!url) return "";
+    const parts = url.replace(/\.git$/, "").split("/");
+    if (parts.length >= 2) return parts.slice(-2).join("/");
+    return parts[parts.length - 1] ?? "";
+}
+
+// â”€â”€ StatCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function StatCard({ icon, iconColor, label, value }: {
+    icon: string; iconColor: string; label: string; value: string;
+}) {
+    return (
+        <motion.div
+            variants={fadeUp}
+            transition={fadeUpTransition}
+            whileHover={{ y: -2, boxShadow: "0 4px 16px 0 rgba(99,102,241,0.10)" }}
+            className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 border border-gray-100 dark:border-gray-700 cursor-default"
+        >
+            <div className="flex items-center gap-2 mb-1">
+                <Icon name={icon} className={`text-sm ${iconColor}`} />
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide">{label}</p>
+            </div>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+        </motion.div>
+    );
+}
 
 interface Props {
     repositoryId: string;
@@ -54,47 +179,47 @@ interface Props {
 }
 
 export function RepoTab({ repositoryId, status, onIndexed }: Props) {
+    const navigate = useNavigate();
+    const token = useAuthStore((s) => s.token) ?? "";
     const [url, setUrl] = useState("");
     const [loading, setLoading] = useState(false);
     const [stepLabel, setStepLabel] = useState(STATUS_LABEL.queued);
     const [progress, setProgress] = useState(0);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const [repoStats, setRepoStats] = useState<
-        RepoStatusResponse["stats"] | null
-    >(null);
+    const [repoData, setRepoData] = useState<RepoStatusResponse | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Clean up polling on unmount
+    useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+    // Load data when already indexed on mount
     useEffect(() => {
-        return () => {
-            if (pollRef.current) clearInterval(pollRef.current);
-        };
-    }, []);
+        if (repositoryId && status === "completed" && !repoData) {
+            getRepositoryStatus(repositoryId, token).then((r) => {
+                setRepoData(r);
+                if (r.error_message) setErrorMsg(r.error_message);
+            }).catch(() => {});
+        }
+    }, [repositoryId]);
 
     function startPolling(repoId: string) {
         if (pollRef.current) clearInterval(pollRef.current);
         pollRef.current = setInterval(async () => {
             try {
-                const r = await getRepositoryStatus(repoId);
+                const r = await getRepositoryStatus(repoId, token);
                 const pct = STATUS_PROGRESS[r.index_status] ?? 50;
-                const label = STATUS_LABEL[r.index_status] ?? "Processando…";
                 setProgress(pct);
-                setStepLabel(label);
+                setStepLabel(STATUS_LABEL[r.index_status] ?? "Processando…");
                 onIndexed(repoId, r.index_status);
 
-                if (
-                    r.index_status === "completed" ||
-                    r.index_status === "failed"
-                ) {
+                if (r.index_status === "completed" || r.index_status === "failed") {
                     clearInterval(pollRef.current!);
                     pollRef.current = null;
                     setLoading(false);
-                    if (r.stats) setRepoStats(r.stats);
+                    setRepoData(r);
                     if (r.error_message) setErrorMsg(r.error_message);
                 }
-            } catch {
-                // Ignore transient polling errors — will retry on next tick
-            }
+            } catch { /* Ignore transient polling errors */ }
         }, 2000);
     }
 
@@ -102,19 +227,16 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
         e.preventDefault();
         if (!url.trim()) return;
         setErrorMsg(null);
-        setRepoStats(null);
+        setRepoData(null);
         setLoading(true);
         setProgress(STATUS_PROGRESS.queued);
         setStepLabel(STATUS_LABEL.queued);
         try {
-            // Returns immediately with repository_id + status="queued"
-            const r = await indexRepository(url.trim());
+            const r = await indexRepository(url.trim(), token);
             onIndexed(r.repository_id, r.job_status);
             startPolling(r.repository_id);
         } catch {
-            setErrorMsg(
-                "Falha ao iniciar indexação. Verifique a URL e tente novamente.",
-            );
+            setErrorMsg("Falha ao iniciar indexação. Verifique a URL e tente novamente.");
             setLoading(false);
         }
     }
@@ -122,209 +244,280 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
     async function onRefresh() {
         if (!repositoryId) return;
         try {
-            const r = await getRepositoryStatus(repositoryId);
+            const r = await getRepositoryStatus(repositoryId, token);
             onIndexed(repositoryId, r.index_status);
-            if (r.stats) setRepoStats(r.stats);
+            setRepoData(r);
             if (r.error_message) setErrorMsg(r.error_message);
         } catch {
             setErrorMsg("Falha ao verificar status");
         }
     }
 
-    // Parse language stats from backend response
-    const langMap = repoStats?.languages as Record<string, number> | undefined;
-    const languages = langMap
-        ? Object.entries(langMap).sort((a, b) => b[1] - a[1])
-        : [];
+    const stats = repoData?.stats;
+    const langMap = stats?.languages as Record<string, number> | undefined;
+    const languages = langMap ? Object.entries(langMap).sort((a, b) => b[1] - a[1]) : [];
+    const totalLangFiles = languages.reduce((s, [, c]) => s + c, 0) || 1;
+    const repoName = (stats?.repo_name as string | undefined)
+        ?? extractRepoName(repoData?.repository_url ?? url);
 
     return (
         <div className="space-y-5">
-            <Card title="Indexar Repositório">
-                <p className="text-sm text-gray-500 mb-4">
-                    Informe a URL de um repositório GitHub público para que o
-                    CodeCompass o indexe. Suporta: Python, JavaScript,
-                    TypeScript, Java, Go e Rust.
-                </p>
-                <form onSubmit={onIndex} className="flex gap-3">
-                    <input
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="https://github.com/owner/repo"
-                        disabled={loading}
-                        className={`${inputCls} flex-1`}
-                    />
-                    <button
-                        type="submit"
-                        disabled={loading || !url.trim()}
-                        className={btnPrimary}
-                    >
-                        {loading ? (
-                            <>
-                                <Icon name="spinner" className="animate-spin" />{" "}
-                                Indexando…
-                            </>
-                        ) : (
-                            <>
-                                <Icon name="code-branch" /> Indexar
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                {loading && (
-                    <div className="mt-5 space-y-3">
-                        <ProgressBar value={progress} />
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                            <ThinkingDots label={stepLabel} />
-                            <span>{Math.round(progress)}%</span>
+            {/* â”€â”€ Index form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="px-6 pt-6 pb-0">
+                    <div className="flex items-center gap-3 mb-3">
+                        <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">
+                            <Icon name="code-branch" />
+                        </span>
+                        <div>
+                            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Indexar Repositório</h2>
+                            <p className="text-xs text-gray-400">Suporta: Python, JavaScript, TypeScript, Java, Go e Rust</p>
                         </div>
                     </div>
-                )}
-            </Card>
-
-            {repositoryId && (
-                <Card title="Status do Repositório">
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <div>
-                            <p className="text-xs text-gray-400 mb-1">
-                                ID do Repositório
-                            </p>
-                            <p className="font-mono text-sm text-gray-700 bg-gray-50 px-2 py-1 rounded border border-gray-200">
-                                {repositoryId}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-400 mb-1">Status</p>
-                            <Badge status={status || "pending"} />
-                        </div>
-                        <button onClick={onRefresh} className={btnSecondary}>
-                            <Icon name="rotate" /> Atualizar
-                        </button>
-                        {status === "completed" && (
-                            <span className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
-                                <Icon name="circle-check" /> Pronto para uso
+                </div>
+                <div className="px-6 pb-5">
+                    <form onSubmit={onIndex} className="flex gap-3">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                <Icon name="github" />
                             </span>
-                        )}
-                    </div>
+                            <input
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                placeholder="https://github.com/owner/repo"
+                                disabled={loading}
+                                className={`${inputCls} pl-9`}
+                            />
+                        </div>
+                        <button type="submit" disabled={loading || !url.trim()} className={btnPrimary}>
+                            {loading ? (
+                                <><Icon name="spinner" className="animate-spin" /> Indexando…</>
+                            ) : (
+                                <><Icon name="code-branch" /> Indexar</>
+                            )}
+                        </button>
+                    </form>
 
-                    {/* Language detection results */}
-                    {languages.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                                Linguagens detectadas
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {languages.map(([lang, count]) => (
-                                    <span
-                                        key={lang}
-                                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full"
-                                    >
-                                        <span>{LANG_ICONS[lang] ?? "📄"}</span>
-                                        <span>{lang}</span>
-                                        <span className="text-indigo-400 font-normal">
-                                            {count} arquivo
-                                            {count !== 1 ? "s" : ""}
-                                        </span>
-                                    </span>
-                                ))}
+                    {loading && (
+                        <div className="mt-4 space-y-2">
+                            <ProgressBar value={progress} />
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                <ThinkingDots label={stepLabel} />
+                                <span>{Math.round(progress)}%</span>
                             </div>
                         </div>
                     )}
 
-                    {/* Stats summary */}
-                    {repoStats && (
-                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                            {repoStats.source_files != null && (
-                                <span>
-                                    <Icon
-                                        name="file-code"
-                                        className="mr-1 text-indigo-400"
-                                    />
-                                    <strong>
-                                        {String(repoStats.source_files)}
-                                    </strong>{" "}
-                                    arquivos indexados
-                                </span>
-                            )}
-                            {repoStats.chunks != null && (
-                                <span>
-                                    <Icon
-                                        name="puzzle-piece"
-                                        className="mr-1 text-indigo-400"
-                                    />
-                                    <strong>{String(repoStats.chunks)}</strong>{" "}
-                                    chunks
-                                </span>
-                            )}
-                            {repoStats.vectors != null && (
-                                <span>
-                                    <Icon
-                                        name="database"
-                                        className="mr-1 text-indigo-400"
-                                    />
-                                    <strong>{String(repoStats.vectors)}</strong>{" "}
-                                    vetores
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {status === "indexing" && (
-                        <div className="mt-4">
-                            <ProgressBar value={progress || 50} />
-                            <p className="text-xs text-gray-500 mt-1">
-                                Indexação em andamento — atualize para ver o
-                                progresso
-                            </p>
-                        </div>
-                    )}
-
                     {errorMsg && (
-                        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                            <p className="text-xs font-semibold text-red-600 mb-0.5">
-                                Detalhes do erro:
+                        <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3">
+                            <p className="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5 mb-0.5">
+                                <Icon name="triangle-exclamation" /> Erro
                             </p>
-                            <p className="text-xs text-red-700 font-mono break-all">
-                                {errorMsg}
-                            </p>
+                            <p className="text-xs text-red-700 dark:text-red-300 font-mono break-all">{errorMsg}</p>
                         </div>
                     )}
+                </div>
+            </div>
 
-                    {status === "completed" && (
-                        <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                            {[
-                                {
-                                    icon: "💬",
-                                    label: "Chat",
-                                    desc: "Faça perguntas em linguagem natural",
-                                },
-                                {
-                                    icon: "🗺️",
-                                    label: "Tour",
-                                    desc: "Guia automático de onboarding",
-                                },
-                                {
-                                    icon: "🔗",
-                                    label: "Grafo",
-                                    desc: "Mapa de dependências dos módulos",
-                                },
-                            ].map((f) => (
-                                <div
-                                    key={f.label}
-                                    className="bg-indigo-50 rounded-lg p-3 border border-indigo-100"
-                                >
-                                    <span className="text-lg">{f.icon}</span>
-                                    <p className="font-medium text-indigo-800 mt-1">
-                                        {f.label}
-                                    </p>
-                                    <p className="text-xs text-indigo-600 mt-0.5">
-                                        {f.desc}
+            {/* â”€â”€ Repo hero card (when we have a repositoryId) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {repositoryId && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-indigo-50/60 to-transparent dark:from-indigo-900/20 dark:to-transparent">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-700 shadow-sm text-indigo-600 dark:text-indigo-400">
+                                <Icon name="book-open" />
+                            </span>
+                            <div className="min-w-0">
+                                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
+                                    {repoName || repositoryId.slice(0, 16) + "…"}
+                                </h3>
+                                {(repoData?.repository_url || url) && (
+                                    <a
+                                        href={repoData?.repository_url || url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
+                                    >
+                                        <Icon name="arrow-up-right-from-square" className="mr-1 text-[10px]" />
+                                        {repoData?.repository_url || url}
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Badge status={status || "pending"} />
+                            <button onClick={onRefresh} className={`${btnSecondary} text-xs`}>
+                                <Icon name="rotate" /> Atualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="px-6 py-5 space-y-5">
+                        {/* Stats grid */}
+                        {stats && (
+                            <motion.div
+                                variants={staggerContainer}
+                                initial="hidden"
+                                animate="show"
+                                className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+                            >
+                                <StatCard
+                                    icon="file-code"
+                                    iconColor="text-indigo-500"
+                                    label="Arquivos indexados"
+                                    value={stats.source_files != null ? String(stats.source_files) : "—"}
+                                />
+                                <StatCard
+                                    icon="puzzle-piece"
+                                    iconColor="text-violet-500"
+                                    label="Chunks de código"
+                                    value={stats.chunks != null ? String(stats.chunks) : "—"}
+                                />
+                                <StatCard
+                                    icon="database"
+                                    iconColor="text-emerald-500"
+                                    label="Vetores semânticos"
+                                    value={stats.vectors != null ? String(stats.vectors) : "—"}
+                                />
+                                <StatCard
+                                    icon="weight-hanging"
+                                    iconColor="text-amber-500"
+                                    label="Tamanho total"
+                                    value={formatSize(stats.total_size_kb as number | undefined)}
+                                />
+                            </motion.div>
+                        )}
+
+                        {/* Dates row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
+                                <Icon name="calendar-plus" className="text-indigo-400 shrink-0" />
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Indexado em</p>
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        {formatDate(repoData?.created_at)}
                                     </p>
                                 </div>
-                            ))}
+                            </div>
+                            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
+                                <Icon name="calendar-check" className="text-emerald-400 shrink-0" />
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Atualizado em</p>
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        {formatDate(repoData?.updated_at)}
+                                    </p>
+                                </div>
+                            </div>
+                            {stats?.elapsed_seconds != null && (
+                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
+                                    <Icon name="stopwatch" className="text-violet-400 shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">Tempo de indexação</p>
+                                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {stats.elapsed_seconds as number}s
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </Card>
+
+                        {/* ID row */}
+                        <div className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-400 shrink-0">ID:</span>
+                            <code className="font-mono text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 truncate">
+                                {repositoryId}
+                            </code>
+                        </div>
+
+                        {/* Languages */}
+                        {languages.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                    <Icon name="code" className="text-indigo-400" /> Linguagens detectadas
+                                </p>
+                                {/* Bar chart */}
+                                <div className="flex rounded-lg overflow-hidden h-3 mb-3 bg-gray-100 dark:bg-gray-700">
+                                    {languages.map(([lang, count], i) => {
+                                        const pct = (count / totalLangFiles) * 100;
+                                        const [bg] = LANG_STYLE[lang] ?? ["bg-gray-300"];
+                                        return (
+                                            <motion.div
+                                                key={lang}
+                                                title={`${lang}: ${count} arquivo${count !== 1 ? "s" : ""} (${pct.toFixed(0)}%)`}
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${pct}%` }}
+                                                transition={{ duration: 0.6, delay: i * 0.08, ease: [0.4, 0, 0.2, 1] }}
+                                                className={bg}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                                <motion.div
+                                    variants={staggerContainer}
+                                    initial="hidden"
+                                    animate="show"
+                                    className="flex flex-wrap gap-2"
+                                >
+                                    {languages.map(([lang, count]) => {
+                                        const [bg, text] = LANG_STYLE[lang] ?? ["bg-gray-100 dark:bg-gray-800", "text-gray-700 dark:text-gray-300"];
+                                        const pct = ((count / totalLangFiles) * 100).toFixed(0);
+                                        return (
+                                            <motion.span
+                                                key={lang}
+                                                variants={scaleIn}
+                                                transition={scaleInTransition}
+                                                className={`inline-flex items-center gap-1.5 text-xs font-medium ${bg} ${text} px-2.5 py-1 rounded-full`}
+                                            >
+                                                <span className="capitalize">{lang}</span>
+                                                <span className="opacity-60">{count} · {pct}%</span>
+                                            </motion.span>
+                                        );
+                                    })}
+                                </motion.div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* â”€â”€ Feature cards (only when completed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {status === "completed" && (
+                <div>
+                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                        <Icon name="rocket" className="text-indigo-400" />
+                        Explorar o repositório
+                    </p>
+                    <motion.div
+                        variants={staggerContainer}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                    >
+                        {FEATURE_CARDS.map((card) => (
+                            <motion.button
+                                key={card.route}
+                                variants={fadeUp}
+                                transition={fadeUpTransition}
+                                whileHover={{ y: -3, scale: 1.01 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => navigate(card.route)}
+                                className={`group text-left flex items-start gap-4 p-4 rounded-xl border transition-colors duration-200 cursor-pointer ${COLOR_MAP[card.color]}`}
+                            >
+                                <span className={`shrink-0 flex items-center justify-center w-10 h-10 rounded-xl ${ICON_COLOR_MAP[card.color]} group-hover:scale-110 transition-transform`}>
+                                    <Icon name={card.icon} />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className={`font-semibold text-sm flex items-center gap-1 ${LABEL_COLOR_MAP[card.color]}`}>
+                                        {card.label}
+                                        <Icon name="arrow-right" className="text-xs opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">{card.desc}</p>
+                                </div>
+                            </motion.button>
+                        ))}
+                    </motion.div>
+                </div>
             )}
         </div>
     );

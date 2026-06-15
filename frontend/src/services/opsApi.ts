@@ -1,4 +1,4 @@
-import { http } from "../infrastructure/http";
+import { httpGet } from "../infrastructure/http";
 
 export interface DependencyStatus {
   name: string;
@@ -22,13 +22,13 @@ export interface OperationalSummary {
 }
 
 export async function getLiveness(): Promise<{ status: string }> {
-  return http.get("/api/ops/health/live");
+  return httpGet("/api/ops/health/live");
 }
 
 export async function getReadiness(): Promise<ReadinessResponse> {
-  return http.get("/api/ops/health/ready");
+  return httpGet("/api/ops/health/ready");
 }
 
 export async function getOperationalSummary(): Promise<OperationalSummary> {
-  return http.get("/api/ops/summary");
+  return httpGet("/api/ops/summary");
 }

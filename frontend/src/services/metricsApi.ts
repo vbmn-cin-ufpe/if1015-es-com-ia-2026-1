@@ -1,4 +1,4 @@
-import { http } from "../infrastructure/http";
+import { httpGet, httpPost } from "../infrastructure/http";
 
 export interface MetricsPayload {
   total_events: number;
@@ -49,7 +49,7 @@ export async function getMetrics(
   if (options?.from) params.set("from_ts", options.from);
   if (options?.to) params.set("to_ts", options.to);
   const qs = params.toString();
-  return http.get(`/api/repos/${repositoryId}/metrics${qs ? `?${qs}` : ""}`);
+  return httpGet<MetricsResponse>(`/api/repos/${repositoryId}/metrics${qs ? `?${qs}` : ""}`);
 }
 
 export async function getQualityReport(
@@ -60,7 +60,7 @@ export async function getQualityReport(
   if (options?.from) params.set("from_ts", options.from);
   if (options?.to) params.set("to_ts", options.to);
   const qs = params.toString();
-  return http.get(
+  return httpGet<QualityReport>(
     `/api/repos/${repositoryId}/metrics/quality-report${qs ? `?${qs}` : ""}`
   );
 }
@@ -68,5 +68,5 @@ export async function getQualityReport(
 export async function submitFeedback(
   payload: FeedbackPayload
 ): Promise<FeedbackResult> {
-  return http.post("/api/feedback", payload);
+  return httpPost<FeedbackResult>("/api/feedback", payload);
 }
