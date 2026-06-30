@@ -1,6 +1,11 @@
 import { type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { fadeUp, fadeUpTransition, scaleIn, scaleInTransition } from "../../animations";
+import {
+    fadeUp,
+    fadeUpTransition,
+    scaleIn,
+    scaleInTransition,
+} from "../../animations";
 
 // ── Icon (Font Awesome 6 wrapper) ────────────────────────────────────────────
 
@@ -13,13 +18,28 @@ export function Icon({
     className?: string;
     regular?: boolean;
 }) {
-    const brandsIcons = ["github", "twitter", "facebook", "google", "linkedin", "youtube", "instagram", "discord", "slack", "npm", "python", "js-square", "react"];
-    const prefix = brandsIcons.includes(name) ? "fa-brands" : regular ? "fa-regular" : "fa-solid";
+    const brandsIcons = [
+        "github",
+        "twitter",
+        "facebook",
+        "google",
+        "linkedin",
+        "youtube",
+        "instagram",
+        "discord",
+        "slack",
+        "npm",
+        "python",
+        "js-square",
+        "react",
+    ];
+    const prefix = brandsIcons.includes(name)
+        ? "fa-brands"
+        : regular
+          ? "fa-regular"
+          : "fa-solid";
     return (
-        <i
-            className={`${prefix} fa-${name} ${className}`}
-            aria-hidden="true"
-        />
+        <i className={`${prefix} fa-${name} ${className}`} aria-hidden="true" />
     );
 }
 
@@ -181,10 +201,12 @@ export function ThinkingDots({ label = "Processando" }: { label?: string }) {
 export function EmptyState({
     icon,
     title,
+    message,
     description,
 }: {
     icon: string;
-    title: string;
+    title?: string;
+    message?: string;
     description?: string;
 }) {
     return (
@@ -194,7 +216,7 @@ export function EmptyState({
                 className="text-5xl mb-4 text-gray-300 dark:text-gray-600"
             />
             <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                {title}
+                {title ?? message}
             </p>
             {description && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
@@ -212,7 +234,7 @@ export function ErrorBanner({
     onClose,
 }: {
     message: string;
-    onClose: () => void;
+    onClose?: () => void;
 }) {
     return (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
@@ -225,12 +247,14 @@ export function ErrorBanner({
                     {message}
                 </span>
             </div>
-            <button
-                onClick={onClose}
-                className="text-red-400 hover:text-red-600 dark:hover:text-red-300 shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-            >
-                <Icon name="xmark" />
-            </button>
+            {onClose && (
+                <button
+                    onClick={onClose}
+                    className="text-red-400 hover:text-red-600 dark:hover:text-red-300 shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                >
+                    <Icon name="xmark" />
+                </button>
+            )}
         </div>
     );
 }

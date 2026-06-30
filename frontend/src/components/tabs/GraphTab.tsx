@@ -78,28 +78,38 @@ function forceLayout(
         // Repulsion
         for (let i = 0; i < n; i++) {
             for (let j = i + 1; j < n; j++) {
-                const a = pos[i], b = pos[j];
-                const dx = b.x - a.x, dy = b.y - a.y;
+                const a = pos[i],
+                    b = pos[j];
+                const dx = b.x - a.x,
+                    dy = b.y - a.y;
                 const d2 = dx * dx + dy * dy;
                 const d = Math.sqrt(d2) || 0.1;
                 // Stronger repulsion when very close
                 const f = (REPULSE / d2) * cool * (d < BOX_W * 2 ? 4 : 1);
-                const fx = (dx / d) * f, fy = (dy / d) * f;
-                a.vx -= fx; a.vy -= fy;
-                b.vx += fx; b.vy += fy;
+                const fx = (dx / d) * f,
+                    fy = (dy / d) * f;
+                a.vx -= fx;
+                a.vy -= fy;
+                b.vx += fx;
+                b.vy += fy;
             }
         }
 
         // Attraction along edges
         for (const e of edges) {
-            const s = byId.get(e.source), t = byId.get(e.target);
+            const s = byId.get(e.source),
+                t = byId.get(e.target);
             if (!s || !t) continue;
-            const dx = t.x - s.x, dy = t.y - s.y;
+            const dx = t.x - s.x,
+                dy = t.y - s.y;
             const d = Math.sqrt(dx * dx + dy * dy) || 0.1;
             const f = d * ATTRACT * cool;
-            const fx = (dx / d) * f, fy = (dy / d) * f;
-            s.vx += fx; s.vy += fy;
-            t.vx -= fx; t.vy -= fy;
+            const fx = (dx / d) * f,
+                fy = (dy / d) * f;
+            s.vx += fx;
+            s.vy += fy;
+            t.vx -= fx;
+            t.vy -= fy;
         }
 
         // Gravity toward center
@@ -110,8 +120,14 @@ function forceLayout(
             p.vy *= DAMPING;
             p.x += p.vx;
             p.y += p.vy;
-            p.x = Math.max(BOX_W / 2 + 20, Math.min(CANVAS - BOX_W / 2 - 20, p.x));
-            p.y = Math.max(BOX_H / 2 + 20, Math.min(CANVAS - BOX_H / 2 - 20, p.y));
+            p.x = Math.max(
+                BOX_W / 2 + 20,
+                Math.min(CANVAS - BOX_W / 2 - 20, p.x),
+            );
+            p.y = Math.max(
+                BOX_H / 2 + 20,
+                Math.min(CANVAS - BOX_H / 2 - 20, p.y),
+            );
         }
     }
 
@@ -363,40 +379,65 @@ export function GraphTab({ repositoryId, status }: Props) {
                             className={`${inputCls} max-w-xs pl-8`}
                         />
                     </div>
-                    <button onClick={loadGraph} className={btnSecondary} title="Recarregar grafo">
+                    <button
+                        onClick={loadGraph}
+                        className={btnSecondary}
+                        title="Recarregar grafo"
+                    >
                         <Icon name="arrows-rotate" /> Recarregar
                     </button>
                     <button
-                        onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }}
+                        onClick={() => {
+                            setPan({ x: 0, y: 0 });
+                            setZoom(1);
+                        }}
                         className={btnSecondary}
                         title="Centralizar visão"
                     >
                         <Icon name="crosshairs" /> Centralizar
                     </button>
                     <button
-                        onClick={() => { setPan({ x: 0, y: 0 }); setZoom(0.5); }}
+                        onClick={() => {
+                            setPan({ x: 0, y: 0 });
+                            setZoom(0.5);
+                        }}
                         className={btnSecondary}
                         title="Visão geral (zoom out)"
                     >
                         <Icon name="maximize" /> Visão geral
                     </button>
                     <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
-                        <Icon name="scroll" className="mr-1" />zoom ·
-                        <Icon name="hand" className="mx-1" />mover ·
-                        <Icon name="arrow-pointer" className="mx-1" />detalhes
+                        <Icon name="scroll" className="mr-1" />
+                        zoom ·
+                        <Icon name="hand" className="mx-1" />
+                        mover ·
+                        <Icon name="arrow-pointer" className="mx-1" />
+                        detalhes
                     </span>
                     <div className="flex gap-3 ml-auto text-xs text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-rose-500 bg-rose-50 dark:bg-rose-950" />
-                            <Icon name="star" className="text-rose-400 text-xs" /> Hub (&gt;60%)
+                            <Icon
+                                name="star"
+                                className="text-rose-400 text-xs"
+                            />{" "}
+                            Hub (&gt;60%)
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-orange-400 bg-orange-50 dark:bg-orange-950" />
-                            <Icon name="circle-half-stroke" className="text-orange-400 text-xs" /> Intermediário
+                            <Icon
+                                name="circle-half-stroke"
+                                className="text-orange-400 text-xs"
+                            />{" "}
+                            Intermediário
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-green-500 bg-green-50 dark:bg-green-950" />
-                            <Icon name="leaf" className="text-green-500 text-xs" /> Folha
+                            <Icon
+                                name="leaf"
+                                className="text-green-500 text-xs"
+                            />{" "}
+                            Folha
                         </span>
                     </div>
                 </div>
@@ -711,13 +752,20 @@ export function GraphTab({ repositoryId, status }: Props) {
                     {selectedId && (
                         <div className="absolute top-3 left-3 bg-orange-50 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-700 rounded-lg px-3 py-1.5 text-xs text-orange-700 dark:text-orange-300 shadow-sm">
                             <Icon name="arrow-pointer" className="mr-1" />
-                            <strong>{outOf.size + intoOf.size}</strong>{" "}
-                            conexão{outOf.size + intoOf.size !== 1 ? "ões" : ""}{" "}
+                            <strong>{outOf.size + intoOf.size}</strong> conexão
+                            {outOf.size + intoOf.size !== 1 ? "ões" : ""}{" "}
                             diretas &nbsp;·&nbsp;
                             <span className="opacity-60">
-                                <Icon name="arrow-up-right-from-square" className="mr-0.5" />{outOf.size} saída
-                                 · 
-                                <Icon name="arrow-down-left" className="mr-0.5" />{intoOf.size} entrada
+                                <Icon
+                                    name="arrow-up-right-from-square"
+                                    className="mr-0.5"
+                                />
+                                {outOf.size} saída  · 
+                                <Icon
+                                    name="arrow-down-left"
+                                    className="mr-0.5"
+                                />
+                                {intoOf.size} entrada
                             </span>
                         </div>
                     )}
@@ -745,7 +793,10 @@ export function GraphTab({ repositoryId, status }: Props) {
                                             </p>
                                         </div>
                                         <button
-                                            onClick={() => { setSelectedId(null); setDetail(null); }}
+                                            onClick={() => {
+                                                setSelectedId(null);
+                                                setDetail(null);
+                                            }}
                                             className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none shrink-0"
                                         >
                                             ×
@@ -757,19 +808,25 @@ export function GraphTab({ repositoryId, status }: Props) {
                                             <p className="font-bold text-rose-700 dark:text-rose-300 text-lg leading-tight">
                                                 {detail.metrics.in_degree}
                                             </p>
-                                            <p className="text-rose-500 dark:text-rose-400 mt-0.5">↙ Entrada</p>
+                                            <p className="text-rose-500 dark:text-rose-400 mt-0.5">
+                                                ↙ Entrada
+                                            </p>
                                         </div>
                                         <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 rounded-lg p-2.5">
                                             <p className="font-bold text-indigo-700 dark:text-indigo-300 text-lg leading-tight">
                                                 {detail.metrics.out_degree}
                                             </p>
-                                            <p className="text-indigo-500 dark:text-indigo-400 mt-0.5">↗ Saída</p>
+                                            <p className="text-indigo-500 dark:text-indigo-400 mt-0.5">
+                                                ↗ Saída
+                                            </p>
                                         </div>
                                         <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 rounded-lg p-2.5">
                                             <p className="font-bold text-gray-700 dark:text-gray-300 text-lg leading-tight">
                                                 {detail.metrics.total_degree}
                                             </p>
-                                            <p className="text-gray-500 dark:text-gray-400 mt-0.5">Total</p>
+                                            <p className="text-gray-500 dark:text-gray-400 mt-0.5">
+                                                Total
+                                            </p>
                                         </div>
                                     </div>
                                     {/* Centrality bar */}
@@ -777,14 +834,28 @@ export function GraphTab({ repositoryId, status }: Props) {
                                         <div className="mt-3">
                                             <div className="flex justify-between text-xs text-gray-400 mb-1">
                                                 <span className="flex items-center gap-1">
-                                                    <Icon name="star" className="text-yellow-400" /> Centralidade (in-degree)
+                                                    <Icon
+                                                        name="star"
+                                                        className="text-yellow-400"
+                                                    />{" "}
+                                                    Centralidade (in-degree)
                                                 </span>
-                                                <span>{Math.round((detail.metrics.in_degree / maxDeg) * 100)}%</span>
+                                                <span>
+                                                    {Math.round(
+                                                        (detail.metrics
+                                                            .in_degree /
+                                                            maxDeg) *
+                                                            100,
+                                                    )}
+                                                    %
+                                                </span>
                                             </div>
                                             <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full rounded-full bg-gradient-to-r from-green-400 via-orange-400 to-rose-500"
-                                                    style={{ width: `${Math.round((detail.metrics.in_degree / maxDeg) * 100)}%` }}
+                                                    style={{
+                                                        width: `${Math.round((detail.metrics.in_degree / maxDeg) * 100)}%`,
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -794,17 +865,34 @@ export function GraphTab({ repositoryId, status }: Props) {
                                 {detail.inbound_dependencies.length > 0 && (
                                     <Card title="">
                                         <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
-                                            <Icon name="arrow-down-to-bracket" className="text-indigo-400" />
+                                            <Icon
+                                                name="arrow-down-to-bracket"
+                                                className="text-indigo-400"
+                                            />
                                             Quem usa este módulo
-                                            <span className="ml-auto text-gray-400 font-normal">{detail.inbound_dependencies.length}</span>
+                                            <span className="ml-auto text-gray-400 font-normal">
+                                                {
+                                                    detail.inbound_dependencies
+                                                        .length
+                                                }
+                                            </span>
                                         </p>
                                         <div className="space-y-1 max-h-48 overflow-y-auto">
-                                            {detail.inbound_dependencies.map((d, i) => (
-                                                <p key={i} className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-2 py-1.5 rounded-md">
-                                                    {d.source.split("/").pop() ?? d.source}
-                                                    <span className="opacity-40 block text-gray-400 text-xs truncate">{d.source}</span>
-                                                </p>
-                                            ))}
+                                            {detail.inbound_dependencies.map(
+                                                (d, i) => (
+                                                    <p
+                                                        key={i}
+                                                        className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 px-2 py-1.5 rounded-md"
+                                                    >
+                                                        {d.source
+                                                            ?.split("/")
+                                                            .pop() ?? d.source}
+                                                        <span className="opacity-40 block text-gray-400 text-xs truncate">
+                                                            {d.source}
+                                                        </span>
+                                                    </p>
+                                                ),
+                                            )}
                                         </div>
                                     </Card>
                                 )}
@@ -812,17 +900,34 @@ export function GraphTab({ repositoryId, status }: Props) {
                                 {detail.outbound_dependencies.length > 0 && (
                                     <Card title="">
                                         <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1.5">
-                                            <Icon name="arrow-up-from-bracket" className="text-orange-400" />
+                                            <Icon
+                                                name="arrow-up-from-bracket"
+                                                className="text-orange-400"
+                                            />
                                             Módulos que este usa
-                                            <span className="ml-auto text-gray-400 font-normal">{detail.outbound_dependencies.length}</span>
+                                            <span className="ml-auto text-gray-400 font-normal">
+                                                {
+                                                    detail.outbound_dependencies
+                                                        .length
+                                                }
+                                            </span>
                                         </p>
                                         <div className="space-y-1 max-h-48 overflow-y-auto">
-                                            {detail.outbound_dependencies.map((d, i) => (
-                                                <p key={i} className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 px-2 py-1.5 rounded-md">
-                                                    {d.target.split("/").pop() ?? d.target}
-                                                    <span className="opacity-40 block text-gray-400 text-xs truncate">{d.target}</span>
-                                                </p>
-                                            ))}
+                                            {detail.outbound_dependencies.map(
+                                                (d, i) => (
+                                                    <p
+                                                        key={i}
+                                                        className="text-xs font-mono text-gray-600 dark:text-gray-400 truncate bg-orange-50 dark:bg-orange-950/30 border border-orange-100 dark:border-orange-900/50 px-2 py-1.5 rounded-md"
+                                                    >
+                                                        {d.target
+                                                            ?.split("/")
+                                                            .pop() ?? d.target}
+                                                        <span className="opacity-40 block text-gray-400 text-xs truncate">
+                                                            {d.target}
+                                                        </span>
+                                                    </p>
+                                                ),
+                                            )}
                                         </div>
                                     </Card>
                                 )}
@@ -842,7 +947,10 @@ export function GraphTab({ repositoryId, status }: Props) {
                     módulos
                 </span>
                 <span className="flex items-center gap-1.5">
-                    <Icon name="arrow-right-arrow-left" className="text-indigo-400" />
+                    <Icon
+                        name="arrow-right-arrow-left"
+                        className="text-indigo-400"
+                    />
                     <strong className="text-gray-700 dark:text-gray-300">
                         {graph.edge_count}
                     </strong>{" "}
@@ -850,7 +958,10 @@ export function GraphTab({ repositoryId, status }: Props) {
                 </span>
                 {filterSet && (
                     <span className="flex items-center gap-1.5">
-                        <Icon name="magnifying-glass" className="text-indigo-400" />
+                        <Icon
+                            name="magnifying-glass"
+                            className="text-indigo-400"
+                        />
                         <strong className="text-gray-700 dark:text-gray-300">
                             {filterSet.size}
                         </strong>{" "}

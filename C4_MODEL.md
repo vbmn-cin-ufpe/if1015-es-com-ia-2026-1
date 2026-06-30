@@ -7,7 +7,7 @@
 | Versão | Data       | Autor                          | Descrição                                                                          |
 | ------ | ---------- | ------------------------------ | ---------------------------------------------------------------------------------- |
 | 1.0    | 2026-05-10 | Victor Barros de Miranda Neves | Versão inicial — arquitetura hexagonal, C4 N1+N2                                   |
-| 1.1    | 2026-05-22 | Victor Barros de Miranda Neves | Adição do N3 (componentes do RAG/LLM), atualização de tecnologias                 |
+| 1.1    | 2026-05-22 | Victor Barros de Miranda Neves | Adição do N3 (componentes do RAG/LLM), atualização de tecnologias                  |
 | 1.2    | 2026-06-08 | Victor Barros de Miranda Neves | Formalização no template C4 Model; inclusão de ADRs                                |
 | 1.3    | 2026-06-15 | Victor Barros de Miranda Neves | Fase 4: drift arquitetural, audit log, webhooks HMAC, watchlist; ADR-007 e ADR-008 |
 
@@ -18,25 +18,25 @@
 > Visão de mais alto nível: quem são os usuários, com quais sistemas externos o CodeCompass interage, e onde a IA se encaixa nesse contexto.
 
 ```mermaid
-C4Context
-    title Sistema CodeCompass — Diagrama de Contexto
+flowchart TD
+    DEV(["Desenvolvedor Novato"])
+    TL(["Tech Lead / Admin"])
 
-    Person(dev_novo, "Desenvolvedor Novato", "Recém-chegado ao time. Precisa entender\numa codebase desconhecida rapidamente.")
-    Person(tech_lead, "Tech Lead / Admin", "Monitora métricas de onboarding,\ngerencia repositórios indexados,\nconfigura webhooks e audit log.")
+    subgraph CC["CodeCompass"]
+        APP["Assistente de Onboarding - RAG + LLM + Drift Detection"]
+    end
 
-    System(codecompass, "CodeCompass", "Assistente conversacional de onboarding.\nIndexa codebases e responde perguntas\nem linguagem natural via RAG + LLM.\nDetecta drift arquitetural.\nNotifica subscribers via e-mail.")
+    GH["GitHub / GitLab / Bitbucket"]
+    LLM_P["LLM Provider - Abacus AI / Anthropic / OpenAI"]
+    EMBED["OpenAI Embeddings API - text-embedding-3-small"]
+    EMAIL["E-mail Gateway SMTP"]
 
-    System_Ext(github, "GitHub / GitLab / Bitbucket", "Hospeda os repositórios\nde código-fonte a serem indexados.\nEnvia push events via webhooks.")
-    System_Ext(llm_provider, "LLM Provider\n(Abacus AI / Anthropic / OpenAI)", "Gera respostas em linguagem natural,\nexplicações de código, walkthroughs\ne interpretações de drift arquitetural.")
-    System_Ext(openai_embed, "OpenAI Embeddings API\n(text-embedding-3-small)", "Converte texto e código\nem vetores semânticos de alta qualidade.")
-    System_Ext(email_gateway, "E-mail Gateway\n(SMTP)", "Envia notificações para subscribers\nda watchlist quando módulos mudam.")
-
-    Rel(dev_novo, codecompass, "Faz perguntas sobre a codebase,\nexplora tours guiados e grafo de dependências,\nsubscreve módulos para notificação", "HTTPS/WebApp")
-    Rel(tech_lead, codecompass, "Indexa repositórios,\nconsulta métricas, configura webhooks,\nvisualiza audit log", "HTTPS/WebApp")
-    Rel(codecompass, github, "Clona repositórios via URL pública;\nrecebe push events via webhook HMAC-SHA256", "HTTPS/Git")
-    Rel(codecompass, llm_provider, "Envia prompts + contexto RAG,\nrecebe respostas geradas", "HTTPS/REST API")
-    Rel(codecompass, openai_embed, "Envia batches de texto/código,\nrecebe vetores de embedding", "HTTPS/REST API")
-    Rel(codecompass, email_gateway, "Envia e-mails de notificação\npara watchlist subscribers", "SMTP")
+    DEV -->|"Perguntas, tours, grafo, watchlist"| APP
+    TL -->|"Indexa repos, metricas, webhooks, audit"| APP
+    APP -->|"git clone + push events HMAC-SHA256"| GH
+    APP -->|"prompts + contexto RAG"| LLM_P
+    APP -->|"batches de texto e codigo"| EMBED
+    APP -->|"notificacoes para subscribers"| EMAIL
 ```
 
 **Descrição:**
@@ -56,51 +56,41 @@ C4Context
 > As grandes partes do sistema: aplicações, bancos de dados, APIs e serviços de infraestrutura.
 
 ```mermaid
-C4Container
-    title Sistema CodeCompass — Diagrama de Contêineres
+flowchart LR
+    DEV(["Dev Novato"])
+    TL(["Tech Lead / Admin"])
 
-    Person(dev_novo, "Desenvolvedor Novato")
-    Person(tech_lead, "Tech Lead / Admin")
+    subgraph CC["CodeCompass"]
+        FE["Frontend SPA\nReact 18 + TypeScript + Vite 6"]
+        BE["Backend API\nPython 3.11 + FastAPI 0.115"]
+        PG[("PostgreSQL 16\nusuarios, repos, audit, webhooks, watchlist")]
+        CHROMA[("ChromaDB 0.5\nVector Store - embeddings de codigo")]
+    end
 
-    System_Boundary(codecompass, "CodeCompass") {
+    GH["GitHub / GitLab\nRepos + Webhooks"]
+    LLM_P["LLM API\nAbacus AI / OpenAI / Anthropic"]
+    EMBED["Embeddings API\nOpenAI / local"]
+    EMAIL["E-mail Gateway"]
 
-        Container(frontend, "Frontend SPA", "React 18 + TypeScript 5.8\nVite 6 + Tailwind CSS",
-            "Interface web com 10 abas:\nChat RAG, Tour Guiado,\nGrafo de Dependências, Drift Arquitetural,\nHistórico de Commits, Métricas,\nRepositório, Watchlist, Admin.\nDark mode + sidebar colapsável.")
-
-        Container(backend, "Backend API", "Python 3.11 + FastAPI 0.115\nArquitetura Hexagonal (Ports & Adapters)",
-            "11 controllers REST.\nOrquestra RAG pipeline,\nindexação de repositórios,\ngeração de tours guiados,\ndetecção de drift arquitetural,\naudit middleware automático,\nwebhooks HMAC-SHA256,\nwatchlist + notificações.")
-
-        ContainerDb(postgres, "PostgreSQL 16", "Banco de dados relacional",
-            "Armazena: usuários, sessões de onboarding,\nmetadados de repositórios (status, URL, stats),\nhistórico de commits classificados,\nmétricas de uso e feedback,\naudit_log (todas as mutações),\nwebhooks + segredos HMAC,\nwatchlist (UNIQUE constraint),\nsnapshots do grafo de dependências.")
-
-        ContainerDb(chroma, "ChromaDB 0.5", "Vector Store",
-            "Armazena embeddings de código-fonte\nindexado para busca semântica (RAG).\nColeção por repositório.\nDistância: cosine similarity.")
-    }
-
-    System_Ext(github, "GitHub / GitLab", "Repositório remoto\n+ push events webhook")
-    System_Ext(llm_api, "LLM API\n(Abacus AI / Anthropic / OpenAI)")
-    System_Ext(embed_api, "OpenAI Embeddings API\nou sentence-transformers (local)")
-    System_Ext(email, "E-mail Gateway (SMTP)")
-
-    Rel(dev_novo, frontend, "Acessa via navegador", "HTTPS :5173")
-    Rel(tech_lead, frontend, "Acessa via navegador", "HTTPS :5173")
-    Rel(frontend, backend, "Requisições REST (JSON) + Bearer JWT", "HTTP :8000")
-    Rel(backend, postgres, "Lê/escreve metadados,\nusuários, audit log, webhooks, watchlist", "PostgreSQL :5432")
-    Rel(backend, chroma, "Armazena e consulta\nvetores de código", "HTTP :8001")
-    Rel(backend, github, "Clona repositórios\n(git clone)\nRecebe push events (webhook)", "HTTPS/Git")
-    Rel(backend, llm_api, "Envia prompts + contexto RAG\nrecebe respostas geradas", "HTTPS")
-    Rel(backend, embed_api, "Envia texto/código em batch\nrecebe vetores float[]", "HTTPS / local")
-    Rel(backend, email, "Notificações de mudança\npara watchlist subscribers", "SMTP")
+    DEV -->|"HTTPS :5173"| FE
+    TL -->|"HTTPS :5173"| FE
+    FE -->|"REST JSON + Bearer JWT - HTTP :8000"| BE
+    BE -->|"TCP :5432"| PG
+    BE -->|"HTTP :8001"| CHROMA
+    BE -->|"HTTPS/Git + push events"| GH
+    BE -->|"HTTPS"| LLM_P
+    BE -->|"HTTPS / local"| EMBED
+    BE -->|"SMTP"| EMAIL
 ```
 
 **Descrição de cada contêiner:**
 
-| Contêiner         | Tecnologia                         | Porta | Responsabilidade                                                                                                                          |
-| ----------------- | ---------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend SPA**  | React 18 + TypeScript 5.8 + Vite 6 | :5173 | Interface com 10 abas: Chat RAG, Tour, Grafo, Drift, Histórico, Métricas, Repositório, Watchlist, Admin. Dark mode + sidebar colapsável  |
-| **Backend API**   | Python 3.11 + FastAPI 0.115        | :8000 | 11 routers REST; pipeline de indexação/RAG; drift arquitetural; audit middleware; webhooks HMAC; watchlist + notificações                |
-| **PostgreSQL 16** | PostgreSQL                         | :5432 | Persistência relacional: usuários, sessões, repos, commits, métricas, audit_log, webhooks, watchlist, snapshots do grafo                 |
-| **ChromaDB 0.5**  | ChromaDB                           | :8001 | Vector store para embeddings de código; busca semântica por cosine similarity para o RAG                                                  |
+| Contêiner         | Tecnologia                         | Porta | Responsabilidade                                                                                                                        |
+| ----------------- | ---------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend SPA**  | React 18 + TypeScript 5.8 + Vite 6 | :5173 | Interface com 10 abas: Chat RAG, Tour, Grafo, Drift, Histórico, Métricas, Repositório, Watchlist, Admin. Dark mode + sidebar colapsável |
+| **Backend API**   | Python 3.11 + FastAPI 0.115        | :8000 | 11 routers REST; pipeline de indexação/RAG; drift arquitetural; audit middleware; webhooks HMAC; watchlist + notificações               |
+| **PostgreSQL 16** | PostgreSQL                         | :5432 | Persistência relacional: usuários, sessões, repos, commits, métricas, audit_log, webhooks, watchlist, snapshots do grafo                |
+| **ChromaDB 0.5**  | ChromaDB                           | :8001 | Vector store para embeddings de código; busca semântica por cosine similarity para o RAG                                                |
 
 **Infraestrutura:** Todos os 4 contêineres são orquestrados pelo `docker-compose.yml` na raiz do repositório. O frontend consome apenas o backend (sem acesso direto a banco ou vector store).
 
@@ -111,118 +101,77 @@ C4Container
 > Zoom no contêiner **Backend API** — os componentes internos organizados em Arquitetura Hexagonal.
 
 ```mermaid
-C4Component
-    title Backend API — Diagrama de Componentes (Arquitetura Hexagonal)
+flowchart LR
+    subgraph HTTP["Controllers - HTTP Layer"]
+        auth_ctrl["auth_controller\nPOST /signup /signin /sessions"]
+        repo_ctrl["repo_controller\nPOST/GET /repos"]
+        chat_ctrl["chat_controller\nPOST /chat/ask"]
+        tour_ctrl["tour_controller\nPOST/GET /tours"]
+        graph_ctrl["graph_controller\nGET /graph /diff /interpret"]
+        admin_ctrl["admin_controller\nGET/PATCH /admin/*"]
+        watch_ctrl["watchlist_controller"]
+        webhook_ctrl["webhook_controller\nHMAC-SHA256"]
+    end
 
-    Container_Boundary(backend, "Backend API — FastAPI") {
+    subgraph SVC["Services - Domain Layer"]
+        auth_svc["auth_service\nbcrypt + JWT sessions"]
+        repo_svc["repo_service\ngit clone > chunk > embed > store"]
+        chat_svc["chat_service\nRAG pipeline"]
+        tour_svc["tour_service\nLLM walkthroughs"]
+        graph_svc["graph_service\ngrafo de dependencias"]
+        drift_svc["drift_service\ndiff de snapshots"]
+        hist_svc["history_service\ncommits + LLM"]
+        embed_svc["embedding_service\nOpenAI / local"]
+        retrieval_svc["retrieval_service\nbusca vetorial"]
+        notif_svc["notification_service\ne-mail alerts"]
+    end
 
-        Component(main, "main.py\n(Entry Point)", "FastAPI app factory",
-            "Registra routers, configura CORS,\nseed do admin, audit middleware,\nbackground tasks.")
+    subgraph INFRA["Infrastructure - Adapters"]
+        llm_client["llm_client\nAbacus/OpenAI/Anthropic"]
+        chroma_adp["chroma_adapter\nHTTP ChromaDB"]
+        pg_adp["postgres_adapter\npsycopg"]
+        git_client["git_client\nGitPython"]
+        audit_repo["audit_repository\naudit_log table"]
+        watchlist_repo["watchlist_repository"]
+        webhook_repo["webhook_repository\nHMAC secrets"]
+    end
 
-        Boundary(controllers, "Controllers (HTTP Layer)") {
-            Component(auth_ctrl, "auth_controller", "FastAPI Router", "POST /signup, /signin, /sessions")
-            Component(repo_ctrl, "repo_controller", "FastAPI Router", "POST/GET /repos — indexação e status")
-            Component(chat_ctrl, "chat_controller", "FastAPI Router", "POST /chat/ask")
-            Component(tour_ctrl, "tour_controller", "FastAPI Router", "POST/GET /tours/{repo_id}")
-            Component(graph_ctrl, "dependency_graph_controller", "FastAPI Router", "GET /graph, /snapshots, /diff, POST /diff/interpret")
-            Component(hist_ctrl, "history_controller", "FastAPI Router", "GET /history/{repo_id}/why")
-            Component(metrics_ctrl, "metrics_controller", "FastAPI Router", "GET/POST /metrics/{repo_id}")
-            Component(ops_ctrl, "ops_controller", "FastAPI Router", "GET /ops/liveness, /readiness")
-            Component(health_ctrl, "health_controller", "FastAPI Router", "GET /health")
-            Component(admin_ctrl, "admin_controller", "FastAPI Router", "GET/PATCH /api/admin/* — users, stats, usage, costs, audit-log, plans")
-            Component(watch_ctrl, "watchlist_controller", "FastAPI Router", "POST/DELETE /repos/{id}/watch, GET /me/watchlist")
-            Component(webhook_ctrl, "webhook_controller", "FastAPI Router", "CRUD /api/admin/webhooks + POST /api/webhooks/github/{id}")
-        }
+    PG[("PostgreSQL 16")]
+    CHROMA[("ChromaDB 0.5")]
+    LLM_API(["LLM API"])
+    EMBED_API(["Embeddings API"])
+    GIT_REMOTE(["GitHub / Git Remote"])
 
-        Boundary(services, "Services (Domain Layer)") {
-            Component(auth_svc, "auth_service", "Python class", "Signup, signin, hash bcrypt,\ngestão de sessões de onboarding")
-            Component(repo_svc, "repo_service", "Python class", "Orquestra pipeline de indexação:\ngit clone → chunk → embed → store")
-            Component(chat_svc, "chat_service", "Python class", "RAG: busca semântica + chamada LLM")
-            Component(embed_svc, "embedding_service", "Python class", "Embeddings local (sentence-transformers)\nou OpenAI (text-embedding-3-small)\nThreadPoolExecutor para paralelismo")
-            Component(retrieval_svc, "retrieval_service", "Python class", "Busca semântica no ChromaDB")
-            Component(chunk_svc, "chunking_service", "Python class", "Divide código em chunks via tree-sitter\n(15 linguagens)")
-            Component(tour_svc, "tour_service", "Python class", "Score módulos (complexidade × churn × acoplamento)\n+ geração de walkthroughs via LLM")
-            Component(graph_svc, "dependency_graph_service", "Python class", "Analisa imports, constrói grafo,\ncalcula métricas de centralidade,\nsalva snapshots no PostgreSQL")
-            Component(drift_svc, "architecture_drift_service", "Python class", "Compara dois snapshots do grafo:\ndrift_score = changed_elements / total * 100\nRetorna DriftReport com added/removed nodes/edges")
-            Component(hist_svc, "history_orchestration_service", "Python class", "Ingere commits, classifica categorias,\norquestra timeline e Why explanations")
-            Component(metrics_svc, "metrics_aggregation_service", "Python class", "Agrega KPIs de onboarding,\ngera relatório de qualidade")
-            Component(notif_svc, "notification_service", "Python class", "Detecta módulos alterados pós-indexação\ne envia e-mails para watchlist subscribers")
-            Component(analyzers, "analyzers\n(ChurnAnalyzer, ComplexityAnalyzer\nCouplingAnalyzer)", "Python classes", "Métricas de código: complexidade ciclomática\n(radon), churn (git log), acoplamento (AST imports)")
-        }
+    auth_ctrl --> auth_svc
+    repo_ctrl --> repo_svc
+    chat_ctrl --> chat_svc
+    tour_ctrl --> tour_svc
+    graph_ctrl --> graph_svc
+    graph_ctrl --> drift_svc
+    admin_ctrl --> audit_repo
+    watch_ctrl --> watchlist_repo
+    webhook_ctrl --> webhook_repo
+    webhook_ctrl --> repo_svc
 
-        Boundary(ports, "Ports (Interfaces — Dependency Inversion)") {
-            Component(ports_file, "ports.py", "Python Protocol classes",
-                "LLMPort, VectorStorePort,\nRepositoryMetadataPort, GitClientPort,\nTourRepositoryPort, DecisionRepositoryPort,\nWatchlistPort, AuditPort, WebhookPort")
-        }
+    repo_svc --> embed_svc
+    repo_svc --> git_client
+    repo_svc --> notif_svc
+    chat_svc --> retrieval_svc
+    chat_svc --> llm_client
+    retrieval_svc --> chroma_adp
+    embed_svc --> chroma_adp
+    tour_svc --> llm_client
+    drift_svc --> graph_svc
+    notif_svc --> watchlist_repo
 
-        Boundary(infra, "Infrastructure (Adapters — Implementations)") {
-            Component(llm_client, "llm_client\n(LlmClient)", "Python class",
-                "Implementa LLMPort.\nSuporta Abacus AI, Anthropic, OpenAI.\nFallback template-based sem chave.")
-            Component(chroma_adapter, "chroma_adapter\n(ChromaAdapter)", "Python class",
-                "Implementa VectorStorePort.\nInterface com ChromaDB via cliente HTTP.")
-            Component(postgres_adapter, "postgres_adapter\n(PostgresAdapter)", "Python class",
-                "Implementa RepositoryMetadataPort.\npsycopg2 com connection pool.")
-            Component(git_client, "git_client\n(GitClient)", "Python class",
-                "Implementa GitClientPort.\nGitPython + subprocess para git log.")
-            Component(audit_repo, "audit_repository\n(AuditRepository)", "Python class",
-                "Tabela audit_log PostgreSQL.\nFallback in-memory.\nRecord(user_id, action, resource_type, ip, ts)")
-            Component(webhook_repo, "webhook_repository\n(WebhookRepository)", "Python class",
-                "Tabela webhooks + segredos HMAC-SHA256.\nFallback in-memory.\nsecrets.token_hex(32) na criação.")
-            Component(watchlist_repo, "watchlist_repository\n(WatchlistRepository)", "Python class",
-                "Tabela watchlist PostgreSQL.\nUNIQUE(user_id, repo_id, module_path).\nFallback in-memory.")
-            Component(settings, "settings.py\n(Settings)", "Pydantic BaseSettings",
-                "Todas as variáveis de ambiente.\nValidação automática no startup.")
-        }
-
-        Component(di, "dependencies.py\n(DI Container)", "FastAPI Depends",
-            "Instancia e injeta todos os serviços\ne adaptadores nos controllers.")
-    }
-
-    ContainerDb(postgres, "PostgreSQL 16", "", "")
-    ContainerDb(chroma, "ChromaDB 0.5", "", "")
-    System_Ext(llm_api, "LLM API")
-    System_Ext(embed_api, "Embeddings API")
-    System_Ext(git_remote, "GitHub / Git Remote")
-
-    Rel(auth_ctrl, auth_svc, "chama")
-    Rel(repo_ctrl, repo_svc, "chama")
-    Rel(chat_ctrl, chat_svc, "chama")
-    Rel(tour_ctrl, tour_svc, "chama")
-    Rel(graph_ctrl, graph_svc, "chama")
-    Rel(graph_ctrl, drift_svc, "chama para /diff e /diff/interpret")
-    Rel(graph_ctrl, llm_client, "via LLMPort (interpretação)")
-    Rel(hist_ctrl, hist_svc, "chama")
-    Rel(metrics_ctrl, metrics_svc, "chama")
-    Rel(watch_ctrl, watchlist_repo, "via WatchlistPort")
-    Rel(webhook_ctrl, webhook_repo, "via WebhookPort")
-    Rel(webhook_ctrl, repo_svc, "trigger reindex pós push event")
-    Rel(admin_ctrl, audit_repo, "via AuditPort")
-
-    Rel(repo_svc, chunk_svc, "usa")
-    Rel(repo_svc, embed_svc, "usa")
-    Rel(repo_svc, git_client, "via GitClientPort")
-    Rel(repo_svc, notif_svc, "notifica após indexação completa")
-    Rel(chat_svc, retrieval_svc, "busca chunks")
-    Rel(chat_svc, llm_client, "via LLMPort")
-    Rel(embed_svc, chroma_adapter, "via VectorStorePort")
-    Rel(tour_svc, analyzers, "usa para scoring")
-    Rel(tour_svc, llm_client, "via LLMPort")
-    Rel(hist_svc, git_client, "via GitClientPort")
-    Rel(hist_svc, llm_client, "via LLMPort")
-    Rel(drift_svc, graph_svc, "lê snapshots do grafo")
-    Rel(notif_svc, watchlist_repo, "lista subscribers por módulo")
-
-    Rel(main, audit_repo, "audit middleware — registra mutações")
-
-    Rel(llm_client, llm_api, "HTTPS")
-    Rel(embed_svc, embed_api, "HTTPS / local")
-    Rel(chroma_adapter, chroma, "HTTP :8001")
-    Rel(postgres_adapter, postgres, "TCP :5432")
-    Rel(audit_repo, postgres, "TCP :5432")
-    Rel(webhook_repo, postgres, "TCP :5432")
-    Rel(watchlist_repo, postgres, "TCP :5432")
-    Rel(git_client, git_remote, "HTTPS/Git")
-    Rel(di, ports_file, "usa interfaces para injeção")
+    llm_client --> LLM_API
+    embed_svc --> EMBED_API
+    chroma_adp --> CHROMA
+    pg_adp --> PG
+    audit_repo --> PG
+    watchlist_repo --> PG
+    webhook_repo --> PG
+    git_client --> GIT_REMOTE
 ```
 
 **Diagrama de fluxo — Indexação de Repositório:**
@@ -393,29 +342,29 @@ webhook_controller
 
 ## Visão de Segurança
 
-| Camada                  | Controle                     | Implementação                                                                                              |
-| ----------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Credenciais**         | Sem hardcoding               | Todas as chaves em env vars; `POSTGRES_PASSWORD` e `ADMIN_PASSWORD` obrigatórios (`${VAR:?required}`)      |
-| **Senhas de usuário**   | Hash seguro                  | bcrypt via `passlib` em `auth_service.py`                                                                  |
-| **Autenticação**        | JWT Bearer global            | `useAuthStore.getState().token` injetado automaticamente em todas as chamadas HTTP via `bearerHeaders()`   |
-| **Autorização admin**   | Verificação de role          | Endpoints `/api/admin/*` verificam `user.role == "admin"` via `require_auth` + role check                 |
-| **Webhooks**            | HMAC-SHA256 timing-safe      | `hmac.compare_digest()` + segredo `secrets.token_hex(32)` retornado apenas na criação                      |
-| **Repositórios**        | Validação de URL             | `git_client.py` valida formato antes do clone; `ALLOW_LOCAL_REPOS=false` bloqueia paths locais em produção |
-| **Segredos**            | Gitignore                    | `.env` na linha 69 do `.gitignore`; `.env.example` sem valores reais no repositório                        |
-| **Containers**          | Isolamento de rede           | Docker Compose com rede bridge; PostgreSQL e ChromaDB não expostos externamente                            |
-| **Auditoria**           | Rastreabilidade completa     | Audit middleware registra toda mutação com user_id, IP, recurso e timestamp                                |
+| Camada                | Controle                 | Implementação                                                                                              |
+| --------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Credenciais**       | Sem hardcoding           | Todas as chaves em env vars; `POSTGRES_PASSWORD` e `ADMIN_PASSWORD` obrigatórios (`${VAR:?required}`)      |
+| **Senhas de usuário** | Hash seguro              | bcrypt via `passlib` em `auth_service.py`                                                                  |
+| **Autenticação**      | JWT Bearer global        | `useAuthStore.getState().token` injetado automaticamente em todas as chamadas HTTP via `bearerHeaders()`   |
+| **Autorização admin** | Verificação de role      | Endpoints `/api/admin/*` verificam `user.role == "admin"` via `require_auth` + role check                  |
+| **Webhooks**          | HMAC-SHA256 timing-safe  | `hmac.compare_digest()` + segredo `secrets.token_hex(32)` retornado apenas na criação                      |
+| **Repositórios**      | Validação de URL         | `git_client.py` valida formato antes do clone; `ALLOW_LOCAL_REPOS=false` bloqueia paths locais em produção |
+| **Segredos**          | Gitignore                | `.env` na linha 69 do `.gitignore`; `.env.example` sem valores reais no repositório                        |
+| **Containers**        | Isolamento de rede       | Docker Compose com rede bridge; PostgreSQL e ChromaDB não expostos externamente                            |
+| **Auditoria**         | Rastreabilidade completa | Audit middleware registra toda mutação com user_id, IP, recurso e timestamp                                |
 
 ---
 
 ## Índice de Documentos
 
-| Documento                                       | Descrição                                       |
-| ----------------------------------------------- | ----------------------------------------------- |
+| Documento                                       | Descrição                                            |
+| ----------------------------------------------- | ---------------------------------------------------- |
 | [README.md](../README.md)                       | Visão geral, stack, features por fase, como executar |
-| [COMO_FUNCIONA.md](../COMO_FUNCIONA.md)         | Arquitetura narrativa + fluxos detalhados        |
-| [COMO_RODAR.md](../COMO_RODAR.md)               | Setup passo a passo do zero                      |
-| [CATALOGO_PROMPTS.md](../CATALOGO_PROMPTS.md)   | Todos os 9 prompts da aplicação documentados     |
-| [C4_MODEL.md](../C4_MODEL.md)                   | Este documento — C4 Model completo               |
-| [ARCHITECTURE.md](../ARCHITECTURE.md)           | Arquitetura hexagonal, SOLID, DI patterns        |
-| [PROPOSTA_v1.md](../PROPOSTA_v1.md)             | Proposta inicial, problema e solução             |
-| [WORKFLOW_DOCUMENT.md](../WORKFLOW_DOCUMENT.md) | Registro de uso de IA e economicidade            |
+| [COMO_FUNCIONA.md](../COMO_FUNCIONA.md)         | Arquitetura narrativa + fluxos detalhados            |
+| [COMO_RODAR.md](../COMO_RODAR.md)               | Setup passo a passo do zero                          |
+| [CATALOGO_PROMPTS.md](../CATALOGO_PROMPTS.md)   | Todos os 9 prompts da aplicação documentados         |
+| [C4_MODEL.md](../C4_MODEL.md)                   | Este documento — C4 Model completo                   |
+| [ARCHITECTURE.md](../ARCHITECTURE.md)           | Arquitetura hexagonal, SOLID, DI patterns            |
+| [PROPOSTA_v1.md](../PROPOSTA_v1.md)             | Proposta inicial, problema e solução                 |
+| [WORKFLOW_DOCUMENT.md](../WORKFLOW_DOCUMENT.md) | Registro de uso de IA e economicidade                |
