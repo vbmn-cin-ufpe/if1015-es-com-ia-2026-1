@@ -80,7 +80,7 @@ def get_settings() -> Settings:
         llm_api_base_url=os.getenv("LLM_API_BASE_URL"),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         llm_model=os.getenv("LLM_MODEL", "claude-3-5-sonnet-20240620"),
-        llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "4096")),
+        llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "1200")),
         llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.7")),
         # Performance
         max_file_size_kb=int(os.getenv("MAX_FILE_SIZE_KB", "200")),

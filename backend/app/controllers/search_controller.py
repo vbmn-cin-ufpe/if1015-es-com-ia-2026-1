@@ -58,10 +58,8 @@ def semantic_search(
     for item in chunks:
         meta = item.get("metadata", {})
         content: str = meta.get("content", "") or ""
-        # Truncate snippet to first 300 chars for readability
-        snippet = content[:300].strip()
-        if len(content) > 300:
-            snippet += "…"
+        # Return the full chunk content (the frontend handles display/truncation)
+        snippet = content.strip()
 
         results.append(SearchResult(
             chunk_id=item.get("chunk_id", ""),

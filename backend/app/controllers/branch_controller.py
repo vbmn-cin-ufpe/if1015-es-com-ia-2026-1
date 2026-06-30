@@ -1,6 +1,7 @@
 """Branch analysis API endpoints — diffs a branch against a base and summarises via LLM."""
 
 import logging
+import subprocess
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,6 +15,11 @@ router = APIRouter(prefix="/api/repos", tags=["branch-analysis"])
 
 
 # ── Request / response models ─────────────────────────────────────────────────
+
+class BranchListResponse(BaseModel):
+    branches: list[str]
+    current: str | None
+
 
 class BranchAnalysisRequest(BaseModel):
     branch: str
@@ -33,7 +39,52 @@ class BranchAnalysisResponse(BaseModel):
     llm_risk_notes: str
 
 
-# ── Endpoint ──────────────────────────────────────────────────────────────────
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{repository_id}/branches",
+    response_model=BranchListResponse,
+    dependencies=[Depends(require_auth)],
+)
+def list_branches(repository_id: str) -> BranchListResponse:
+    """Return all local + remote branches for the indexed repository."""
+    from app.dependencies import get_metadata_adapter
+    from app.infrastructure.settings import get_settings
+
+    metadata = get_metadata_adapter()
+    record = metadata.get_repository(repository_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    settings = get_settings()
+    repo_root = Path(settings.repo_workspace) / repository_id
+    if not repo_root.exists():
+        raise HTTPException(status_code=404, detail="Repository workspace not found on disk")
+
+    def _git(*args: str) -> str:
+        r = subprocess.run(["git"] + list(args), cwd=repo_root, capture_output=True, text=True, check=False)
+        return r.stdout if r.returncode == 0 else ""
+
+    # Local branches
+    raw = _git("branch", "--format=%(refname:short)")
+    local = [b.strip() for b in raw.splitlines() if b.strip()]
+
+    # Remote branches (deduplicated, strip "origin/")
+    raw_remote = _git("branch", "-r", "--format=%(refname:short)")
+    remote = []
+    for b in raw_remote.splitlines():
+        b = b.strip().removeprefix("origin/")
+        if b and b not in local and "HEAD" not in b:
+            remote.append(b)
+
+    all_branches = local + remote
+
+    # Current branch
+    current_raw = _git("rev-parse", "--abbrev-ref", "HEAD").strip()
+    current = current_raw if current_raw and current_raw != "HEAD" else None
+
+    return BranchListResponse(branches=all_branches, current=current)
+
 
 @router.post(
     "/{repository_id}/analyze-branch",

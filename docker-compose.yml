@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-codecompass}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   chroma:
     image: chromadb/chroma:0.5.5

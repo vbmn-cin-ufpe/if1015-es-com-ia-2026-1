@@ -25,6 +25,7 @@ export interface TourStep {
   files?: string[]
   file_details?: TourFileDetail[]
   rationale: string
+  llm_insight?: string
   metrics: TourStepMetrics
   recommendations: string[]
 }

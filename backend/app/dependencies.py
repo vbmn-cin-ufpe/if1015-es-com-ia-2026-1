@@ -104,6 +104,7 @@ def get_tour_service() -> "TourGenerationService":
         scoring_service=ModuleScoringService(),
         metadata_adapter=get_metadata_adapter(),
         tour_repository=get_tour_repository(),
+        llm_client=get_llm_client(),
     )
 
 

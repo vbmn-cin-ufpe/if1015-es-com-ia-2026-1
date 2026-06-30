@@ -98,6 +98,10 @@ class LLMPort(Protocol):
         """Generate answer based on question and retrieved context."""
         ...
 
+    def generate_raw(self, prompt: str, system_prompt: str) -> str:
+        """Generate a response using a fully custom prompt and system prompt."""
+        ...
+
 
 @dataclass
 class TourStepRecord:
