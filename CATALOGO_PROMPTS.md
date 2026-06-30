@@ -3,8 +3,8 @@
 ## Metadados
 
 - **Modelo alvo:** claude-sonnet-4-6 (via Abacus AI) / fallback: gpt-4o, claude-3-5-sonnet
-- **Versão do catálogo:** 1.0
-- **Última atualização:** 2026-06-08
+- **Versão do catálogo:** 1.1
+- **Última atualização:** 2026-06-30
 - **Responsável:** Vinicius Henrique Silva (vhs@cin.ufpe.br)
 
 ---
@@ -602,6 +602,7 @@ as implementações concretas.
 | PROMPT-007 | Análise de Branch         | `POST /api/repos/{id}/analyze-branch`    | Média (on-demand)    | 1.0    |
 | PROMPT-008 | Gerador de Documentação   | `POST /api/repos/{id}/generate-doc`      | Baixa (on-demand)    | 1.0    |
 | PROMPT-009 | Interpretação de Drift    | `POST /api/repos/{id}/graph/diff/interpret` | Baixa (on-demand) | 1.0    |
+| PROMPT-010 | Análise de Dívida Técnica  | `POST /api/repos/{id}/tech-debt/analyse` | Baixa (on-demand)    | 1.0    |
 
 ---
 
@@ -816,3 +817,110 @@ do webhook_controller antes do próximo sprint.
 | Versão | Mudança        | Motivo                                               |
 | ------ | -------------- | ---------------------------------------------------- |
 | 1.0    | Versão inicial | Implementação do endpoint de interpretação de drift  |
+
+---
+
+## Registro #010
+
+### Identificação
+
+- **ID:** PROMPT-010
+- **Nome:** Análise de Dívida Técnica por Boas Práticas de Código
+- **Versão:** 1.0
+- **Responsável:** Victor Barros de Miranda Neves (vbmn@cin.ufpe.br)
+- **Data:** 2026-06-30
+
+### Objetivo
+
+> Avaliar a dívida técnica de um repositório comparando os arquivos críticos identificados (top hotspots) com princípios reconhecidos da indústria: Clean Code, SOLID, DRY, KISS, YAGNI e Clean Architecture. Transforma métricas quantitativas (CC, churn, LOC, acoplamento) em diagnóstico qualitativo categorizado, com ações priorizadas para redução de dívida.
+
+### Contexto de uso
+
+> Invocado pelo `TechDebtService._generate_llm_summary()` em `backend/app/services/tech_debt_service.py`, acionado pelo endpoint `POST /api/repos/{id}/tech-debt/analyse`. Frequência: on-demand pelo usuário ao clicar em "Analisar Agora" no painel de Dívida Técnica. Não é chamado durante a indexação automática (apenas `take_snapshot()` sem LLM). Latência típica: 4–10s.
+
+### Template do prompt
+
+```
+[SYSTEM]
+Você é especialista em qualidade de software e arquitetura.
+Analise dados de dívida técnica e responda em Português do Brasil de forma CONCISA.
+Use Markdown simples: **negrito**, bullet com -, listas numeradas. Limite: ~450 tokens.
+
+[USER]
+Score médio de dívida: {avg_score:.1f}/100 | Tendência: {trend_label}
+CC média: {avg_complexity:.1f} | Churn médio: {avg_churn:.1f} commits/arquivo |
+LOC médio: {avg_loc:.0f} | Acoplamento: {coupling:.1f} imports/arquivo
+
+Arquivos críticos analisados:
+- {relative_path} | score: {hotspot_score:.0f} | CC: {complexity:.1f} | churn: {churn} commits | {loc} LOC
+(... até 8 arquivos)
+
+Avalie considerando: Clean Code, SOLID, DRY, KISS, YAGNI, Clean Architecture e Design Patterns.
+
+Responda neste formato exato:
+**Score de Dívida:** [0-100] - [2 frases de justificativa]
+
+**Principais Problemas:**
+- [Categoria SOLID/Clean Code/etc]: [descrição com arquivo de exemplo]
+- [Categoria]: [descrição]
+- [Categoria]: [descrição]
+
+**Ações Priorizadas:**
+1. [ação concreta] - Impacto: alto/médio/baixo
+2. [ação concreta] - Impacto: alto/médio/baixo
+3. [ação concreta] - Impacto: alto/médio/baixo
+
+**Diagnóstico:** {trend_label} - [1 frase explicando o motivo]
+```
+
+### Parâmetros
+
+| Parâmetro        | Tipo   | Descrição                                              | Exemplo                                         |
+| ---------------- | ------ | ------------------------------------------------------ | ----------------------------------------------- |
+| `avg_score`      | float  | Score médio de dívida do repositório (0–100)           | `62.3`                                          |
+| `trend_label`    | string | Tendência da dívida (`melhorando`/`estável`/`degradando`) | `"degradando"`                               |
+| `avg_complexity` | float  | Complexidade ciclomática média entre os hotspots       | `8.4`                                           |
+| `avg_churn`      | float  | Média de commits por arquivo (últimos 6 meses)         | `14.2`                                          |
+| `avg_loc`        | float  | Média de linhas de código por arquivo                  | `312`                                           |
+| `coupling`       | float  | Média de imports por arquivo                           | `9.1`                                           |
+| `files_lines`    | string | Lista formatada dos top-8 hotspot files com métricas   | `"- auth_service.py \| score: 84 \| CC: 12.3"` |
+
+### Exemplo de execução
+
+**Input:** score 62.3, degradando, CC 8.4, churn 14.2, LOC 312, coupling 9.1
+
+**Output obtido:**
+
+```
+**Score de Dívida:** 62/100 - O repositório apresenta dívida moderada-alta concentrada em
+poucos arquivos críticos com alta complexidade ciclomática e churn elevado. A tendência de
+degradação indica que as mudanças recentes aumentaram o débito sem refatoração compensatória.
+
+**Principais Problemas:**
+- Complexidade (Clean Code / SOLID SRP): auth_service.py com CC 12.3 concentra múltiplas
+  responsabilidades — autenticação, sessão e hash de senha num único módulo.
+- Acoplamento (DIP / Hexagonal): ingestion_service.py importa 11 módulos internos
+  diretamente, violando o princípio de inversão de dependência.
+- Churn (YAGNI): 3 arquivos com churn > 20 commits/6m sem redução de complexidade —
+  indicativo de patches contínuos sem refatoração estrutural.
+
+**Ações Priorizadas:**
+1. Extrair PasswordHasher e SessionManager de auth_service.py (SRP) - Impacto: alto
+2. Introduzir interface para ingestion pipeline e inverter dependência - Impacto: alto
+3. Estabelecer feature freeze nos arquivos de alto churn para refatoração - Impacto: médio
+
+**Diagnóstico:** degradando - O aumento de churn sem redução proporcional de complexidade
+indica ciclos de correção acelerada (firefighting) em vez de desenvolvimento sustentável.
+```
+
+### Avaliação de qualidade
+
+- **Taxa de sucesso estimada:** 82%
+- **Casos onde falha:** Repositórios com poucos arquivos (< 5 hotspots) — análise com contexto insuficiente; métricas zeradas (repositório sem commits) — LLM produz análise genérica
+- **Estratégia de mitigação:** Verificar `len(hotspots) >= 3` antes de chamar o LLM; para repos sem commits (churn = 0 em todos), retornar `llm_summary = ""` e exibir mensagem orientando o usuário a executar `git log`
+
+### Histórico de versões
+
+| Versão | Mudança        | Motivo                                                    |
+| ------ | -------------- | --------------------------------------------------------- |
+| 1.0    | Versão inicial | Implementação do endpoint `POST /tech-debt/analyse` (v2)  |

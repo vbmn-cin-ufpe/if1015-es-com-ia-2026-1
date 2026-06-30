@@ -41,13 +41,13 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 | **Observabilidade**               | 1    | Logging estruturado, rastreamento por correlation ID, coleta de latência/erros, endpoints de liveness e readiness                                       |
 | **Dark mode**                     | 1    | Tema claro/escuro persistido em localStorage, ativado via Tailwind CSS `dark:` classes                                                                  |
 | **Sidebar colapsável**            | 1    | Navegação lateral retrátil (estilo ChatLLM) com ícones + labels, botão de recolher/expandir                                                             |
-| **Mapa de Hotspots**              | 2    | Identifica arquivos de maior risco (combinação de churn alto + complexidade alta), exibe heatmap visual                                                 |
+| **Mapa de Hotspots**              | 2    | Identifica arquivos de maior risco (churn × complexidade), BubbleChart interativo (X=churn, Y=complexidade, tamanho=LOC), ZONA DE RISCO destacada, filtros por linguagem e nível de risco, threshold visual arrastável |
 | **Saúde do Repositório**          | 2    | Dashboard admin com status de indexação, métricas e alertas por repositório                                                                             |
 | **Avaliação LLM**                 | 2    | Sistema de feedback por resposta do chat (👍/👎), painel admin com análise de qualidade das respostas                                                   |
 | **Dashboard de Uso**              | 2    | Métricas de utilização por usuário, repositório e período; gráficos de tendência                                                                        |
 | **Análise de Branch**             | 2    | Compara uma feature branch com a base, lista arquivos alterados, calcula risk score e gera resumo por LLM                                               |
 | **Gerador de Documentação**       | 2    | Gera README.md detalhado para um módulo usando chunks indexados + histórico de commits, via LLM                                                         |
-| **Score de Dívida Técnica**       | 3    | Registra snapshots históricos de hotspot médio por re-indexação, exibe curva de evolução da dívida técnica                                              |
+| **Score de Dívida Técnica**       | 3    | Análise multidimensional com 5 categorias (complexidade, churn, tamanho, acoplamento, documentação), resumo de qualidade por IA (PROMPT-010 — avalia Clean Code · SOLID · DRY · KISS · YAGNI · Clean Architecture), endpoint de análise on-demand, indicador de tendência (↓ Melhorando / → Estável / ↑ Degradando) e breakdown visual por categoria |
 | **Monitor de Custo LLM**          | 3    | Rastreia tokens consumidos e custo estimado por chamada ao LLM, com agrupamento por provedor e dia                                                      |
 | **Fila de Ingestão**              | 3    | Painel em tempo real do progresso de indexação de repositórios, com auto-refresh e barra de progresso                                                   |
 | **Gerenciamento de Planos**       | 3    | CRUD de limites de plano (free/paid/enterprise): max repos, max perguntas, permissão de deleção                                                         |
@@ -218,7 +218,7 @@ npm --prefix frontend test
 
 | Camada          | Arquivos                                                                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Unit**        | `auth_service`, `repo_service`, `tour_service`, `dependency_graph`, `commit_history`, `health_service`, `metrics_service`, `observability` |
+| **Unit**        | `auth_service`, `repo_service`, `tour_service`, `dependency_graph`, `commit_history`, `health_service`, `metrics_service`, `observability`, `hotspot_service`, `chat_service`, `plan_enforcer`, `token_service` |
 | **Integration** | `auth_api`, `repo_api`, `tour_api`, `dependency_graph_api`, `history_api`, `metrics_api`, `ops_api`, `health`                              |
 | **E2E**         | `index_chat`, `tour`, `dependency_graph`, `history`                                                                                        |
 | **Frontend**    | `App.test.tsx` (Vitest)                                                                                                                    |
@@ -231,7 +231,7 @@ npm --prefix frontend test
 |------|---------|-------------------|
 | **Fase 1** — Exposição | Aulas 14-20 | Foundation, RAG/Chat, Tour, Grafo, Impacto, Busca Semântica, Histórico, Métricas, Auth, Observabilidade |
 | **Fase 2** — Composição | Aulas 21-24 | Hotspots, Saúde do Repo, Avaliação LLM, Dashboard de Uso, Análise de Branch, Gerador de Docs; otimização de embeddings (18.7x) |
-| **Fase 3** — Ensaio | Aulas 25-29 | Score de Dívida Técnica, Monitor de Custo LLM, Fila de Ingestão, Planos, Exportar Relatório; dark mode, sidebar, VS Code code blocks |
+| **Fase 3** — Ensaio | Aulas 25-29 | Score de Dívida Técnica (multidimensional + IA), Monitor de Custo LLM, Fila de Ingestão, Planos, Exportar Relatório; dark mode, sidebar, VS Code code blocks |
 | **Fase 4** — Ressonância | Aulas 30-32 | Drift Arquitetural + IA, Audit Log, Webhooks GitHub, Watchlist/Notificações |
 
 ---
@@ -294,7 +294,7 @@ O projeto foi desenvolvido com assistência extensiva do **GitHub Copilot Agent 
 | [README.md](README.md)                                 | Visão geral, stack e instruções rápidas (este arquivo)                |
 | [COMO_FUNCIONA.md](COMO_FUNCIONA.md)                   | Como o sistema funciona por dentro — arquitetura, fluxos e decisões   |
 | [COMO_RODAR.md](COMO_RODAR.md)                         | Guia passo a passo para rodar do zero                                 |
-| [CATALOGO_PROMPTS.md](CATALOGO_PROMPTS.md)             | Catálogo formal de todos os prompts usados na aplicação (6 registros) |
+| [CATALOGO_PROMPTS.md](CATALOGO_PROMPTS.md)             | Catálogo formal de todos os prompts usados na aplicação (10 registros: PROMPT-001 a PROMPT-010) |
 | [backend/ARQUITETURA_C4.md](backend/ARQUITETURA_C4.md) | Documento de arquitetura C4 Model (Níveis 1, 2 e 3) + 6 ADRs          |
 | [PROPOSTA_v1.md](PROPOSTA_v1.md)                       | Proposta inicial, problema, solução e arquitetura preliminar          |
 | [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md)           | Registro de uso de IA, economicidade e prompts notáveis               |

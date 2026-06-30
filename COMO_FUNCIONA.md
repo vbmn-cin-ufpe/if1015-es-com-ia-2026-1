@@ -267,16 +267,19 @@ App.tsx
 ├── <aside>          ← Sidebar colapsável (w-52 ↔ w-14)
 │   └── TABS.map()  ← Cada aba: ícone + label
 └── <main>           ← Conteúdo da aba ativa
-    ├── RepoTab      → indexação + status
-    ├── ChatTab      → chat RAG com Markdown + VS Code blocks
-    ├── TourTab      → tour guiado passo a passo
-    ├── GraphTab     → grafo de dependências
-    ├── HistoryTab   → timeline de commits
-    ├── MetricsTab   → dashboard de qualidade
-    ├── OpsTab       → health + operacional
-    ├── DriftTab     → detecção de drift arquitetural + interpretação IA
-    ├── WatchlistTab → subscrição a módulos para notificações
-    └── AdminTab     → painel admin (usuários, planos, uso, auditoria, webhooks)
+    ├── RepoTab          → indexação + status + progresso
+    ├── ChatTab          → chat RAG com Markdown + VS Code blocks
+    ├── TourTab          → tour guiado passo a passo com insights IA
+    ├── GraphTab         → grafo de dependências interativo
+    ├── HistoryTab       → timeline de commits + "Por quê?" via IA
+    ├── MetricsTab       → dashboard de qualidade + relatório LLM
+    ├── HotspotsTab      → BubbleChart (churn × CC), ZONA DE RISCO, filtros
+    ├── TechDebtTab      → dívida técnica multidimensional + análise IA
+    ├── BranchAnalysisTab → análise de branch vs base + risk score + IA
+    ├── OpsTab           → health + operacional
+    ├── DriftTab         → detecção de drift arquitetural + interpretação IA
+    ├── WatchlistTab     → subscrição a módulos para notificações
+    └── AdminTab         → painel admin (usuários, planos, uso, auditoria, webhooks)
 ```
 
 **Dark mode:** Tailwind `darkMode: 'class'` — ao ativar, adiciona `dark` ao `<html>`. Todos os componentes usam pares de classes como `bg-white dark:bg-gray-800`.
@@ -388,6 +391,61 @@ async def audit_middleware(request, call_next):
 **Por que excluir `/api/chat/ask`?** Perguntas do chat são volume alto e não representam mutações de recurso — incluí-las inflaria o audit log desnecessariamente.
 
 ---
+
+## Fluxo 9 — Análise de Dívida Técnica (on-demand com IA)
+
+```
+POST /api/repos/{id}/tech-debt/analyse
+    │
+    ├─ Verifica repositório indexado (status=completed)
+    │
+    ├─ HotspotService.analyse(repo_root, top_n=50)
+    │       → lista de FileHotspot com churn, CC, LOC, hotspot_score
+    │
+    ├─ Métricas básicas (rápido — derivadas do hotspot data):
+    │       avg_score = média de hotspot_score
+    │       avg_complexity = média de CC por arquivo
+    │       avg_churn = média de commits por arquivo
+    │       avg_loc = média de LOC por arquivo
+    │
+    ├─ Métricas de arquivo (I/O — top 10 files):
+    │       ComplexityAnalyzer.analyze_file() → comment_ratio
+    │       CouplingAnalyzer.analyze_file_coupling() → coupling_score
+    │
+    ├─ Debt breakdown por categoria (0–100 cada):
+    │       complexity_debt = min(100, avg_complexity / 20 * 100)
+    │       churn_debt      = min(100, avg_churn / 30 * 100)
+    │       size_debt       = min(100, avg_loc / 400 * 100)
+    │       coupling_debt   = min(100, coupling_score / 20 * 100)
+    │       docs_debt       = (1 − comment_ratio × 5) × 100
+    │
+    ├─ Tendência (comparação com snapshot anterior):
+    │       delta = avg_score_atual − avg_score_anterior
+    │       δ < −2 → "improving" | δ > +2 → "degrading" | else → "stable"
+    │
+    ├─ LlmClient.generate_raw(PROMPT-010)
+    │       → llm_summary: diagnóstico por Clean Code / SOLID / DRY / KISS / YAGNI
+    │         inclui: Score de Dívida, Principais Problemas, Ações Priorizadas, Diagnóstico
+    │
+    └─ TechDebtRepository.save(snapshot enriquecido)
+           → persiste no PostgreSQL com todos os campos v2
+           → retorna SnapshotOut completo para o frontend
+```
+
+**O que o `take_snapshot` faz diferente?** O mesmo pipeline sem a etapa LLM — chamado durante re-indexação automática para não adicionar latência ao processo de indexação.
+
+**Campos novos no `TechDebtSnapshot` (v2):**
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `avg_complexity` | float | Complexidade ciclomática média |
+| `avg_churn` | float | Média de commits/arquivo (6m) |
+| `avg_loc` | float | Média de LOC/arquivo |
+| `comment_ratio` | float | Comentários / LOC (0–1) |
+| `coupling_score` | float | Média de imports/arquivo |
+| `debt_trend` | string | `"improving"` / `"stable"` / `"degrading"` |
+| `llm_summary` | string | Análise gerada pelo PROMPT-010 |
+| `debt_breakdown` | dict | Score 0–100 por categoria |
 
 ---
 
