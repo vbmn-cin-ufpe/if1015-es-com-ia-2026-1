@@ -67,7 +67,7 @@ def _check_postgres() -> DependencyStatus:
 
 
 def _check_chromadb() -> DependencyStatus:
-    """Check ChromaDB connectivity."""
+    """Check ChromaDB connectivity via direct HTTP heartbeat (avoids SDK tenant validation on init)."""
     try:
         from app.infrastructure.settings import get_settings
         settings = get_settings()
@@ -77,12 +77,12 @@ def _check_chromadb() -> DependencyStatus:
                 message="Using in-memory fallback"
             )
         import time
-        import chromadb
+        import urllib.request
+        scheme = "https" if settings.chroma_ssl else "http"
+        url = f"{scheme}://{settings.chroma_host}:{settings.chroma_port}/api/v1/heartbeat"
         start = time.time()
-        client = chromadb.HttpClient(
-            host=settings.chroma_host, port=settings.chroma_port
-        )
-        client.heartbeat()
+        with urllib.request.urlopen(url, timeout=5) as resp:  # noqa: S310
+            resp.read()
         latency = (time.time() - start) * 1000
         return DependencyStatus(
             name="chromadb", status="healthy", latency_ms=round(latency, 2)

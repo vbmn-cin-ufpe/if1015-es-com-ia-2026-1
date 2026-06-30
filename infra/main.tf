@@ -81,6 +81,10 @@ resource "azurerm_postgresql_flexible_server" "main" {
   sku_name               = var.postgres_sku
   backup_retention_days  = 7
   tags                   = local.tags
+
+  lifecycle {
+    ignore_changes = [zone]
+  }
 }
 
 resource "azurerm_postgresql_flexible_server_database" "codecompass" {
@@ -123,7 +127,8 @@ resource "azurerm_container_app_environment_storage" "chroma" {
 
 # ── Container App: ChromaDB ───────────────────────────────────────────────────
 # Ingress interno (não exposto para a internet) — apenas o backend acessa
-# Volume Azure Files montado em /chroma/chroma para persistência dos embeddings
+# Usa armazenamento efêmero do container (Azure Files SMB não suporta SQLite locking)
+# Para persistência real em produção, usar Azure Blob Storage ou ChromaDB Cloud
 
 resource "azurerm_container_app" "chroma" {
   name                         = "${var.prefix}-chroma"
@@ -138,7 +143,7 @@ resource "azurerm_container_app" "chroma" {
 
     container {
       name   = "chroma"
-      image  = "chromadb/chroma:latest"
+      image  = "chromadb/chroma:0.5.5"
       cpu    = 0.5
       memory = "1Gi"
 
@@ -155,25 +160,13 @@ resource "azurerm_container_app" "chroma" {
         value = "False"
       }
 
-      volume_mounts {
-        name = "chroma-data"
-        path = "/chroma/chroma"
-      }
-
       liveness_probe {
         transport               = "HTTP"
         path                    = "/api/v1/heartbeat"
         port                    = 8000
-        initial_delay           = 30
         interval_seconds        = 30
         failure_count_threshold = 3
       }
-    }
-
-    volume {
-      name         = "chroma-data"
-      storage_type = "AzureFile"
-      storage_name = azurerm_container_app_environment_storage.chroma.name
     }
   }
 
@@ -238,8 +231,8 @@ resource "azurerm_container_app" "backend" {
 
     container {
       name = "backend"
-      # Imagem placeholder — substituída pelo deploy.ps1 após o primeiro terraform apply
-      image  = "${azurerm_container_registry.main.login_server}/codecompass-backend:latest"
+      # Imagem placeholder — substituída pelo deploy-no-docker.ps1 após o acr build
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = var.backend_cpu
       memory = var.backend_memory
 
@@ -305,18 +298,18 @@ resource "azurerm_container_app" "backend" {
 
       # ── ChromaDB (via FQDN interno do Container Apps Environment) ─────────
       # O FQDN interno tem formato: <app-name>.<environment-default-domain>
-      # O ChromaDB usa ingress HTTP interno — porta efetiva é 80 no FQDN interno
+      # transport = "http" → ingress interno escuta na porta 80 (sem TLS)
       env {
         name  = "CHROMA_HOST"
         value = azurerm_container_app.chroma.ingress[0].fqdn
       }
       env {
         name  = "CHROMA_PORT"
-        value = "443"
+        value = "80"
       }
       env {
         name  = "CHROMA_SSL"
-        value = "true"
+        value = "false"
       }
 
       # ── Auth ──────────────────────────────────────────────────────────────
@@ -339,17 +332,15 @@ resource "azurerm_container_app" "backend" {
         transport               = "HTTP"
         path                    = "/api/health"
         port                    = 8000
-        initial_delay           = 30
         interval_seconds        = 30
         failure_count_threshold = 3
       }
 
       readiness_probe {
         transport        = "HTTP"
-        path             = "/api/ops/readiness"
+        path             = "/api/health"
         port             = 8000
-        initial_delay    = 15
-        interval_seconds = 15
+        interval_seconds = 10
       }
     }
   }
@@ -431,3 +422,4 @@ resource "azurerm_container_app" "frontend" {
 
   depends_on = [azurerm_container_app.backend]
 }
+
