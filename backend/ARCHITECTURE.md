@@ -11,7 +11,7 @@ app/
 ├── ports.py                         # Interfaces (Protocol) — Dependency Inversion
 ├── dependencies.py                  # Container DI — FastAPI Depends
 ├── main.py                          # Entry point, CORS, middlewares, seed admin
-├── controllers/                     # HTTP handlers — apenas orquestração (11 routers)
+├── controllers/                     # HTTP handlers — apenas orquestração (16 routers)
 │   ├── health_controller.py        # GET /api/health
 │   ├── repo_controller.py          # POST/GET /api/repos — indexação e status
 │   ├── chat_controller.py          # POST /api/chat/ask
@@ -22,11 +22,17 @@ app/
 │   ├── ops_controller.py           # GET /api/ops/liveness, /readiness
 │   ├── auth_controller.py          # POST /api/auth/signup, /signin
 │   ├── admin_controller.py         # GET/PATCH /api/admin/* (users, plans, audit-log, usage)
+│   ├── hotspot_controller.py       # GET /api/repos/{id}/hotspots
+│   ├── tech_debt_controller.py     # GET /api/repos/{id}/tech-debt + POST /tech-debt/analyse
+│   ├── branch_controller.py        # POST /api/repos/{id}/analyze-branch
+│   ├── doc_controller.py           # POST /api/repos/{id}/generate-doc
+│   ├── report_controller.py        # GET /api/repos/{id}/report
+│   ├── search_controller.py        # GET /api/repos/{id}/search
 │   ├── watchlist_controller.py     # POST/DELETE /api/repos/{id}/watch, GET /api/me/watchlist
 │   └── webhook_controller.py       # CRUD /api/admin/webhooks + POST /api/webhooks/github/{id}
 ├── middleware/
 │   └── auth_middleware.py          # require_auth, get_current_user
-├── services/                        # Lógica de negócio (22 serviços)
+├── services/                        # Lógica de negócio (24+ serviços)
 │   ├── models.py                   # Domain models e DTOs
 │   ├── repo_service.py             # Orquestra pipeline de indexação
 │   ├── chat_service.py             # Orquestra chat/RAG
@@ -36,15 +42,13 @@ app/
 │   ├── ingestion_service.py        # Coleta de arquivos + pipeline de indexação completo
 │   ├── auth_service.py             # Autenticação, hashing de senha, sessões de onboarding
 │   ├── tour_service.py             # Tour guiado (score = complexidade × churn × acoplamento)
+│   ├── hotspot_service.py          # Identifica top-N arquivos de maior risco (churn × CC)
+│   ├── tech_debt_service.py        # Análise multidimensional + PROMPT-010 (LLM opcional)
 │   ├── dependency_graph_service.py # Análise de imports e construção do grafo
 │   ├── architecture_drift_service.py  # Compara snapshots → drift_score + added/removed nodes/edges
 │   ├── commit_history_service.py   # Ingere e classifica commits, timeline, Why explanations
-│   ├── metrics_aggregation_service.py
-│   ├── metrics_ingestion_service.py
-│   ├── notification_service.py     # Detecta módulos alterados → e-mail para watchlist subscribers
-│   ├── observability_service.py
-│   ├── timeline_service.py
 │   ├── analyzers.py                # ChurnAnalyzer, ComplexityAnalyzer, CouplingAnalyzer
+│   ├── notification_service.py     # Detecta módulos alterados → e-mail para watchlist subscribers
 │   └── ... (outros)
 └── infrastructure/                  # Adaptadores externos
     ├── settings.py                 # Pydantic BaseSettings — todas as env vars
@@ -52,6 +56,7 @@ app/
     ├── chroma_adapter.py           # Implementa VectorStorePort
     ├── git_client.py               # Implementa GitClientPort
     ├── llm_client.py               # Implementa LLMPort (Abacus AI / OpenAI / Anthropic)
+    ├── tech_debt_repository.py     # TechDebtSnapshot + PostgreSQL + migração automática v2
     ├── audit_repository.py         # Tabela audit_log + fallback in-memory
     ├── webhook_repository.py       # Tabela webhooks + segredos HMAC-SHA256
     └── watchlist_repository.py     # Tabela watchlist com UNIQUE(user_id, repo_id, module_path)
@@ -208,8 +213,9 @@ def test_index_with_mock():
 | Drift arquitetural entre snapshots | 4 | ✅ `architecture_drift_service.py` + endpoints |
 | Audit log automático (middleware) | 4 | ✅ Middleware em `main.py` → `AuditRepository` |
 | Webhooks GitHub com HMAC-SHA256 | 4 | ✅ `webhook_controller.py` + `webhook_repository.py` |
-| Watchlist + notificações por e-mail | 4 | ✅ `watchlist_controller.py` + `notification_service.py` |
-
+| Watchlist + notificações por e-mail | 4 | ✅ `watchlist_controller.py` + `notification_service.py` || Mapa de Hotspots (BubbleChart) | 2 | ✅ `hotspot_service.py` + `hotspot_controller.py` + `HotspotsTab.tsx` |
+| Dívida Técnica multidimensional + IA | 3 | ✅ `tech_debt_service.py` v2 + PROMPT-010 + `TechDebtTab.tsx` |
+| Testes unitários adicionais | 3 | ✅ `test_hotspot_service`, `test_chat_service`, `test_plan_enforcer`, `test_token_service` |
 ## 🔄 Próximos Passos Sugeridos
 
 1. **Streaming de respostas LLM** — reduzir percepção de latência para perguntas complexas

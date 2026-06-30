@@ -147,6 +147,54 @@ def get_impact_analysis(
     return ImpactAnalysisResponse(**result)
 
 
+# ── Module list (lightweight — no edges) ─────────────────────────────────────
+
+class ModuleItem(BaseModel):
+    id: str
+    label: str
+    module_path: str
+    in_degree: int
+    out_degree: int
+    total_degree: int
+
+
+@router.get("/{repository_id}/graph/modules", response_model=list[ModuleItem])
+def list_graph_modules(
+    repository_id: str,
+    graph_service: GraphService = Depends(get_graph_service),
+) -> list[ModuleItem]:
+    """Return the list of all known modules in the dependency graph.
+
+    Intentionally lightweight — returns only node metadata, no edges.
+    Sorted by in_degree descending (most-depended-upon first) so callers
+    get the highest-impact modules at the top.
+    """
+    from app.dependencies import get_metadata_adapter, get_graph_repository
+
+    metadata = get_metadata_adapter()
+    repo_record = metadata.get_repository(repository_id)
+    if not repo_record:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    graph = get_graph_repository().get_graph(repository_id)
+    if not graph or not graph.get("nodes"):
+        return []
+
+    items = [
+        ModuleItem(
+            id=n["id"],
+            label=n["label"],
+            module_path=n["module_path"],
+            in_degree=n.get("metrics", {}).get("in_degree", 0),
+            out_degree=n.get("metrics", {}).get("out_degree", 0),
+            total_degree=n.get("metrics", {}).get("total_degree", 0),
+        )
+        for n in graph["nodes"]
+    ]
+    items.sort(key=lambda x: x.in_degree, reverse=True)
+    return items
+
+
 # ── Graph snapshots list ──────────────────────────────────────────────────────
 
 class SnapshotMeta(BaseModel):

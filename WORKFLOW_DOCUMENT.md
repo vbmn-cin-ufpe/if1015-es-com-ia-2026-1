@@ -501,18 +501,115 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 
 ---
 
+## Fase: Melhorias e Qualidade (2026-06-30)
+
+Sessão de iteração pós-Ressonância focada em UX avançado, evolução profunda de feature de Dívida Técnica com análise por IA e cobertura de testes unitários.
+
+### Onde a IA ajudou
+
+- **HotspotsTab — reescrita completa:** A IA reescreveu o componente do zero com `BubbleChart` SVG interativo (eixo X=churn, Y=complexidade ciclomática, tamanho das bolhas=LOC, cor=risco), quadrante `ZONA DE RISCO` com dividers, handle de threshold arrastável (visual), chips de filtro por linguagem e nível de risco, e barras animadas de CC + churn por arquivo via Framer Motion.
+- **TechDebtService v2 — análise multidimensional:** A IA expandiu o `TechDebtService` com cálculo de 5 dimensões separadas (complexidade, churn, tamanho, acoplamento, documentação), identificação de tendência (`improving/stable/degrading` por delta do score anterior), e breakdown por categoria normalizado 0–100. O modelo `TechDebtSnapshot` ganhou 8 novos campos e o PostgreSQL migra automaticamente via `ALTER TABLE ADD COLUMN IF NOT EXISTS`.
+- **PROMPT-010 — Análise de Dívida por Boas Práticas:** A IA projetou e implementou o PROMPT-010, que recebe métricas dos top-8 arquivos hotspot e avalia contra Clean Code, SOLID, DRY, KISS, YAGNI e Clean Architecture. Retorna Score de Dívida, Principais Problemas categorizados, Ações Priorizadas com impacto, e Diagnóstico de tendência. Invocado pelo `POST /api/repos/{id}/tech-debt/analyse` (endpoint novo on-demand, sem LLM na indexação automática).
+- **TechDebtTab.tsx — reescrita com 5 novos componentes:** `TrendBadge` (↓/→/↑ com cores), `DebtBreakdownCard` (5 barras animadas por categoria com referência ao princípio violado), `MetricSparkline` (mini sparklines SVG para CC, churn e comment ratio), `ScoreTrendChart` (linha temporal com pontos coloridos por severidade e gridline de zona crítica ≥75), `LlmSummaryCard` (renderizador de Markdown simples para o resumo do PROMPT-010) e botão "Analisar Agora" com estado de loading.
+- **Testes unitários (5 novos arquivos):** A IA criou `test_hotspot_service.py` (13 testes — fórmula de score, ordenação, filtragem, edge cases), `test_chat_service.py` (13 testes — happy path + error cases com mocks), `test_plan_enforcer.py` (17 testes — todos os planos + bypass admin + limites), `test_token_service.py` (18 testes — JWT issue/decode/round-trip/expiração) e corrigiu `test_auth_service.py` (mocks corretos, mensagens em PT-BR, validação de senha mínima 8 chars).
+- **Fix de declaração duplicada:** A IA identificou e removeu a segunda declaração do componente `BranchAnalysisTab` (linhas 511–672 de um arquivo de 672 linhas) causada por operação `Set-Content` do PowerShell que havia inserido o conteúdo duas vezes.
+- **Atualização completa dos arquivos MD (4 arquivos):** README.md, CATALOGO_PROMPTS.md, COMO_FUNCIONA.md e backend/ARCHITECTURE.md atualizados com as novas features, PROMPT-010 e listas de componentes.
+
+### Onde a IA não ajudou (ou atrapalhou)
+
+- **Escrita via PowerShell Set-Content:** A escrita do `TechDebtTab.tsx` via Python `-c` foi truncada por limitação de tamanho da string no PowerShell. Foi necessário usar arquivo script intermediário (`write_techdebt_tab.py`) copiado e executado pelo Python.
+- **Encoding de string em verificação inline:** A checagem de keywords com acentos (ex: `"Análise de Dívida Técnica"`) em Python `-c` no PowerShell falhou por escape de caracteres; foi necessário usar `grep_search` como alternativa.
+
+### Prompts notáveis desta fase
+
+- "na parte de hotspot eu gostaria de uma UI e UX mais significativa e com melhor acesso. Melhore essa feature e evolua para trazer mais valor"
+- "Eu quero evoluir no projeto a parte de 'Debito Tecnico'... Faça uma analise primeiro para depois começar implementar. Mapei tudo e me traga aqui um resultado sem implementar nada por enquanto."
+- "Implemente agora essas novas melhorias e features"
+- "Agora eu gostaria de investir na parte de testes. Analise meu projeto por completo e crie alguns testes unitarios"
+- "Agora apos todas as atualizações do projeto eu gostaria que você atualizasse os arquivos MD do projeto"
+
+### Decisões tomadas sem IA
+
+- **Escopo da análise antes da implementação:** O usuário solicitou explicitamente a análise antes de implementar — decisão consciente de validar o design antes do código
+- **Priorização de Dívida Técnica sobre Branch:** O usuário escolheu evoluir TechDebt em vez de Branch (que havia sido mencionado anteriormente mas não implementado)
+- **Design do PROMPT-010:** A escolha dos princípios a avaliar (SOLID, DRY, KISS, YAGNI, Clean Architecture) foi definida pelo usuário; a IA estruturou o template
+
+### Registro de economicidade desta fase
+
+#### Camada 1 — Consumo de IA
+
+| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+|---|---|---|---|---|
+| HotspotsTab — análise + reescrita completa | GitHub Copilot / Claude Sonnet 4.6 | ~55.000 | ~30.000 | ~$0.62 |
+| TechDebt — análise semântica profunda (pré-impl.) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~22.000 | ~$0.45 |
+| TechDebt backend v2 (snapshot + service + controller) | GitHub Copilot / Claude Sonnet 4.6 | ~50.000 | ~28.000 | ~$0.57 |
+| TechDebtTab.tsx — reescrita frontend (5 componentes) | GitHub Copilot / Claude Sonnet 4.6 | ~35.000 | ~25.000 | ~$0.48 |
+| Testes unitários (5 novos arquivos, ~80 testes) | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~18.000 | ~$0.36 |
+| Fix BranchAnalysisTab + debugging | GitHub Copilot / Claude Sonnet 4.6 | ~8.000 | ~4.000 | ~$0.08 |
+| Atualização MD (4 arquivos + PROMPT-010) | GitHub Copilot / Claude Sonnet 4.6 | ~28.000 | ~18.000 | ~$0.35 |
+| **Total da fase** | | **~246.000** | **~145.000** | **~$2.91** |
+
+#### Camada 2 — Esforço humano real (auto-declarado)
+
+| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
+|---|---|---|---|---|
+| HotspotsTab rewrite + validação visual | [Membro] (pleno) | 0.5h | 0.3h | Rebuild Docker + verificação no browser |
+| TechDebt análise + aprovação do design | [Membro] (pleno) | 0.3h | 0.2h | Revisão do mapeamento |
+| TechDebt v2 implementação + rebuild | [Membro] (pleno) | 0.5h | 0.3h | Rebuild Docker + teste do endpoint |
+| Testes unitários (leitura e validação) | [Membro] (pleno) | 0.3h | 0.2h | Revisão de cobertura |
+| Fix duplicata + MD updates | [Membro] (pleno) | 0.2h | 0.2h | Verificação visual |
+| **Total da fase** | | **1.8h** | **1.2h** | **3.0h total de esforço humano** |
+
+#### Camada 3 — Estimativa contrafactual
+
+| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+|---|---|---|---|---|
+| HotspotsTab (BubbleChart SVG + animações + filtros) | Sênior | 12.0h | R$ 115 | R$ 1.380 |
+| TechDebt v2 backend (5 métricas + trend + endpoint) | Sênior | 10.0h | R$ 115 | R$ 1.150 |
+| PROMPT-010 design + integração LLM | Sênior | 4.0h | R$ 115 | R$ 460 |
+| TechDebtTab.tsx (5 componentes + charts SVG) | Pleno | 10.0h | R$ 75 | R$ 750 |
+| Testes unitários (~80 testes em 5 arquivos) | Pleno | 8.0h | R$ 75 | R$ 600 |
+| Diagnóstico + fix de duplicata | Pleno | 1.0h | R$ 75 | R$ 75 |
+| Atualização de documentação (4 arquivos MD) | Pleno | 4.0h | R$ 75 | R$ 300 |
+| **Total da fase** | | **49.0h** | | **R$ 4.715** |
+
+### Análise parcial de economicidade (esta fase)
+
+- **Custo real com IA:** ~$2.91 USD (~R$ 16.01 a R$5.50/USD) + 3.0h de trabalho humano
+- **Custo humano das 3.0h (perfil médio pleno):** ~R$ 225 (3.0h × R$75 média)
+- **Custo total com IA:** ~R$ 241
+- **Custo contrafactual sem IA:** ~R$ 4.715
+- **Razão de economicidade:** 19.6x (cada R$1 gasto com IA equivaleu a ~R$19.60 sem IA)
+- **Saving estimado:** ~R$ 4.474 (94.9%)
+
+### Lições aprendidas
+
+- Solicitar análise prévia antes da implementação ("mapear antes de codificar") evita retrabalho e melhora a qualidade do design — especialmente em features com múltiplas camadas
+- A separação entre `take_snapshot` (automático, sem LLM) e `analyse_and_save` (on-demand, com LLM) é o padrão correto para features de análise custosa — nunca bloquear a indexação com chamadas LLM
+- Arquivo Python intermediário para escrita de TSX longo é mais confiável que `-c` inline no PowerShell
+- Testes unitários com mocks claros e isolamento de dependências externas exigem leitura prévia profunda do código de produção — a IA precisa de contexto real para gerar testes úteis
+
+---
+
 ## Reflexão final
-[A preencher ao final do semestre]
+
+Este projeto demonstrou de forma concreta que engenharia de software com IA generativa não é apenas uma aceleração de produtividade marginal — é uma mudança qualitativa na forma como sistemas complexos são projetados e construídos. Em aproximadamente 6 semanas de trabalho distribuídas em 6 fases, uma plataforma completa de análise de código foi erguida do zero: backend Python/FastAPI com arquitetura hexagonal, frontend React/TypeScript, pipeline RAG, análise de grafos de dependência, detecção de drift arquitetural, dívida técnica multidimensional com LLM, audit log, webhooks HMAC, watchlist com notificações e 80+ testes unitários.
+
+O custo total de IA foi **~$33.66 USD** para uma equivalência de trabalho estimada em **~329 horas** de desenvolvimento profissional, representando uma economia de **~94.8%** frente ao desenvolvimento tradicional. A razão de economicidade de **19.4x** sustentou-se ao longo de todo o semestre — não foi um pico isolado de uma fase.
+
+A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. Decisões de arquitetura, priorização de features, validação de segurança, escolha de patterns e design de prompts continuaram sendo trabalho humano. O que a IA assumiu foi a tradução dessas decisões em código correto, consistente e testado.
 
 ### Métricas de uso de IA (estimadas)
 
 | Atividade | % assistida por IA | Ferramentas |
 |---|---|---|
-| Escrita de código | ~95% | GitHub Copilot (Claude Opus 4) |
-| Geração de testes | ~95% | GitHub Copilot (Claude Opus 4) |
-| Documentação | ~80% | ChatLLM / GitHub Copilot |
-| Design de prompts | ~30% | Manual + ChatLLM |
-| Análise de requisitos | ~70% | ChatLLM (Claude Opus 4) |
+| Escrita de código | ~95% | GitHub Copilot (Claude Sonnet 4.6 / Claude Opus 4) |
+| Geração de testes | ~95% | GitHub Copilot (Claude Sonnet 4.6) |
+| Documentação | ~85% | GitHub Copilot (Claude Sonnet 4.6) |
+| Design de prompts | ~40% | Manual + GitHub Copilot |
+| Análise de requisitos | ~70% | GitHub Copilot / ChatLLM |
+| Debugging e diagnóstico | ~80% | GitHub Copilot (Claude Sonnet 4.6) |
+| Decisões de arquitetura | ~20% | Manual (IA como consultor) |
 
 ### Consolidado de economicidade do projeto
 
@@ -524,7 +621,8 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 | Composição | ~88.000 | ~65.000 | ~$1.11 | ~R$ 6.11 |
 | Ensaio | ~92.000 | ~84.000 | ~$1.56 | ~R$ 8.58 |
 | Ressonância | ~310.000 | ~220.000 | ~$4.26 | ~R$ 23.43 |
-| **Total** | **~706.000** | **~692.000** | **~$30.75** | **~R$ 169.13** |
+| Melhorias e Qualidade | ~246.000 | ~145.000 | ~$2.91 | ~R$ 16.01 |
+| **Total** | **~952.000** | **~837.000** | **~$33.66** | **~R$ 185.13** |
 
 #### Custo contrafactual humano (total do projeto)
 | Fase | Horas totais estimadas | Custo humano estimado (R$) |
@@ -534,13 +632,14 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 | Composição | 19.0h | R$ 1.985 |
 | Ensaio | 27.0h | R$ 2.465 |
 | Ressonância | 67.0h | R$ 6.465 |
-| **Total** | **280.0h** | **R$ 27.650** |
+| Melhorias e Qualidade | 49.0h | R$ 4.715 |
+| **Total** | **329.0h** | **R$ 32.365** |
 
 #### Análise comparativa
-- **Custo total com IA (R$):** ~R$ 169 (IA) + ~R$ 1.260 (trabalho humano nas sessões) = **~R$ 1.429**
-- **Custo total estimado sem IA (R$):** ~R$ 27.650
+- **Custo total com IA (R$):** ~R$ 185 (IA) + ~R$ 1.485 (trabalho humano nas sessões) = **~R$ 1.670**
+- **Custo total estimado sem IA (R$):** ~R$ 32.365
 - **Razão de economicidade:** **~19.4x** (custo sem IA / custo com IA)
-- **Saving estimado (R$):** ~R$ 26.221
+- **Saving estimado (R$):** ~R$ 30.695
 - **Saving estimado (%):** ~94.8%
 
 > **Atenção às limitações desta análise:**
@@ -550,7 +649,41 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 > (4) Há atividades onde a IA aumentou o tempo total — esses casos devem ser documentados.
 
 ### O que mudaria se fizesse novamente?
-> [A preencher]
+
+1. **Começar com Claude Sonnet, não Opus.** A Fase de Exposição usou Claude Opus 4 (~$22.74 de ~$30.75 totais de IA) — 67% do custo total em uma fase só. Sonnet 4.6 entrega qualidade equivalente para implementação a 1/5 do preço por token. A troca do modelo no meio do projeto foi a decisão mais impactante economicamente.
+
+2. **Criar testes unitários junto com a implementação, não depois.** Os testes foram criados em sessão separada, o que exigiu que a IA relesse e reinterpretasse todo o código de produção. Fazer isso na mesma sessão de implementação economizaria tokens e produziria testes mais aderentes.
+
+3. **Manter session memory estruturada desde o início.** A compactação de contexto em sessões longas causou perda de estado várias vezes, forçando re-exploração de arquivos já lidos. Um arquivo `/memories/session/plan.md` atualizado a cada fase teria eliminado esse retrabalho.
+
+4. **Definir o CATALOGO_PROMPTS.md antes de usar prompts repetidamente.** Os prompts de sistema (SYSTEM_PROMPT_007, PROMPT-010, etc.) foram criados ad hoc. Catalogar desde o início com template fixo teria facilitado reutilização entre fases.
+
+5. **Validar UI visualmente antes de rebuild Docker completo.** Vários rebuilds (~10 min cada por PyTorch) foram feitos para corrigir bugs de CSS/Tailwind que poderiam ser detectados antes do build via inspeção de código.
+
+6. **Criar specs para features avançadas como para as básicas.** Features como Drift Arquitetural e Tech Debt v2 foram implementadas sem `design.md`/`tasks.md` formais. A estrutura de spec das fases iniciais produziu output de maior qualidade com menos iterações.
 
 ### Recomendações para outras equipes
-> [A preencher]
+
+**Sobre o uso de modelos:**
+- Use Claude Sonnet (ou equivalente mid-tier) para implementação de código — o delta de qualidade em relação ao Opus/GPT-4o em tarefas de código não justifica o custo 5x maior.
+- Reserve modelos premium (Opus, o1) para raciocínio arquitetural profundo, revisão de segurança crítica e design de prompts complexos.
+- Defina `LLM_MODEL` como variável de ambiente desde o início — trocar modelos em produção sem isso é trabalhoso.
+
+**Sobre gestão de contexto:**
+- Em sessões longas (>100 mensagens), escreva um `session_plan.md` com estado atual antes de cada sub-tarefa. A compactação de contexto é inevitável e silenciosa — não descubra quando já perdeu o estado.
+- Documente decisões de arquitetura em arquivos dedicados (`ARCHITECTURE.md`) logo após tomá-las. A IA não lembra entre sessões — mas lê arquivos.
+
+**Sobre implementação:**
+- O padrão "in-memory fallback em todos os adapters" é obrigatório para times que precisam desenvolver sem infraestrutura rodando. A produtividade local dobra.
+- Para escrever arquivos grandes (>200 linhas) via IA em terminal Windows, use scripts Python intermediários — nunca `python -c` com string inline ou `Set-Content` com acentos.
+- Peça análise antes de implementação: "mapeie tudo sem implementar" produz designs melhores que pedir código direto.
+
+**Sobre economicidade:**
+- Meça tokens e custos por fase desde o início — a surpresa da Fase de Exposição com Claude Opus 4 ($22.74 de $33.66 totais) só foi identificada retroativamente.
+- O contrafactual em horas deve ser estimado por quem conhece o domínio, não pela IA — o viés de retrospecto da IA inflaciona o contrafactual; o viés humano tende a subestimar.
+- Uma razão de economicidade sustentada acima de 10x ao longo de um semestre é realista e replicável em contextos acadêmicos e de startups.
+
+**Sobre segurança:**
+- Nenhuma credencial deve existir hardcoded nem por um commit — o histórico de chat também vaza segredos. Rogue todas as chaves que aparecerem em conversas com IA.
+- Webhooks externos sempre com `hmac.compare_digest()` — nunca comparação direta de strings.
+- Audit log como middleware cross-cutting, não lógica em controllers — é mais seguro e garantido.

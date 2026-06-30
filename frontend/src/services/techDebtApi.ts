@@ -1,4 +1,4 @@
-import { httpGet } from "../infrastructure/http";
+import { httpGet, httpPost } from "../infrastructure/http";
 
 export interface TechDebtSnapshot {
   id: string;
@@ -17,6 +17,21 @@ export interface TechDebtSnapshot {
     hotspot_score: number;
     language: string;
   }>;
+  // Extended metrics (v2)
+  avg_complexity: number;
+  avg_churn: number;
+  avg_loc: number;
+  comment_ratio: number;
+  coupling_score: number;
+  debt_trend: "improving" | "stable" | "degrading";
+  llm_summary: string;
+  debt_breakdown: {
+    complexity?: number;
+    churn?: number;
+    size?: number;
+    coupling?: number;
+    documentation?: number;
+  };
 }
 
 export async function getTechDebtHistory(
@@ -25,5 +40,14 @@ export async function getTechDebtHistory(
 ): Promise<TechDebtSnapshot[]> {
   return httpGet<TechDebtSnapshot[]>(
     `/api/repos/${repositoryId}/tech-debt?limit=${limit}`
+  );
+}
+
+export async function analyseTechDebt(
+  repositoryId: string
+): Promise<TechDebtSnapshot> {
+  return httpPost<TechDebtSnapshot>(
+    `/api/repos/${repositoryId}/tech-debt/analyse`,
+    {}
   );
 }

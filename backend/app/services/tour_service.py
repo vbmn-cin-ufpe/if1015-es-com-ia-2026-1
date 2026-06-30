@@ -6,10 +6,24 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from app.ports import RepositoryMetadataPort, TourRecord, TourRepositoryPort, TourStepRecord
+from app.ports import LLMPort, RepositoryMetadataPort, TourRecord, TourRepositoryPort, TourStepRecord
 from app.services.analyzers import ChurnAnalyzer, ComplexityAnalyzer, CouplingAnalyzer
 
 logger = logging.getLogger(__name__)
+
+_TOUR_SYSTEM_PROMPT = """\
+Você é um mentor técnico de onboarding para desenvolvedores. Analise o código fornecido e explique
+de forma pedagógica por que este módulo é importante para um novo desenvolvedor.
+
+Regras:
+- Escreva em 2 a 3 parágrafos concisos em prosa fluida (sem listas, sem títulos Markdown)
+- Seja concreto: mencione nomes reais de classes, funções e arquivos visíveis no código
+- Explique o papel arquitetural, responsabilidades e padrões de design identificados
+- Se houver interfaces, abstrações ou pontos de extensão relevantes, destaque-os
+- Termine com uma frase sobre o impacto de alterar ou não entender este módulo
+- Escreva em Português do Brasil
+- Máximo 200 palavras
+"""
 
 
 class ModuleScoringService:
@@ -180,10 +194,12 @@ class TourGenerationService:
         scoring_service: ModuleScoringService,
         metadata_adapter: RepositoryMetadataPort,
         tour_repository: TourRepositoryPort | None = None,
+        llm_client: LLMPort | None = None,
     ):
         self.scoring_service = scoring_service
         self.metadata_adapter = metadata_adapter
         self.tour_repository = tour_repository
+        self.llm_client = llm_client
 
     def generate_tour(
         self,
@@ -226,6 +242,7 @@ class TourGenerationService:
         # Build tour steps
         steps = []
         for idx, module_data in enumerate(ranked_modules, 1):
+            llm_insight = self._generate_llm_insight(module_data, repo_root)
             step = {
                 "step_number": idx,
                 "module_name": module_data["module_name"],
@@ -240,6 +257,7 @@ class TourGenerationService:
                 "files": module_data["files"],
                 "file_details": module_data["file_details"],
                 "rationale": self._generate_rationale(module_data),
+                "llm_insight": llm_insight,
                 "metrics": module_data["metrics"],
                 "recommendations": self._generate_recommendations(module_data),
             }
@@ -347,6 +365,71 @@ class TourGenerationService:
             }
             for r in records
         ]
+
+    def _generate_llm_insight(self, module_data: dict[str, Any], repo_root: Path) -> str | None:
+        """Use LLM to generate a code-grounded explanation of module importance."""
+        if self.llm_client is None:
+            return None
+
+        # Pick top 3 files by composite score (complexity × commits × deps)
+        file_details: list[dict[str, Any]] = module_data.get("file_details", [])
+        if not file_details:
+            return None
+
+        def _file_score(f: dict[str, Any]) -> float:
+            return (
+                f.get("complexity", 0) * 0.5
+                + f.get("commits", 0) * 0.3
+                + f.get("dependencies", 0) * 0.2
+            )
+
+        top_files = sorted(file_details, key=_file_score, reverse=True)[:3]
+
+        # Read up to 80 lines from each file
+        snippets: list[str] = []
+        for fmeta in top_files:
+            fpath = repo_root / fmeta["path"]
+            try:
+                lines = fpath.read_text(encoding="utf-8", errors="replace").splitlines()
+                preview = "\n".join(lines[:80])
+                lang = fpath.suffix.lstrip(".") or "text"
+                snippets.append(
+                    f"### {fmeta['path']}  "
+                    f"(complexidade={fmeta.get('complexity', 0):.1f}, "
+                    f"commits={fmeta.get('commits', 0)}, "
+                    f"deps={fmeta.get('dependencies', 0)})\n"
+                    f"```{lang}\n{preview}\n```"
+                )
+            except Exception:
+                pass
+
+        if not snippets:
+            return None
+
+        metrics = module_data["metrics"]
+        avg_cc = metrics["complexity"].get("avg_complexity", 0)
+        total_commits = metrics["churn"].get("total_commits", 0)
+        unique_deps = metrics["coupling"].get("unique_dependencies", 0)
+
+        prompt = (
+            f"## Módulo analisado: `{module_data['module_name']}`\n\n"
+            f"**Métricas:** complexidade média={avg_cc:.1f}, "
+            f"total de commits={total_commits}, "
+            f"dependências únicas={unique_deps}, "
+            f"score de criticidade={module_data['score']:.3f}\n\n"
+            f"**Arquivos mais críticos do módulo ({len(top_files)} de {module_data['file_count']}):**\n\n"
+            + "\n\n".join(snippets)
+            + "\n\n---\n\n"
+            "Com base exclusivamente no código acima, explique por que este módulo é importante "
+            "para um desenvolvedor novato que está chegando ao projeto."
+        )
+
+        try:
+            result = self.llm_client.generate_raw(prompt, _TOUR_SYSTEM_PROMPT)
+            return result if result else None
+        except Exception as exc:
+            logger.warning("LLM insight generation failed for %s: %s", module_data["module_name"], exc)
+            return None
 
     def _generate_rationale(self, module_data: dict[str, Any]) -> str:
         """Generate explanation for why this module is critical."""

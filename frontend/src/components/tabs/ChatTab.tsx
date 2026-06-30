@@ -374,8 +374,11 @@ export function ChatTab({ repositoryId, status }: Props) {
     const [thinkLabel, setThinkLabel] = useState(THINKING_LABELS[0]);
     const [thinkIcon, setThinkIcon] = useState(THINKING_ICONS[0]);
     const [error, setError] = useState("");
+    const [elapsedMs, setElapsedMs] = useState<number | null>(null);
     // Track per-entry feedback: entry.id → "up" | "down"
     const [feedbackSent, setFeedbackSent] = useState<Record<string, "up" | "down">>({});
+    // Track response time per entry
+    const [responseTimes, setResponseTimes] = useState<Record<string, number>>({});
 
     // Auto-scroll ref
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -395,8 +398,10 @@ export function ChatTab({ repositoryId, status }: Props) {
         if (!repositoryId || !input.trim()) return;
         setError("");
         setLoading(true);
+        setElapsedMs(null);
         const q = input.trim();
         setInput("");
+        const t0 = Date.now();
 
         let idx = 0;
         const interval = setInterval(() => {
@@ -407,7 +412,15 @@ export function ChatTab({ repositoryId, status }: Props) {
 
         try {
             const response = await askQuestion(repositoryId, q, token);
+            const ms = Date.now() - t0;
+            setElapsedMs(ms);
             addEntry(q, response, repositoryId);
+            // Grab the id of the entry just added
+            const entries = useChatStore.getState().history;
+            const lastEntry = entries[entries.length - 1];
+            if (lastEntry?.id) {
+                setResponseTimes((prev) => ({ ...prev, [lastEntry.id]: ms }));
+            }
         } catch {
             setError("Falha ao consultar o modelo. Tente novamente.");
             setInput(q); // restore input on error
@@ -599,30 +612,40 @@ export function ChatTab({ repositoryId, status }: Props) {
                                 )}
 
                                 {/* Feedback thumbs */}
-                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                    <span className="text-[11px] text-gray-400">Esta resposta foi útil?</span>
+                                <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                            Esta resposta foi útil?
+                                        </p>
+                                        <p className="text-[11px] text-gray-400 mt-0.5">Seu feedback melhora as próximas respostas</p>
+                                    </div>
                                     {feedbackSent[entry.id] ? (
-                                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        <span className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg font-medium">
                                             <Icon name={feedbackSent[entry.id] === "up" ? "thumbs-up" : "thumbs-down"} />
                                             Obrigado pelo feedback!
                                         </span>
                                     ) : (
-                                        <>
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handleFeedback(entry.id, true)}
-                                                className="text-gray-400 hover:text-emerald-500 transition-colors p-1 rounded"
+                                                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
                                                 title="Resposta útil"
                                             >
-                                                <Icon name="thumbs-up" regular />
+                                                <Icon name="thumbs-up" regular /> Sim
                                             </button>
                                             <button
                                                 onClick={() => handleFeedback(entry.id, false)}
-                                                className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded"
+                                                className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                                 title="Resposta não útil"
                                             >
-                                                <Icon name="thumbs-down" regular />
+                                                <Icon name="thumbs-down" regular /> Não
                                             </button>
-                                        </>
+                                        </div>
+                                    )}
+                                    {responseTimes[entry.id] && (
+                                        <span className="text-[10px] text-gray-300 dark:text-gray-600 ml-1 shrink-0">
+                                            {(responseTimes[entry.id] / 1000).toFixed(1)}s
+                                        </span>
                                     )}
                                 </div>
                             </div>

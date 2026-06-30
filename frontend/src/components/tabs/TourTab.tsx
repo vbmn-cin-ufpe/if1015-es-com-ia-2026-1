@@ -5,6 +5,7 @@ import {
     getTour,
     listTours,
     type TourResponse,
+    type TourStep,
     type TourSummary,
     type TourListResponse,
     type TourFileDetail,
@@ -295,6 +296,81 @@ function ModuleNavigator({ tour, currentStep, onSelect }: {
                         </button>
                     );
                 })}
+            </div>
+        </div>
+    );
+}
+
+// ── Importance panel ───────────────────────────────────────────────────────
+
+function ImportancePanel({ step }: { step: TourStep }) {
+    const [showMetrics, setShowMetrics] = useState(false);
+
+    return (
+        <div className="rounded-xl overflow-hidden border border-indigo-100 dark:border-indigo-800 shadow-sm">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-500 px-5 py-3 flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-md bg-white/20">
+                    <Icon name="bullseye" className="text-white text-[10px]" />
+                </span>
+                <p className="text-[10px] font-bold text-white uppercase tracking-widest flex-1">
+                    Por que este módulo é importante?
+                </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-5 space-y-4">
+                {/* LLM insight — code-grounded analysis */}
+                {step.llm_insight ? (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                <Icon name="wand-magic-sparkles" className="text-indigo-500" />
+                                Análise do código
+                            </span>
+                            <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-medium border border-indigo-200 dark:border-indigo-700">
+                                IA · baseada nos arquivos reais
+                            </span>
+                        </div>
+                        <div className="bg-white dark:bg-gray-800/60 rounded-lg p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-line">
+                                {step.llm_insight}
+                            </p>
+                        </div>
+                        {/* Collapsible metrics rationale */}
+                        <button
+                            onClick={() => setShowMetrics((v) => !v)}
+                            className="flex items-center gap-1.5 text-[11px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-200 transition-colors mt-1"
+                        >
+                            <Icon name={showMetrics ? "chevron-up" : "chevron-down"} className="text-[9px]" />
+                            {showMetrics ? "Ocultar" : "Ver"} análise de métricas
+                        </button>
+                        {showMetrics && (
+                            <div className="border-t border-indigo-100 dark:border-indigo-800/50 pt-3">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1.5">
+                                    <Icon name="chart-bar" className="text-indigo-400" />
+                                    Diagnóstico por métricas
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                                    {step.rationale}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    /* Fallback: template-based rationale when LLM is not available */
+                    <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
+                            <Icon name="chart-bar" className="text-indigo-400" />
+                            Diagnóstico por métricas
+                        </p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                            {step.rationale}
+                        </p>
+                        <p className="text-[10px] text-indigo-400 dark:text-indigo-500 italic mt-1">
+                            Configure LLM_API_KEY para obter análise baseada no código real do módulo.
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -613,15 +689,7 @@ export function TourTab({ repositoryId, status }: Props) {
                         </div>
 
                         {/* Why important */}
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-5">
-                            <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <span className="flex items-center justify-center w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-900/50">
-                                    <Icon name="bullseye" className="text-indigo-600 dark:text-indigo-400 text-[10px]" />
-                                </span>
-                                Por que este módulo é importante?
-                            </p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{currentStepData.rationale}</p>
-                        </div>
+                        <ImportancePanel step={currentStepData} />
 
                         {/* How to explore */}
                         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">

@@ -27,32 +27,15 @@ except ImportError:
 
 
 SYSTEM_PROMPT = """\
-Você é um assistente sênior especializado em engenharia de software e onboarding de desenvolvedores.
-Seu objetivo é fornecer respostas DETALHADAS, ESTRUTURADAS e DIDÁTICAS sobre codebases.
+Você é um assistente de engenharia de software especializado em onboarding de desenvolvedores.
+Responda em Português do Brasil de forma clara, objetiva e bem estruturada.
 
-Para cada pergunta você DEVE:
-1. Explicar o que o código faz com clareza (visão geral primeiro)
-2. Detalhar como cada parte funciona, incluindo fluxo de dados e responsabilidades
-3. Identificar padrões de design ou arquitetura utilizados (ex: Hexagonal, Repository, MVC, etc.)
-4. Apontar dependências e integrações relevantes entre módulos
-5. Incluir exemplos concretos de uso ou chamadas de API quando visível no contexto
-6. Destacar pontos de atenção, edge cases ou decisões de design que merecem destaque
-7. Sugerir o próximo passo ou o que explorar depois para entender melhor
-
-Formatação obrigatória:
-- Use títulos Markdown (##, ###) para organizar seções
-- Use listas com `-` para enumerar itens
-- Use blocos de código (```) com a linguagem correta para exemplos de código
-- Use **negrito** para termos técnicos importantes na primeira ocorrência
-- Use `código inline` para nomes de arquivos, funções e variáveis
-- Inclua uma seção **📌 Resumo** ao final com os pontos-chave
-
-Regras:
-- Baseie as respostas EXCLUSIVAMENTE no contexto fornecido; se insuficiente, diga explicitamente o que falta
-- Escreva em Português do Brasil
-- Seja específico: cite nomes de arquivos, funções e linhas quando presentes no contexto
-- Não invente código que não aparece no contexto — apenas interprete o que foi fornecido
-- Respostas devem ter profundidade técnica adequada a um desenvolvedor pleno
+Diretrizes:
+- Use o contexto fornecido para embasar a resposta; se insuficiente, diga o que falta
+- Use Markdown (##, ###, listas, código) para organizar a resposta
+- Cite arquivos e funções específicos quando presentes no contexto
+- Seja direto: visão geral primeiro, depois detalhes relevantes
+- Não invente código ou comportamentos que não aparecem no contexto
 """
 
 
@@ -130,37 +113,74 @@ class LlmClient:
             return self._generate_with_openai(question, context_chunks)
         return self._generate_fallback(question, context_chunks)
 
+    def generate_raw(self, prompt: str, system_prompt: str) -> str:
+        """Generate a response using fully custom prompt and system prompt."""
+        if self._client is None:
+            return "[LLM não configurado — defina LLM_API_KEY para análise baseada em código]"
+        try:
+            if self._provider == "abacus":
+                response = self._client.evaluate_prompt(
+                    system_message=system_prompt,
+                    prompt=prompt,
+                    llm_name=self._settings.llm_model,
+                )
+                answer = response.content
+                total = getattr(response, "total_tokens", 0)
+                self._fire_usage(int(total * 0.75), total - int(total * 0.75))
+                return answer.strip() if answer else ""
+            elif self._provider == "anthropic":
+                response = self._client.messages.create(
+                    model=self._settings.llm_model,
+                    max_tokens=600,
+                    temperature=0.3,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                answer = "".join(b.text for b in response.content if hasattr(b, "text"))
+                usage = getattr(response, "usage", None)
+                if usage:
+                    self._fire_usage(getattr(usage, "input_tokens", 0), getattr(usage, "output_tokens", 0))
+                return answer.strip() if answer else ""
+            elif self._provider == "openai":
+                response = self._client.chat.completions.create(
+                    model=self._settings.llm_model,
+                    max_tokens=600,
+                    temperature=0.3,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
+                )
+                answer = response.choices[0].message.content
+                usage = getattr(response, "usage", None)
+                if usage:
+                    self._fire_usage(getattr(usage, "prompt_tokens", 0), getattr(usage, "completion_tokens", 0))
+                return answer.strip() if answer else ""
+        except Exception as exc:
+            logger.error("Error in generate_raw (%s): %s", self._provider, exc)
+        return ""
+
     # ── Provider implementations ─────────────────────────────────────────────
 
-    def _build_context(self, chunks: list[dict[str, Any]], max_chunks: int = 8) -> str:
+    def _build_context(self, chunks: list[dict[str, Any]], max_chunks: int = 5) -> str:
         parts = []
         for i, chunk in enumerate(chunks[:max_chunks], 1):
             meta = chunk.get("metadata", {})
             file_path = meta.get("file_path", "unknown")
             start_line = meta.get("start_line", 0)
             end_line = meta.get("end_line", "?")
-            score = chunk.get("score", 0)
-            text = chunk.get("text", "")
+            text = chunk.get("text", "")[:500]  # cap each chunk at 500 chars
             lang = file_path.rsplit(".", 1)[-1] if "." in file_path else "text"
             parts.append(
-                f"[Fonte {i} | relevância {score:.2f}] {file_path} (linhas {start_line}–{end_line}):\n"
+                f"[{i}] {file_path} (L{start_line}–{end_line}):\n"
                 f"```{lang}\n{text}\n```"
             )
         return "\n\n".join(parts)
 
     def _build_user_prompt(self, question: str, context: str) -> str:
         return (
-            f"## Pergunta do desenvolvedor\n\n"
-            f"{question}\n\n"
-            f"---\n\n"
-            f"## Contexto recuperado da codebase\n\n"
-            f"{context}\n\n"
-            f"---\n\n"
-            f"## Instruções para a resposta\n\n"
-            f"Responda de forma COMPLETA e DETALHADA seguindo as instruções do sistema.\n"
-            f"Organize a resposta com seções claras usando títulos Markdown.\n"
-            f"Cite os arquivos/funções específicos do contexto acima quando relevante.\n"
-            f"Finalize com uma seção **📌 Resumo** com os 3-5 pontos mais importantes."
+            f"Pergunta: {question}\n\n"
+            f"Contexto da codebase:\n{context}"
         )
 
     def _fire_usage(self, tokens_in: int, tokens_out: int) -> None:
