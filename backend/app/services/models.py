@@ -52,11 +52,18 @@ class TourStepMetrics(BaseModel):
 
 
 class TourStep(BaseModel):
+    model_config = {"extra": "allow"}
+
     step_number: int
     module_name: str
     title: str
     score: float
+    score_breakdown: dict[str, float] | None = None
+    file_count: int | None = None
+    files: list[str] | None = None
+    file_details: list[dict[str, Any]] | None = None
     rationale: str
+    llm_insight: str | None = None
     metrics: TourStepMetrics
     recommendations: list[str]
 

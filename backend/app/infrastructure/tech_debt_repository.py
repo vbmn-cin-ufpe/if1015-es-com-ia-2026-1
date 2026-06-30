@@ -21,9 +21,18 @@ class TechDebtSnapshot:
     snapshot_ts: str       # ISO 8601
     avg_score: float
     total_files: int
-    critical_count: int    # files with score ≥ 75
-    high_count: int        # files with score ≥ 50
+    critical_count: int    # files with score >= 75
+    high_count: int        # files with score >= 50
     top_files: list[dict[str, Any]] = field(default_factory=list)
+    # Extended metrics (v2)
+    avg_complexity: float = 0.0       # mean cyclomatic complexity
+    avg_churn: float = 0.0            # mean commits per file (last 6 months)
+    avg_loc: float = 0.0              # mean lines of code per file
+    comment_ratio: float = 0.0        # comments / loc ratio (0-1)
+    coupling_score: float = 0.0       # mean import count per file
+    debt_trend: str = "stable"        # "improving" | "stable" | "degrading"
+    llm_summary: str = ""             # AI-generated summary (PROMPT-007)
+    debt_breakdown: dict[str, float] = field(default_factory=dict)  # per-category 0-100
 
 
 class TechDebtRepository:
@@ -56,10 +65,36 @@ class TechDebtRepository:
                         total_files INT NOT NULL DEFAULT 0,
                         critical_count INT NOT NULL DEFAULT 0,
                         high_count INT NOT NULL DEFAULT 0,
-                        top_files JSONB NOT NULL DEFAULT '[]'
+                        top_files JSONB NOT NULL DEFAULT '[]',
+                        avg_complexity REAL DEFAULT 0,
+                        avg_churn REAL DEFAULT 0,
+                        avg_loc REAL DEFAULT 0,
+                        comment_ratio REAL DEFAULT 0,
+                        coupling_score REAL DEFAULT 0,
+                        debt_trend TEXT DEFAULT 'stable',
+                        llm_summary TEXT DEFAULT '',
+                        debt_breakdown JSONB DEFAULT '{}'
                     )
                     """
                 )
+                # Migrate existing tables — add new columns if missing
+                for col_def in [
+                    "avg_complexity REAL DEFAULT 0",
+                    "avg_churn REAL DEFAULT 0",
+                    "avg_loc REAL DEFAULT 0",
+                    "comment_ratio REAL DEFAULT 0",
+                    "coupling_score REAL DEFAULT 0",
+                    "debt_trend TEXT DEFAULT 'stable'",
+                    "llm_summary TEXT DEFAULT ''",
+                    "debt_breakdown JSONB DEFAULT '{}'",
+                ]:
+                    col_name = col_def.split()[0]
+                    try:
+                        cur.execute(
+                            f"ALTER TABLE tech_debt_snapshots ADD COLUMN IF NOT EXISTS {col_def}"
+                        )
+                    except Exception:
+                        pass  # column already exists
                 cur.execute(
                     "CREATE INDEX IF NOT EXISTS idx_tech_debt_repo_ts "
                     "ON tech_debt_snapshots(repository_id, snapshot_ts DESC)"
@@ -80,8 +115,10 @@ class TechDebtRepository:
                     """
                     INSERT INTO tech_debt_snapshots
                         (id, repository_id, snapshot_ts, avg_score, total_files,
-                         critical_count, high_count, top_files)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                         critical_count, high_count, top_files,
+                         avg_complexity, avg_churn, avg_loc, comment_ratio,
+                         coupling_score, debt_trend, llm_summary, debt_breakdown)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (id) DO NOTHING
                     """,
                     (
@@ -89,6 +126,10 @@ class TechDebtRepository:
                         snapshot.avg_score, snapshot.total_files,
                         snapshot.critical_count, snapshot.high_count,
                         json.dumps(snapshot.top_files),
+                        snapshot.avg_complexity, snapshot.avg_churn, snapshot.avg_loc,
+                        snapshot.comment_ratio, snapshot.coupling_score,
+                        snapshot.debt_trend, snapshot.llm_summary,
+                        json.dumps(snapshot.debt_breakdown),
                     ),
                 )
             self._conn.commit()
@@ -111,7 +152,9 @@ class TechDebtRepository:
                 cur.execute(
                     """
                     SELECT id, repository_id, snapshot_ts::text, avg_score,
-                           total_files, critical_count, high_count, top_files
+                           total_files, critical_count, high_count, top_files,
+                           avg_complexity, avg_churn, avg_loc, comment_ratio,
+                           coupling_score, debt_trend, llm_summary, debt_breakdown
                       FROM tech_debt_snapshots
                      WHERE repository_id = %s
                      ORDER BY snapshot_ts ASC
@@ -125,6 +168,14 @@ class TechDebtRepository:
                         avg_score=r[3], total_files=r[4],
                         critical_count=r[5], high_count=r[6],
                         top_files=r[7] if isinstance(r[7], list) else json.loads(r[7] or "[]"),
+                        avg_complexity=float(r[8] or 0),
+                        avg_churn=float(r[9] or 0),
+                        avg_loc=float(r[10] or 0),
+                        comment_ratio=float(r[11] or 0),
+                        coupling_score=float(r[12] or 0),
+                        debt_trend=r[13] or "stable",
+                        llm_summary=r[14] or "",
+                        debt_breakdown=r[15] if isinstance(r[15], dict) else json.loads(r[15] or "{}"),
                     )
                     for r in cur.fetchall()
                 ]
@@ -144,7 +195,15 @@ class TechDebtRepository:
         critical_count: int,
         high_count: int,
         top_files: list[dict[str, Any]],
-    ) -> TechDebtSnapshot:
+        avg_complexity: float = 0.0,
+        avg_churn: float = 0.0,
+        avg_loc: float = 0.0,
+        comment_ratio: float = 0.0,
+        coupling_score: float = 0.0,
+        debt_trend: str = "stable",
+        llm_summary: str = "",
+        debt_breakdown: dict[str, float] | None = None,
+    ) -> "TechDebtSnapshot":
         return TechDebtSnapshot(
             id=str(uuid4()),
             repository_id=repository_id,
@@ -154,4 +213,12 @@ class TechDebtRepository:
             critical_count=critical_count,
             high_count=high_count,
             top_files=top_files,
+            avg_complexity=avg_complexity,
+            avg_churn=avg_churn,
+            avg_loc=avg_loc,
+            comment_ratio=comment_ratio,
+            coupling_score=coupling_score,
+            debt_trend=debt_trend,
+            llm_summary=llm_summary,
+            debt_breakdown=debt_breakdown or {},
         )
