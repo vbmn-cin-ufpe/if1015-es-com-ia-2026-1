@@ -23,6 +23,9 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 
 **CodeCompass** é um assistente conversacional de onboarding que ajuda desenvolvedores novos a entender uma codebase legada de forma guiada e contextualizada. O sistema indexa repositórios Git, extrai embeddings semânticos do código-fonte e do histórico de commits, e fornece uma interface web para chat, tours guiados, grafo de dependências e análise de métricas.
 
+<img width="667" height="372" alt="image" src="https://github.com/user-attachments/assets/dab435b0-3e2c-41f1-a6fb-771fc131a5b5" />
+
+
 ---
 
 ## Funcionalidades implementadas
