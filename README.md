@@ -2,6 +2,10 @@
 
 Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF1015 Engenharia de Software com IA** (Tópicos Avançados em SI 6), turma de Sistemas de Informação, professor **Vinicius Cardoso Garcia**.
 
+Link apresentação Canva : https://www.canva.com/design/DAHMrRH85cQ/rpHYQHauYtlc1Tw1F2Js6w/edit
+
+Link pata Video Demo : https://drive.google.com/file/d/1gHsRPVkesumXVxDzyDu-laThpPflyLvl/view?usp=drivesdk
+
 ---
 
 ## CodeCompass — Onboarding Inteligente em Codebases Legados
