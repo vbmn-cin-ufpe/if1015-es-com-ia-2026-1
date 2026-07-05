@@ -6,6 +6,9 @@ Link apresentação Canva : https://www.canva.com/design/DAHMrRH85cQ/rpHYQHauYtl
 
 Link pata Video Demo : https://drive.google.com/file/d/1gHsRPVkesumXVxDzyDu-laThpPflyLvl/view?usp=drivesdk
 
+Sistema em produção : https://codecompass.lemonwave-598e1007.brazilsouth.azurecontainerapps.io/chat
+
+
 ---
 
 ## CodeCompass — Onboarding Inteligente em Codebases Legados
