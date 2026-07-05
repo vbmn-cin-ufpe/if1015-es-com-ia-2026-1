@@ -4,7 +4,7 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 
 Link apresentação Canva : https://www.canva.com/design/DAHMrRH85cQ/rpHYQHauYtlc1Tw1F2Js6w/edit
 
-Link pata Video Demo : https://drive.google.com/file/d/1gHsRPVkesumXVxDzyDu-laThpPflyLvl/view?usp=drivesdk
+Link pata Video Demo Youtube: https://youtu.be/63nNUSE4aY8
 
 Sistema em produção : https://codecompass.lemonwave-598e1007.brazilsouth.azurecontainerapps.io/chat
 
