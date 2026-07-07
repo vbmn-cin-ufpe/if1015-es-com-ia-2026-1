@@ -10,10 +10,10 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 
 ## Ferramentas utilizadas
 
-| Ferramenta | Categoria | Quando usada | Modelo/Versão | Avaliação geral |
-|---|---|---|---|---|
-| ChatLLM (Claude) | LLM/Assistente | Elaboração da proposta, pesquisa de arquitetura, geração de código de referência, análise de viabilidade | Claude Opus 4 | ⭐⭐⭐⭐⭐ |
-| GitHub Copilot (Agent Mode) | Code generation / Agent | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs, otimizações e melhorias de UX | Claude Sonnet 4.6 | ⭐⭐⭐⭐⭐ |
+| Ferramenta                  | Categoria               | Quando usada                                                                                                                   | Modelo/Versão     | Avaliação geral |
+| --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- | --------------- |
+| ChatLLM (Claude)            | LLM/Assistente          | Elaboração da proposta, pesquisa de arquitetura, geração de código de referência, análise de viabilidade                       | Claude Opus 4     | ⭐⭐⭐⭐⭐      |
+| GitHub Copilot (Agent Mode) | Code generation / Agent | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs, otimizações e melhorias de UX | Claude Sonnet 4.6 | ⭐⭐⭐⭐⭐      |
 
 ---
 
@@ -51,43 +51,43 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| Análise dos 10 domínios + classificação | ChatLLM / Claude Opus 4 | ~8.000 | ~6.000 | ~$0.12 |
-| Geração de estrutura do projeto (backend + IA) | ChatLLM / Claude Opus 4 | ~5.000 | ~12.000 | ~$0.22 |
-| Análise de boas práticas production-ready | ChatLLM / Claude Opus 4 | ~4.000 | ~15.000 | ~$$0.28 |
-| Visão de produto (fluxo empresa) | ChatLLM / Claude Opus 4 | ~3.000 | ~10.000 | ~$$0.18 |
-| Geração da PROPOSTA_v1.md | ChatLLM / Claude Opus 4 | ~6.000 | ~8.000 | ~$$0.16 |
-| Geração do WORKFLOW_DOCUMENT.md | ChatLLM / Claude Opus 4 | ~4.000 | ~6.000 | ~$$0.12 |
-| **Total da fase** | | **~30.000** | **~57.000** | **~$1.08** |
+| Atividade                                      | Ferramenta/Modelo       | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| ---------------------------------------------- | ----------------------- | --------------------- | ------------------- | -------------------- |
+| Análise dos 10 domínios + classificação        | ChatLLM / Claude Opus 4 | ~8.000                | ~6.000              | ~$0.12               |
+| Geração de estrutura do projeto (backend + IA) | ChatLLM / Claude Opus 4 | ~5.000                | ~12.000             | ~$0.22               |
+| Análise de boas práticas production-ready      | ChatLLM / Claude Opus 4 | ~4.000                | ~15.000             | ~$$0.28              |
+| Visão de produto (fluxo empresa)               | ChatLLM / Claude Opus 4 | ~3.000                | ~10.000             | ~$$0.18              |
+| Geração da PROPOSTA_v1.md                      | ChatLLM / Claude Opus 4 | ~6.000                | ~8.000              | ~$$0.16              |
+| Geração do WORKFLOW_DOCUMENT.md                | ChatLLM / Claude Opus 4 | ~4.000                | ~6.000              | ~$$0.12              |
+| **Total da fase**                              |                         | **~30.000**           | **~57.000**         | **~$1.08**           |
 
 > **Nota:** Estimativas baseadas no volume de texto trocado nas conversas com o ChatLLM. Preços de referência: Claude Opus ~$15/M tokens input, ~$75/M tokens output (março 2026). [AJUSTAR com preços reais consultados em docs.anthropic.com]
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| Análise dos domínios e votação | [Membro A] (júnior) | 0.5h | 0.5h (discussão em grupo) | IA gerou análise, equipe discutiu e votou |
-| Estrutura do projeto | [Membro B] (pleno) | 1.0h | 0.5h (revisão técnica) | Código de referência útil como ponto de partida |
-| Pesquisa de boas práticas | [Membro C] (júnior) | 0.5h | 0.3h | Conteúdo denso, precisou de leitura cuidadosa |
-| Visão de produto | [Membro D] (júnior) | 0.5h | 0.2h | Ajudou a pensar no produto além do MVP |
-| Escrita da PROPOSTA_v1 | [Membro E] (pleno) | 1.0h | 1.0h (revisão coletiva) | Template preenchido pela IA, revisado por todos |
-| Escrita do Workflow Doc | [Membro A] (júnior) | 0.5h | 0.5h | Registro do processo |
-| **Total da fase** | | **4.0h** | **3.0h** | **7.0h total de esforço humano** |
+| Atividade                      | Membro (perfil)     | Tempo com IA (h) | Tempo revisão/ajuste (h)  | Observações                                     |
+| ------------------------------ | ------------------- | ---------------- | ------------------------- | ----------------------------------------------- |
+| Análise dos domínios e votação | [Membro A] (júnior) | 0.5h             | 0.5h (discussão em grupo) | IA gerou análise, equipe discutiu e votou       |
+| Estrutura do projeto           | [Membro B] (pleno)  | 1.0h             | 0.5h (revisão técnica)    | Código de referência útil como ponto de partida |
+| Pesquisa de boas práticas      | [Membro C] (júnior) | 0.5h             | 0.3h                      | Conteúdo denso, precisou de leitura cuidadosa   |
+| Visão de produto               | [Membro D] (júnior) | 0.5h             | 0.2h                      | Ajudou a pensar no produto além do MVP          |
+| Escrita da PROPOSTA_v1         | [Membro E] (pleno)  | 1.0h             | 1.0h (revisão coletiva)   | Template preenchido pela IA, revisado por todos |
+| Escrita do Workflow Doc        | [Membro A] (júnior) | 0.5h             | 0.5h                      | Registro do processo                            |
+| **Total da fase**              |                     | **4.0h**         | **3.0h**                  | **7.0h total de esforço humano**                |
 
 > **Perfis de referência:** Classificação baseada na experiência dos membros com as tecnologias envolvidas nesta atividade específica, não no perfil geral.
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| Análise comparativa dos 10 domínios | Pleno | 6.0h | R$ 75 | R$$ 450 |
-| Definição de arquitetura + estrutura de projeto | Sênior | 8.0h | R$$ 115 | R$$ 920 |
-| Pesquisa de boas práticas (production-ready) | Sênior | 5.0h | R$$ 115 | R$ 575 |
-| Análise de produto e fluxo de mercado | Pleno | 4.0h | R$ 75 | R$ 300 |
-| Escrita da proposta completa | Pleno | 6.0h | R$ 75 | R$ 450 |
-| Documentação do workflow | Júnior | 2.0h | R$ 40 | R$ 80 |
-| **Total da fase** | | **31.0h** | | **R$ 2.775** |
+| Atividade                                       | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| ----------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| Análise comparativa dos 10 domínios             | Pleno              | 6.0h                      | R$ 75                | R$$ 450                    |
+| Definição de arquitetura + estrutura de projeto | Sênior             | 8.0h                      | R$$ 115              | R$$ 920                    |
+| Pesquisa de boas práticas (production-ready)    | Sênior             | 5.0h                      | R$$ 115              | R$ 575                     |
+| Análise de produto e fluxo de mercado           | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
+| Escrita da proposta completa                    | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
+| Documentação do workflow                        | Júnior             | 2.0h                      | R$ 40                | R$ 80                      |
+| **Total da fase**                               |                    | **31.0h**                 |                      | **R$ 2.775**               |
 
 > **Fontes salariais:** ABES pesquisa salarial 2025, Glassdoor Brasil (Recife/PE). Valores ajustáveis pela equipe com documentação da fonte.
 >
@@ -103,6 +103,7 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 - **Saving estimado:** ~R$ 2.384 (85.9%)
 
 > **Limitações desta análise parcial:**
+>
 > 1. O contrafactual é estimativa subjetiva — membros da equipe são estudantes, não profissionais com os perfis indicados
 > 2. A qualidade do output com IA pode diferir do que um profissional produziria
 > 3. O tempo de aprendizado das ferramentas de IA não está contabilizado
@@ -118,6 +119,7 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 ---
 
 ## Fase: Exposição (Aulas 14-20)
+
 Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistência de IA (GitHub Copilot / Claude Opus 4).
 
 ### Onde a IA ajudou
@@ -151,47 +153,47 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| SPEC-0001: Monolith Foundation (backend + Docker + frontend base) | GitHub Copilot / Claude Opus 4 | ~35.000 | ~45.000 | ~$3.90 |
-| SPEC-0002: Repo Index & RAG (embedding, chunking, retrieval, chat) | GitHub Copilot / Claude Opus 4 | ~30.000 | ~40.000 | ~$3.45 |
-| SPEC-0003: Guided Tour (scoring, persistence, step viewer) | GitHub Copilot / Claude Opus 4 | ~25.000 | ~35.000 | ~$3.00 |
-| SPEC-0004: Module Dependency Visualization (AST, graph, frontend) | GitHub Copilot / Claude Opus 4 | ~20.000 | ~30.000 | ~$2.55 |
-| SPEC-0005: Commit History Decision Intelligence (ingest, classify, timeline, why) | GitHub Copilot / Claude Opus 4 | ~25.000 | ~35.000 | ~$3.00 |
-| SPEC-0006: Onboarding Metrics & Evaluation (events, feedback, KPIs, dashboard) | GitHub Copilot / Claude Opus 4 | ~18.000 | ~28.000 | ~$2.37 |
-| SPEC-0007: Auth & Onboarding Sessions (auth, sessions, checkpoints, UI) | GitHub Copilot / Claude Opus 4 | ~15.000 | ~25.000 | ~$2.10 |
-| SPEC-0008: Observability & Operational Readiness (logging, metrics, ops, alerts) | GitHub Copilot / Claude Opus 4 | ~18.000 | ~28.000 | ~$2.37 |
-| **Total da fase** | | **~186.000** | **~266.000** | **~$22.74** |
+| Atividade                                                                         | Ferramenta/Modelo              | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| --------------------------------------------------------------------------------- | ------------------------------ | --------------------- | ------------------- | -------------------- |
+| SPEC-0001: Monolith Foundation (backend + Docker + frontend base)                 | GitHub Copilot / Claude Opus 4 | ~35.000               | ~45.000             | ~$3.90               |
+| SPEC-0002: Repo Index & RAG (embedding, chunking, retrieval, chat)                | GitHub Copilot / Claude Opus 4 | ~30.000               | ~40.000             | ~$3.45               |
+| SPEC-0003: Guided Tour (scoring, persistence, step viewer)                        | GitHub Copilot / Claude Opus 4 | ~25.000               | ~35.000             | ~$3.00               |
+| SPEC-0004: Module Dependency Visualization (AST, graph, frontend)                 | GitHub Copilot / Claude Opus 4 | ~20.000               | ~30.000             | ~$2.55               |
+| SPEC-0005: Commit History Decision Intelligence (ingest, classify, timeline, why) | GitHub Copilot / Claude Opus 4 | ~25.000               | ~35.000             | ~$3.00               |
+| SPEC-0006: Onboarding Metrics & Evaluation (events, feedback, KPIs, dashboard)    | GitHub Copilot / Claude Opus 4 | ~18.000               | ~28.000             | ~$2.37               |
+| SPEC-0007: Auth & Onboarding Sessions (auth, sessions, checkpoints, UI)           | GitHub Copilot / Claude Opus 4 | ~15.000               | ~25.000             | ~$2.10               |
+| SPEC-0008: Observability & Operational Readiness (logging, metrics, ops, alerts)  | GitHub Copilot / Claude Opus 4 | ~18.000               | ~28.000             | ~$2.37               |
+| **Total da fase**                                                                 |                                | **~186.000**          | **~266.000**        | **~$22.74**          |
 
 > **Nota:** Estimativas baseadas no volume de código gerado (~4.500 linhas de Python + ~1.200 linhas de TypeScript), leitura de specs, e conversação. Preços de referência: Claude Opus 4 ~$15/M tokens input, ~$75/M tokens output (maio 2026).
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| SPEC-0001 + SPEC-0002 (foundation + RAG) | [Membro] (pleno) | 2.0h | 1.0h | Setup inicial do projeto completo |
-| SPEC-0003 (guided tour) | [Membro] (pleno) | 1.5h | 0.5h | Scoring + persistence + UI |
-| SPEC-0004 (dependency graph) | [Membro] (pleno) | 1.0h | 0.5h | AST parsing + graph frontend |
-| SPEC-0005 (commit history) | [Membro] (pleno) | 1.5h | 0.5h | Classifier + timeline + why |
-| SPEC-0006 (metrics) | [Membro] (pleno) | 1.0h | 0.3h | KPIs + dashboard |
-| SPEC-0007 (auth/sessions) | [Membro] (pleno) | 0.5h | 0.3h | Auth + session lifecycle |
-| SPEC-0008 (observability) | [Membro] (pleno) | 0.5h | 0.3h | Logging + ops endpoints |
-| **Total da fase** | | **8.0h** | **3.4h** | **11.4h total de esforço humano** |
+| Atividade                                | Membro (perfil)  | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações                       |
+| ---------------------------------------- | ---------------- | ---------------- | ------------------------ | --------------------------------- |
+| SPEC-0001 + SPEC-0002 (foundation + RAG) | [Membro] (pleno) | 2.0h             | 1.0h                     | Setup inicial do projeto completo |
+| SPEC-0003 (guided tour)                  | [Membro] (pleno) | 1.5h             | 0.5h                     | Scoring + persistence + UI        |
+| SPEC-0004 (dependency graph)             | [Membro] (pleno) | 1.0h             | 0.5h                     | AST parsing + graph frontend      |
+| SPEC-0005 (commit history)               | [Membro] (pleno) | 1.5h             | 0.5h                     | Classifier + timeline + why       |
+| SPEC-0006 (metrics)                      | [Membro] (pleno) | 1.0h             | 0.3h                     | KPIs + dashboard                  |
+| SPEC-0007 (auth/sessions)                | [Membro] (pleno) | 0.5h             | 0.3h                     | Auth + session lifecycle          |
+| SPEC-0008 (observability)                | [Membro] (pleno) | 0.5h             | 0.3h                     | Logging + ops endpoints           |
+| **Total da fase**                        |                  | **8.0h**         | **3.4h**                 | **11.4h total de esforço humano** |
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| Backend foundation + Docker + CI/CD setup | Sênior | 16.0h | R$ 115 | R$ 1.840 |
-| RAG pipeline (embedding, chunking, retrieval, chat) | Sênior | 20.0h | R$ 115 | R$ 2.300 |
-| Guided tour (scoring engine + persistence + UI) | Sênior | 16.0h | R$ 115 | R$ 1.840 |
-| Dependency graph (AST extraction + assembly + API + frontend) | Sênior | 14.0h | R$ 115 | R$ 1.610 |
-| Commit history intelligence (git parsing + classifier + timeline + why) | Sênior | 16.0h | R$ 115 | R$ 1.840 |
-| Metrics & evaluation (ingestion + aggregation + reporting + dashboard) | Pleno | 12.0h | R$ 75 | R$ 900 |
-| Auth & sessions (auth service + session lifecycle + frontend) | Pleno | 10.0h | R$ 75 | R$ 750 |
-| Observability (structured logging + metrics + ops endpoints + alerts) | Sênior | 12.0h | R$ 115 | R$ 1.380 |
-| Testes (unitários + integração + E2E para todas as specs) | Pleno | 20.0h | R$ 75 | R$ 1.500 |
-| **Total da fase** | | **136.0h** | | **R$ 13.960** |
+| Atividade                                                               | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| ----------------------------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| Backend foundation + Docker + CI/CD setup                               | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
+| RAG pipeline (embedding, chunking, retrieval, chat)                     | Sênior             | 20.0h                     | R$ 115               | R$ 2.300                   |
+| Guided tour (scoring engine + persistence + UI)                         | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
+| Dependency graph (AST extraction + assembly + API + frontend)           | Sênior             | 14.0h                     | R$ 115               | R$ 1.610                   |
+| Commit history intelligence (git parsing + classifier + timeline + why) | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
+| Metrics & evaluation (ingestion + aggregation + reporting + dashboard)  | Pleno              | 12.0h                     | R$ 75                | R$ 900                     |
+| Auth & sessions (auth service + session lifecycle + frontend)           | Pleno              | 10.0h                     | R$ 75                | R$ 750                     |
+| Observability (structured logging + metrics + ops endpoints + alerts)   | Sênior             | 12.0h                     | R$ 115               | R$ 1.380                   |
+| Testes (unitários + integração + E2E para todas as specs)               | Pleno              | 20.0h                     | R$ 75                | R$ 1.500                   |
+| **Total da fase**                                                       |                    | **136.0h**                |                      | **R$ 13.960**              |
 
 ### Análise parcial de economicidade (esta fase)
 
@@ -203,6 +205,7 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 - **Saving estimado:** ~R$ 12.980 (93.0%)
 
 > **Limitações desta análise parcial:**
+>
 > 1. O volume de código gerado é alto mas precisa de validação funcional completa (testes não executados por falta de deps no Windows)
 > 2. A qualidade do output da IA pode requerer ajustes em produção
 > 3. Não inclui tempo de debugging de problemas de ambiente (ex: tokenizers build failure)
@@ -255,41 +258,41 @@ Fase de otimização e expansão do projeto após a implementação das 8 specs.
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| Diagnóstico e fix do bug de 92% (BackgroundTasks) | GitHub Copilot / Claude Sonnet 4.6 | ~12.000 | ~8.000 | ~$0.14 |
-| Investigação Abacus AI embeddings (testes exaustivos) | GitHub Copilot / Claude Sonnet 4.6 | ~18.000 | ~12.000 | ~$0.21 |
-| Implementação OpenAI embeddings + Settings refactor | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~15.000 | ~$0.26 |
-| Otimização concorrência (ThreadPoolExecutor) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.18 |
-| Expansão de 15 linguagens no registry | GitHub Copilot / Claude Sonnet 4.6 | ~10.000 | ~12.000 | ~$0.17 |
-| Testes de embedding direto (nestjs/nest benchmark) | GitHub Copilot / Claude Sonnet 4.6 | ~8.000 | ~5.000 | ~$0.09 |
-| Limpeza Docker + suporte operacional | GitHub Copilot / Claude Sonnet 4.6 | ~5.000 | ~3.000 | ~$0.06 |
-| **Total da fase** | | **~88.000** | **~65.000** | **~$1.11** |
+| Atividade                                             | Ferramenta/Modelo                  | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| ----------------------------------------------------- | ---------------------------------- | --------------------- | ------------------- | -------------------- |
+| Diagnóstico e fix do bug de 92% (BackgroundTasks)     | GitHub Copilot / Claude Sonnet 4.6 | ~12.000               | ~8.000              | ~$0.14               |
+| Investigação Abacus AI embeddings (testes exaustivos) | GitHub Copilot / Claude Sonnet 4.6 | ~18.000               | ~12.000             | ~$0.21               |
+| Implementação OpenAI embeddings + Settings refactor   | GitHub Copilot / Claude Sonnet 4.6 | ~20.000               | ~15.000             | ~$0.26               |
+| Otimização concorrência (ThreadPoolExecutor)          | GitHub Copilot / Claude Sonnet 4.6 | ~15.000               | ~10.000             | ~$0.18               |
+| Expansão de 15 linguagens no registry                 | GitHub Copilot / Claude Sonnet 4.6 | ~10.000               | ~12.000             | ~$0.17               |
+| Testes de embedding direto (nestjs/nest benchmark)    | GitHub Copilot / Claude Sonnet 4.6 | ~8.000                | ~5.000              | ~$0.09               |
+| Limpeza Docker + suporte operacional                  | GitHub Copilot / Claude Sonnet 4.6 | ~5.000                | ~3.000              | ~$0.06               |
+| **Total da fase**                                     |                                    | **~88.000**           | **~65.000**         | **~$1.11**           |
 
 > **Nota:** Preços de referência: Claude Sonnet 4.6 ~$3/M tokens input, ~$15/M tokens output (junho 2026).
 > Custo real de embeddings OpenAI na indexação do nestjs/nest (2825 chunks, `text-embedding-3-small`): **~$0.00006** — praticamente zero.
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| Debug do bug de 92% + BackgroundTasks | [Membro] (pleno) | 0.5h | 0.3h | Build e teste do fix |
-| Investigação Abacus AI + integração OpenAI | [Membro] (pleno) | 1.0h | 0.5h | Testes reais de API |
-| Otimização concorrência (ThreadPoolExecutor) | [Membro] (pleno) | 0.5h | 0.3h | Build e benchmark |
-| Expansão de linguagens (9 novas) | [Membro] (pleno) | 0.5h | 0.2h | Build e verificação |
-| Limpeza Docker + operacional | [Membro] (pleno) | 0.3h | 0.1h | Liberou ~58.6 GB |
-| **Total da fase** | | **2.8h** | **1.4h** | **4.2h total de esforço humano** |
+| Atividade                                    | Membro (perfil)  | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações                      |
+| -------------------------------------------- | ---------------- | ---------------- | ------------------------ | -------------------------------- |
+| Debug do bug de 92% + BackgroundTasks        | [Membro] (pleno) | 0.5h             | 0.3h                     | Build e teste do fix             |
+| Investigação Abacus AI + integração OpenAI   | [Membro] (pleno) | 1.0h             | 0.5h                     | Testes reais de API              |
+| Otimização concorrência (ThreadPoolExecutor) | [Membro] (pleno) | 0.5h             | 0.3h                     | Build e benchmark                |
+| Expansão de linguagens (9 novas)             | [Membro] (pleno) | 0.5h             | 0.2h                     | Build e verificação              |
+| Limpeza Docker + operacional                 | [Membro] (pleno) | 0.3h             | 0.1h                     | Liberou ~58.6 GB                 |
+| **Total da fase**                            |                  | **2.8h**         | **1.4h**                 | **4.2h total de esforço humano** |
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| Diagnóstico e fix bug assíncrono (BackgroundTasks) | Sênior | 4.0h | R$ 115 | R$ 460 |
-| Investigação de APIs de embedding + integração | Sênior | 6.0h | R$ 115 | R$ 690 |
-| Implementação concorrência com ThreadPoolExecutor | Sênior | 4.0h | R$ 115 | R$ 460 |
-| Expansão registry de linguagens (9 linguagens) | Pleno | 3.0h | R$ 75 | R$ 225 |
-| Testes de performance e benchmark | Pleno | 2.0h | R$ 75 | R$ 150 |
-| **Total da fase** | | **19.0h** | | **R$ 1.985** |
+| Atividade                                          | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| -------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| Diagnóstico e fix bug assíncrono (BackgroundTasks) | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
+| Investigação de APIs de embedding + integração     | Sênior             | 6.0h                      | R$ 115               | R$ 690                     |
+| Implementação concorrência com ThreadPoolExecutor  | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
+| Expansão registry de linguagens (9 linguagens)     | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
+| Testes de performance e benchmark                  | Pleno              | 2.0h                      | R$ 75                | R$ 150                     |
+| **Total da fase**                                  |                    | **19.0h**                 |                      | **R$ 1.985**               |
 
 ### Análise parcial de economicidade (esta fase)
 
@@ -301,6 +304,7 @@ Fase de otimização e expansão do projeto após a implementação das 8 specs.
 - **Saving estimado:** ~R$ 1.664 (83.8%)
 
 **Resultado técnico de destaque desta fase:**
+
 - Embedding de 2825 chunks: **220s → 11.8s** (18.7x mais rápido)
 - Custo de indexação completa do nestjs/nest: ~$0.00006 (praticamente grátis)
 - Suporte a linguagens: **6 → 15** (+9 novas)
@@ -351,36 +355,36 @@ Fase de polimento de UX, segurança e documentação do projeto.
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| Sidebar colapsável + dark mode (App.tsx refactor) | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
-| VS Code code blocks (react-syntax-highlighter) | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~18.000 | ~$0.33 |
-| Debug código duplicado (App.tsx + ui/index.tsx) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.22 |
-| Auditoria de segurança + hardened env vars | GitHub Copilot / Claude Sonnet 4.6 | ~12.000 | ~8.000 | ~$0.16 |
-| Troca de modelos LLM + testes | GitHub Copilot / Claude Sonnet 4.6 | ~5.000 | ~3.000 | ~$0.06 |
-| Documentação (README, COMO_FUNCIONA, COMO_RODAR) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~25.000 | ~$0.42 |
-| **Total da fase** | | **~92.000** | **~84.000** | **~$1.56** |
+| Atividade                                         | Ferramenta/Modelo                  | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| ------------------------------------------------- | ---------------------------------- | --------------------- | ------------------- | -------------------- |
+| Sidebar colapsável + dark mode (App.tsx refactor) | GitHub Copilot / Claude Sonnet 4.6 | ~25.000               | ~20.000             | ~$0.37               |
+| VS Code code blocks (react-syntax-highlighter)    | GitHub Copilot / Claude Sonnet 4.6 | ~20.000               | ~18.000             | ~$0.33               |
+| Debug código duplicado (App.tsx + ui/index.tsx)   | GitHub Copilot / Claude Sonnet 4.6 | ~15.000               | ~10.000             | ~$0.22               |
+| Auditoria de segurança + hardened env vars        | GitHub Copilot / Claude Sonnet 4.6 | ~12.000               | ~8.000              | ~$0.16               |
+| Troca de modelos LLM + testes                     | GitHub Copilot / Claude Sonnet 4.6 | ~5.000                | ~3.000              | ~$0.06               |
+| Documentação (README, COMO_FUNCIONA, COMO_RODAR)  | GitHub Copilot / Claude Sonnet 4.6 | ~15.000               | ~25.000             | ~$0.42               |
+| **Total da fase**                                 |                                    | **~92.000**           | **~84.000**         | **~$1.56**           |
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| Sidebar + dark mode + code blocks | [Membro] (pleno) | 1.0h | 0.5h | Múltiplos rebuilds Docker |
-| Debug de duplicações | [Membro] (pleno) | 0.5h | 0.3h | Leitura de erros do Vite |
-| Auditoria de segurança | [Membro] (pleno) | 0.3h | 0.2h | Revisão de variáveis |
-| Documentação | [Membro] (pleno) | 0.5h | 0.5h | Revisão dos textos gerados |
-| **Total da fase** | | **2.3h** | **1.5h** | **3.8h total de esforço humano** |
+| Atividade                         | Membro (perfil)  | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações                      |
+| --------------------------------- | ---------------- | ---------------- | ------------------------ | -------------------------------- |
+| Sidebar + dark mode + code blocks | [Membro] (pleno) | 1.0h             | 0.5h                     | Múltiplos rebuilds Docker        |
+| Debug de duplicações              | [Membro] (pleno) | 0.5h             | 0.3h                     | Leitura de erros do Vite         |
+| Auditoria de segurança            | [Membro] (pleno) | 0.3h             | 0.2h                     | Revisão de variáveis             |
+| Documentação                      | [Membro] (pleno) | 0.5h             | 0.5h                     | Revisão dos textos gerados       |
+| **Total da fase**                 |                  | **2.3h**         | **1.5h**                 | **3.8h total de esforço humano** |
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| Refatorar navegação para sidebar colapsável | Pleno | 6.0h | R$ 75 | R$ 450 |
-| Implementar dark mode (Tailwind) em todos os componentes | Pleno | 4.0h | R$ 75 | R$ 300 |
-| Markdown renderer + syntax highlighting VS Code | Sênior | 8.0h | R$ 115 | R$ 920 |
-| Auditoria de segurança e hardening de env vars | Sênior | 3.0h | R$ 115 | R$ 345 |
-| Documentação completa (3 documentos) | Pleno | 6.0h | R$ 75 | R$ 450 |
-| **Total da fase** | | **27.0h** | | **R$ 2.465** |
+| Atividade                                                | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| -------------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| Refatorar navegação para sidebar colapsável              | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
+| Implementar dark mode (Tailwind) em todos os componentes | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
+| Markdown renderer + syntax highlighting VS Code          | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
+| Auditoria de segurança e hardening de env vars           | Sênior             | 3.0h                      | R$ 115               | R$ 345                     |
+| Documentação completa (3 documentos)                     | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
+| **Total da fase**                                        |                    | **27.0h**                 |                      | **R$ 2.465**               |
 
 ### Análise parcial de economicidade (esta fase)
 
@@ -439,48 +443,48 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| Backend: AuditRepository + middleware | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
-| Backend: WebhookRepository + controller (HMAC) | GitHub Copilot / Claude Sonnet 4.6 | ~28.000 | ~22.000 | ~$0.41 |
-| Backend: WatchlistRepository + NotificationService | GitHub Copilot / Claude Sonnet 4.6 | ~22.000 | ~18.000 | ~$0.33 |
-| Backend: ArchitectureDriftService + snapshots + diff | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~25.000 | ~$0.47 |
-| Backend: /graph/diff/interpret (LLM endpoint) | GitHub Copilot / Claude Sonnet 4.6 | ~15.000 | ~10.000 | ~$0.20 |
-| Frontend: DriftTab.tsx (seleção por data + IA) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~30.000 | ~$0.56 |
-| Frontend: WatchlistTab.tsx | GitHub Copilot / Claude Sonnet 4.6 | ~25.000 | ~20.000 | ~$0.37 |
-| Frontend: AdminTab.tsx (AuditLogSection + WebhookSection) | GitHub Copilot / Claude Sonnet 4.6 | ~35.000 | ~25.000 | ~$0.48 |
-| Frontend: App.tsx wiring + http.ts global auth | GitHub Copilot / Claude Sonnet 4.6 | ~20.000 | ~12.000 | ~$0.24 |
-| Debugging (Babel error, duplicate http, light theme) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~18.000 | ~$0.39 |
-| Atualização de documentação MD | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~20.000 | ~$0.44 |
-| **Total da fase** | | **~310.000** | **~220.000** | **~$4.26** |
+| Atividade                                                 | Ferramenta/Modelo                  | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| --------------------------------------------------------- | ---------------------------------- | --------------------- | ------------------- | -------------------- |
+| Backend: AuditRepository + middleware                     | GitHub Copilot / Claude Sonnet 4.6 | ~25.000               | ~20.000             | ~$0.37               |
+| Backend: WebhookRepository + controller (HMAC)            | GitHub Copilot / Claude Sonnet 4.6 | ~28.000               | ~22.000             | ~$0.41               |
+| Backend: WatchlistRepository + NotificationService        | GitHub Copilot / Claude Sonnet 4.6 | ~22.000               | ~18.000             | ~$0.33               |
+| Backend: ArchitectureDriftService + snapshots + diff      | GitHub Copilot / Claude Sonnet 4.6 | ~30.000               | ~25.000             | ~$0.47               |
+| Backend: /graph/diff/interpret (LLM endpoint)             | GitHub Copilot / Claude Sonnet 4.6 | ~15.000               | ~10.000             | ~$0.20               |
+| Frontend: DriftTab.tsx (seleção por data + IA)            | GitHub Copilot / Claude Sonnet 4.6 | ~40.000               | ~30.000             | ~$0.56               |
+| Frontend: WatchlistTab.tsx                                | GitHub Copilot / Claude Sonnet 4.6 | ~25.000               | ~20.000             | ~$0.37               |
+| Frontend: AdminTab.tsx (AuditLogSection + WebhookSection) | GitHub Copilot / Claude Sonnet 4.6 | ~35.000               | ~25.000             | ~$0.48               |
+| Frontend: App.tsx wiring + http.ts global auth            | GitHub Copilot / Claude Sonnet 4.6 | ~20.000               | ~12.000             | ~$0.24               |
+| Debugging (Babel error, duplicate http, light theme)      | GitHub Copilot / Claude Sonnet 4.6 | ~40.000               | ~18.000             | ~$0.39               |
+| Atualização de documentação MD                            | GitHub Copilot / Claude Sonnet 4.6 | ~30.000               | ~20.000             | ~$0.44               |
+| **Total da fase**                                         |                                    | **~310.000**          | **~220.000**        | **~$4.26**           |
 
 > **Nota:** Preços de referência: Claude Sonnet 4.6 ~$3/M tokens input, ~$15/M tokens output (junho 2026).
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| Backend Fase 4 completo | [Membro] (pleno) | 1.5h | 0.5h | Rebuild Docker ~10 min |
-| Frontend Fase 4 (3 componentes novos) | [Membro] (pleno) | 1.5h | 0.7h | Múltiplos erros de build |
-| Debug e correções (3 bugs) | [Membro] (pleno) | 0.5h | 0.3h | Babel, auth, tema claro |
-| Atualização documentação MD | [Membro] (pleno) | 0.3h | 0.5h | Revisão de textos |
-| **Total da fase** | | **3.8h** | **2.0h** | **5.8h total de esforço humano** |
+| Atividade                             | Membro (perfil)  | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações                      |
+| ------------------------------------- | ---------------- | ---------------- | ------------------------ | -------------------------------- |
+| Backend Fase 4 completo               | [Membro] (pleno) | 1.5h             | 0.5h                     | Rebuild Docker ~10 min           |
+| Frontend Fase 4 (3 componentes novos) | [Membro] (pleno) | 1.5h             | 0.7h                     | Múltiplos erros de build         |
+| Debug e correções (3 bugs)            | [Membro] (pleno) | 0.5h             | 0.3h                     | Babel, auth, tema claro          |
+| Atualização documentação MD           | [Membro] (pleno) | 0.3h             | 0.5h                     | Revisão de textos                |
+| **Total da fase**                     |                  | **3.8h**         | **2.0h**                 | **5.8h total de esforço humano** |
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| AuditRepository + middleware + endpoint admin | Sênior | 8.0h | R$ 115 | R$ 920 |
-| WebhookRepository + HMAC + CRUD + receiver | Sênior | 10.0h | R$ 115 | R$ 1.150 |
-| WatchlistRepository + NotificationService | Sênior | 8.0h | R$ 115 | R$ 920 |
-| ArchitectureDriftService + snapshots API | Sênior | 10.0h | R$ 115 | R$ 1.150 |
-| LLM interpretation endpoint | Pleno | 3.0h | R$ 75 | R$ 225 |
-| DriftTab.tsx (seleção por data + IA) | Pleno | 8.0h | R$ 75 | R$ 600 |
-| WatchlistTab.tsx | Pleno | 5.0h | R$ 75 | R$ 375 |
-| AdminTab.tsx (Auditoria + Webhooks) | Pleno | 8.0h | R$ 75 | R$ 600 |
-| Wiring + global auth fix | Pleno | 3.0h | R$ 75 | R$ 225 |
-| Documentação MD (5 arquivos) | Pleno | 4.0h | R$ 75 | R$ 300 |
-| **Total da fase** | | **67.0h** | | **R$ 6.465** |
+| Atividade                                     | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| --------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| AuditRepository + middleware + endpoint admin | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
+| WebhookRepository + HMAC + CRUD + receiver    | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
+| WatchlistRepository + NotificationService     | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
+| ArchitectureDriftService + snapshots API      | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
+| LLM interpretation endpoint                   | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
+| DriftTab.tsx (seleção por data + IA)          | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
+| WatchlistTab.tsx                              | Pleno              | 5.0h                      | R$ 75                | R$ 375                     |
+| AdminTab.tsx (Auditoria + Webhooks)           | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
+| Wiring + global auth fix                      | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
+| Documentação MD (5 arquivos)                  | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
+| **Total da fase**                             |                    | **67.0h**                 |                      | **R$ 6.465**               |
 
 ### Análise parcial de economicidade (esta fase)
 
@@ -513,7 +517,7 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 - **TechDebtTab.tsx — reescrita com 5 novos componentes:** `TrendBadge` (↓/→/↑ com cores), `DebtBreakdownCard` (5 barras animadas por categoria com referência ao princípio violado), `MetricSparkline` (mini sparklines SVG para CC, churn e comment ratio), `ScoreTrendChart` (linha temporal com pontos coloridos por severidade e gridline de zona crítica ≥75), `LlmSummaryCard` (renderizador de Markdown simples para o resumo do PROMPT-010) e botão "Analisar Agora" com estado de loading.
 - **Testes unitários (5 novos arquivos):** A IA criou `test_hotspot_service.py` (13 testes — fórmula de score, ordenação, filtragem, edge cases), `test_chat_service.py` (13 testes — happy path + error cases com mocks), `test_plan_enforcer.py` (17 testes — todos os planos + bypass admin + limites), `test_token_service.py` (18 testes — JWT issue/decode/round-trip/expiração) e corrigiu `test_auth_service.py` (mocks corretos, mensagens em PT-BR, validação de senha mínima 8 chars).
 - **Fix de declaração duplicada:** A IA identificou e removeu a segunda declaração do componente `BranchAnalysisTab` (linhas 511–672 de um arquivo de 672 linhas) causada por operação `Set-Content` do PowerShell que havia inserido o conteúdo duas vezes.
-- **Atualização completa dos arquivos MD (4 arquivos):** README.md, CATALOGO_PROMPTS.md, COMO_FUNCIONA.md e backend/ARCHITECTURE.md atualizados com as novas features, PROMPT-010 e listas de componentes.
+- **Atualização completa dos arquivos MD (4 arquivos):** README.md, CATALOGO_PROMPTS.md, COMO_FUNCIONA.md e ARCHITECTURE.md atualizados com as novas features, PROMPT-010 e listas de componentes.
 
 ### Onde a IA não ajudou (ou atrapalhou)
 
@@ -538,40 +542,40 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 
 #### Camada 1 — Consumo de IA
 
-| Atividade | Ferramenta/Modelo | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-|---|---|---|---|---|
-| HotspotsTab — análise + reescrita completa | GitHub Copilot / Claude Sonnet 4.6 | ~55.000 | ~30.000 | ~$0.62 |
-| TechDebt — análise semântica profunda (pré-impl.) | GitHub Copilot / Claude Sonnet 4.6 | ~40.000 | ~22.000 | ~$0.45 |
-| TechDebt backend v2 (snapshot + service + controller) | GitHub Copilot / Claude Sonnet 4.6 | ~50.000 | ~28.000 | ~$0.57 |
-| TechDebtTab.tsx — reescrita frontend (5 componentes) | GitHub Copilot / Claude Sonnet 4.6 | ~35.000 | ~25.000 | ~$0.48 |
-| Testes unitários (5 novos arquivos, ~80 testes) | GitHub Copilot / Claude Sonnet 4.6 | ~30.000 | ~18.000 | ~$0.36 |
-| Fix BranchAnalysisTab + debugging | GitHub Copilot / Claude Sonnet 4.6 | ~8.000 | ~4.000 | ~$0.08 |
-| Atualização MD (4 arquivos + PROMPT-010) | GitHub Copilot / Claude Sonnet 4.6 | ~28.000 | ~18.000 | ~$0.35 |
-| **Total da fase** | | **~246.000** | **~145.000** | **~$2.91** |
+| Atividade                                             | Ferramenta/Modelo                  | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
+| ----------------------------------------------------- | ---------------------------------- | --------------------- | ------------------- | -------------------- |
+| HotspotsTab — análise + reescrita completa            | GitHub Copilot / Claude Sonnet 4.6 | ~55.000               | ~30.000             | ~$0.62               |
+| TechDebt — análise semântica profunda (pré-impl.)     | GitHub Copilot / Claude Sonnet 4.6 | ~40.000               | ~22.000             | ~$0.45               |
+| TechDebt backend v2 (snapshot + service + controller) | GitHub Copilot / Claude Sonnet 4.6 | ~50.000               | ~28.000             | ~$0.57               |
+| TechDebtTab.tsx — reescrita frontend (5 componentes)  | GitHub Copilot / Claude Sonnet 4.6 | ~35.000               | ~25.000             | ~$0.48               |
+| Testes unitários (5 novos arquivos, ~80 testes)       | GitHub Copilot / Claude Sonnet 4.6 | ~30.000               | ~18.000             | ~$0.36               |
+| Fix BranchAnalysisTab + debugging                     | GitHub Copilot / Claude Sonnet 4.6 | ~8.000                | ~4.000              | ~$0.08               |
+| Atualização MD (4 arquivos + PROMPT-010)              | GitHub Copilot / Claude Sonnet 4.6 | ~28.000               | ~18.000             | ~$0.35               |
+| **Total da fase**                                     |                                    | **~246.000**          | **~145.000**        | **~$2.91**           |
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
-| Atividade | Membro (perfil) | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações |
-|---|---|---|---|---|
-| HotspotsTab rewrite + validação visual | [Membro] (pleno) | 0.5h | 0.3h | Rebuild Docker + verificação no browser |
-| TechDebt análise + aprovação do design | [Membro] (pleno) | 0.3h | 0.2h | Revisão do mapeamento |
-| TechDebt v2 implementação + rebuild | [Membro] (pleno) | 0.5h | 0.3h | Rebuild Docker + teste do endpoint |
-| Testes unitários (leitura e validação) | [Membro] (pleno) | 0.3h | 0.2h | Revisão de cobertura |
-| Fix duplicata + MD updates | [Membro] (pleno) | 0.2h | 0.2h | Verificação visual |
-| **Total da fase** | | **1.8h** | **1.2h** | **3.0h total de esforço humano** |
+| Atividade                              | Membro (perfil)  | Tempo com IA (h) | Tempo revisão/ajuste (h) | Observações                             |
+| -------------------------------------- | ---------------- | ---------------- | ------------------------ | --------------------------------------- |
+| HotspotsTab rewrite + validação visual | [Membro] (pleno) | 0.5h             | 0.3h                     | Rebuild Docker + verificação no browser |
+| TechDebt análise + aprovação do design | [Membro] (pleno) | 0.3h             | 0.2h                     | Revisão do mapeamento                   |
+| TechDebt v2 implementação + rebuild    | [Membro] (pleno) | 0.5h             | 0.3h                     | Rebuild Docker + teste do endpoint      |
+| Testes unitários (leitura e validação) | [Membro] (pleno) | 0.3h             | 0.2h                     | Revisão de cobertura                    |
+| Fix duplicata + MD updates             | [Membro] (pleno) | 0.2h             | 0.2h                     | Verificação visual                      |
+| **Total da fase**                      |                  | **1.8h**         | **1.2h**                 | **3.0h total de esforço humano**        |
 
 #### Camada 3 — Estimativa contrafactual
 
-| Atividade | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
-|---|---|---|---|---|
-| HotspotsTab (BubbleChart SVG + animações + filtros) | Sênior | 12.0h | R$ 115 | R$ 1.380 |
-| TechDebt v2 backend (5 métricas + trend + endpoint) | Sênior | 10.0h | R$ 115 | R$ 1.150 |
-| PROMPT-010 design + integração LLM | Sênior | 4.0h | R$ 115 | R$ 460 |
-| TechDebtTab.tsx (5 componentes + charts SVG) | Pleno | 10.0h | R$ 75 | R$ 750 |
-| Testes unitários (~80 testes em 5 arquivos) | Pleno | 8.0h | R$ 75 | R$ 600 |
-| Diagnóstico + fix de duplicata | Pleno | 1.0h | R$ 75 | R$ 75 |
-| Atualização de documentação (4 arquivos MD) | Pleno | 4.0h | R$ 75 | R$ 300 |
-| **Total da fase** | | **49.0h** | | **R$ 4.715** |
+| Atividade                                           | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
+| --------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
+| HotspotsTab (BubbleChart SVG + animações + filtros) | Sênior             | 12.0h                     | R$ 115               | R$ 1.380                   |
+| TechDebt v2 backend (5 métricas + trend + endpoint) | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
+| PROMPT-010 design + integração LLM                  | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
+| TechDebtTab.tsx (5 componentes + charts SVG)        | Pleno              | 10.0h                     | R$ 75                | R$ 750                     |
+| Testes unitários (~80 testes em 5 arquivos)         | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
+| Diagnóstico + fix de duplicata                      | Pleno              | 1.0h                      | R$ 75                | R$ 75                      |
+| Atualização de documentação (4 arquivos MD)         | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
+| **Total da fase**                                   |                    | **49.0h**                 |                      | **R$ 4.715**               |
 
 ### Análise parcial de economicidade (esta fase)
 
@@ -601,41 +605,44 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 
 ### Métricas de uso de IA (estimadas)
 
-| Atividade | % assistida por IA | Ferramentas |
-|---|---|---|
-| Escrita de código | ~95% | GitHub Copilot (Claude Sonnet 4.6 / Claude Opus 4) |
-| Geração de testes | ~95% | GitHub Copilot (Claude Sonnet 4.6) |
-| Documentação | ~85% | GitHub Copilot (Claude Sonnet 4.6) |
-| Design de prompts | ~40% | Manual + GitHub Copilot |
-| Análise de requisitos | ~70% | GitHub Copilot / ChatLLM |
-| Debugging e diagnóstico | ~80% | GitHub Copilot (Claude Sonnet 4.6) |
-| Decisões de arquitetura | ~20% | Manual (IA como consultor) |
+| Atividade               | % assistida por IA | Ferramentas                                        |
+| ----------------------- | ------------------ | -------------------------------------------------- |
+| Escrita de código       | ~95%               | GitHub Copilot (Claude Sonnet 4.6 / Claude Opus 4) |
+| Geração de testes       | ~95%               | GitHub Copilot (Claude Sonnet 4.6)                 |
+| Documentação            | ~85%               | GitHub Copilot (Claude Sonnet 4.6)                 |
+| Design de prompts       | ~40%               | Manual + GitHub Copilot                            |
+| Análise de requisitos   | ~70%               | GitHub Copilot / ChatLLM                           |
+| Debugging e diagnóstico | ~80%               | GitHub Copilot (Claude Sonnet 4.6)                 |
+| Decisões de arquitetura | ~20%               | Manual (IA como consultor)                         |
 
 ### Consolidado de economicidade do projeto
 
 #### Custo real de IA (total do projeto)
-| Fase | Tokens entrada | Tokens saída | Custo IA (USD) | Custo IA (R$) |
-|---|---|---|---|---|
-| Pré-proposta | ~30.000 | ~57.000 | ~$1.08 | ~R$ 5.94 |
-| Exposição | ~186.000 | ~266.000 | ~$22.74 | ~R$ 125.07 |
-| Composição | ~88.000 | ~65.000 | ~$1.11 | ~R$ 6.11 |
-| Ensaio | ~92.000 | ~84.000 | ~$1.56 | ~R$ 8.58 |
-| Ressonância | ~310.000 | ~220.000 | ~$4.26 | ~R$ 23.43 |
-| Melhorias e Qualidade | ~246.000 | ~145.000 | ~$2.91 | ~R$ 16.01 |
-| **Total** | **~952.000** | **~837.000** | **~$33.66** | **~R$ 185.13** |
+
+| Fase                  | Tokens entrada | Tokens saída | Custo IA (USD) | Custo IA (R$)  |
+| --------------------- | -------------- | ------------ | -------------- | -------------- |
+| Pré-proposta          | ~30.000        | ~57.000      | ~$1.08         | ~R$ 5.94       |
+| Exposição             | ~186.000       | ~266.000     | ~$22.74        | ~R$ 125.07     |
+| Composição            | ~88.000        | ~65.000      | ~$1.11         | ~R$ 6.11       |
+| Ensaio                | ~92.000        | ~84.000      | ~$1.56         | ~R$ 8.58       |
+| Ressonância           | ~310.000       | ~220.000     | ~$4.26         | ~R$ 23.43      |
+| Melhorias e Qualidade | ~246.000       | ~145.000     | ~$2.91         | ~R$ 16.01      |
+| **Total**             | **~952.000**   | **~837.000** | **~$33.66**    | **~R$ 185.13** |
 
 #### Custo contrafactual humano (total do projeto)
-| Fase | Horas totais estimadas | Custo humano estimado (R$) |
-|---|---|---|
-| Pré-proposta | 31.0h | R$ 2.775 |
-| Exposição | 136.0h | R$ 13.960 |
-| Composição | 19.0h | R$ 1.985 |
-| Ensaio | 27.0h | R$ 2.465 |
-| Ressonância | 67.0h | R$ 6.465 |
-| Melhorias e Qualidade | 49.0h | R$ 4.715 |
-| **Total** | **329.0h** | **R$ 32.365** |
+
+| Fase                  | Horas totais estimadas | Custo humano estimado (R$) |
+| --------------------- | ---------------------- | -------------------------- |
+| Pré-proposta          | 31.0h                  | R$ 2.775                   |
+| Exposição             | 136.0h                 | R$ 13.960                  |
+| Composição            | 19.0h                  | R$ 1.985                   |
+| Ensaio                | 27.0h                  | R$ 2.465                   |
+| Ressonância           | 67.0h                  | R$ 6.465                   |
+| Melhorias e Qualidade | 49.0h                  | R$ 4.715                   |
+| **Total**             | **329.0h**             | **R$ 32.365**              |
 
 #### Análise comparativa
+
 - **Custo total com IA (R$):** ~R$ 185 (IA) + ~R$ 1.485 (trabalho humano nas sessões) = **~R$ 1.670**
 - **Custo total estimado sem IA (R$):** ~R$ 32.365
 - **Razão de economicidade:** **~19.4x** (custo sem IA / custo com IA)
@@ -665,25 +672,30 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 ### Recomendações para outras equipes
 
 **Sobre o uso de modelos:**
+
 - Use Claude Sonnet (ou equivalente mid-tier) para implementação de código — o delta de qualidade em relação ao Opus/GPT-4o em tarefas de código não justifica o custo 5x maior.
 - Reserve modelos premium (Opus, o1) para raciocínio arquitetural profundo, revisão de segurança crítica e design de prompts complexos.
 - Defina `LLM_MODEL` como variável de ambiente desde o início — trocar modelos em produção sem isso é trabalhoso.
 
 **Sobre gestão de contexto:**
+
 - Em sessões longas (>100 mensagens), escreva um `session_plan.md` com estado atual antes de cada sub-tarefa. A compactação de contexto é inevitável e silenciosa — não descubra quando já perdeu o estado.
 - Documente decisões de arquitetura em arquivos dedicados (`ARCHITECTURE.md`) logo após tomá-las. A IA não lembra entre sessões — mas lê arquivos.
 
 **Sobre implementação:**
+
 - O padrão "in-memory fallback em todos os adapters" é obrigatório para times que precisam desenvolver sem infraestrutura rodando. A produtividade local dobra.
 - Para escrever arquivos grandes (>200 linhas) via IA em terminal Windows, use scripts Python intermediários — nunca `python -c` com string inline ou `Set-Content` com acentos.
 - Peça análise antes de implementação: "mapeie tudo sem implementar" produz designs melhores que pedir código direto.
 
 **Sobre economicidade:**
+
 - Meça tokens e custos por fase desde o início — a surpresa da Fase de Exposição com Claude Opus 4 ($22.74 de $33.66 totais) só foi identificada retroativamente.
 - O contrafactual em horas deve ser estimado por quem conhece o domínio, não pela IA — o viés de retrospecto da IA inflaciona o contrafactual; o viés humano tende a subestimar.
 - Uma razão de economicidade sustentada acima de 10x ao longo de um semestre é realista e replicável em contextos acadêmicos e de startups.
 
 **Sobre segurança:**
+
 - Nenhuma credencial deve existir hardcoded nem por um commit — o histórico de chat também vaza segredos. Rogue todas as chaves que aparecerem em conversas com IA.
 - Webhooks externos sempre com `hmac.compare_digest()` — nunca comparação direta de strings.
 - Audit log como middleware cross-cutting, não lógica em controllers — é mais seguro e garantido.
