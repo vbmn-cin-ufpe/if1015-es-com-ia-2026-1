@@ -2,6 +2,13 @@
 
 Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF1015 Engenharia de Software com IA** (Tópicos Avançados em SI 6), turma de Sistemas de Informação, professor **Vinicius Cardoso Garcia**.
 
+Link apresentação Canva : https://www.canva.com/design/DAHMrRH85cQ/rpHYQHauYtlc1Tw1F2Js6w/edit
+
+Link pata Video Demo Youtube: https://youtu.be/63nNUSE4aY8
+
+Sistema em produção : https://codecompass.lemonwave-598e1007.brazilsouth.azurecontainerapps.io/chat
+
+
 ---
 
 ## CodeCompass — Onboarding Inteligente em Codebases Legados
@@ -24,6 +31,19 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 **CodeCompass** é um assistente conversacional de onboarding que ajuda desenvolvedores novos a entender uma codebase legada de forma guiada e contextualizada. O sistema indexa repositórios Git, extrai embeddings semânticos do código-fonte e do histórico de commits, e fornece uma interface web para chat, tours guiados, grafo de dependências e análise de métricas.
 
 <img width="667" height="372" alt="image" src="https://github.com/user-attachments/assets/dab435b0-3e2c-41f1-a6fb-771fc131a5b5" />
+<img width="667" height="372" alt="image" src="https://github.com/user-attachments/assets/9cc157e8-29ed-4fa0-a9b2-c29d79415241" />
+
+
+Captura de tela fase MVP
+
+<img width="1402" height="697" alt="image" src="https://github.com/user-attachments/assets/37b86ac0-b3a1-43fc-a00c-914fb198ae99" />
+
+Captura de tela da fase Atual
+
+<img width="1714" height="949" alt="image" src="https://github.com/user-attachments/assets/3c985d74-a82c-47b1-b06f-60f48b6305d6" />
+
+
+
 
 
 ---
