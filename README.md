@@ -15,15 +15,14 @@ Sistema em produção : https://codecompass.lemonwave-598e1007.brazilsouth.azure
 
 **Equipe:** CodeCompass
 
-| Membro                            | E-mail           |
-| --------------------------------- | ---------------- |
-| Victor Barros de Miranda Neves    | vbmn@cin.ufpe.br |
-| Vinicius Henrique Silva           | vhs@cin.ufpe.br  |
-| Alexandre de Souza Cabral         | asc5@cin.ufpe.br |
-| Arthur Luis de Farias Alves       | alfa@cin.ufpe.br |
-| Getulio Junqueira de Queiroz Lima | gjql@cin.ufpe.br |
-| Carlos Henrique da Silva Frey     | chsf@cin.ufpe.br |
-
+| Membro                            | E-mail           | Foto |
+| --------------------------------- | ---------------- | ---- |
+| Victor Barros de Miranda Neves    | vbmn@cin.ufpe.br | <img width="105" height="100" alt="Victor" src="https://github.com/user-attachments/assets/61023d27-5828-4078-a39f-b4ae1e46f357" /> |
+| Vinicius Henrique Silva           | vhs@cin.ufpe.br  | <img width="105" height="100" alt="Vinicius" src="https://github.com/user-attachments/assets/50b24635-ea17-430f-a4e8-a2cdfddc9b64" /> |
+| Alexandre de Souza Cabral         | asc5@cin.ufpe.br | <img width="105" height="100" alt="Alexandre" src="https://github.com/user-attachments/assets/7a200cf8-20e3-4296-abaa-eb65b43fc571" /> |
+| Arthur Luis de Farias Alves       | alfa@cin.ufpe.br | <img width="105" height="100" alt="Arthur" src="https://github.com/user-attachments/assets/ffa35d68-713f-4f16-8928-7392eef53191" /> |
+| Getulio Junqueira de Queiroz Lima | gjql@cin.ufpe.br | <img width="105" height="100" alt="Getulio" src="https://github.com/user-attachments/assets/b4c8552f-4614-46f5-b4df-1a78c393bab3" /> |
+| Carlos Henrique da Silva Frey     | chsf@cin.ufpe.br | <img width="105" height="100" alt="Carlos" src="https://github.com/user-attachments/assets/e3b04e42-d6e1-403c-9ece-54ac31a6ca79" /> |
 ---
 
 ## Sobre o projeto
@@ -31,8 +30,6 @@ Sistema em produção : https://codecompass.lemonwave-598e1007.brazilsouth.azure
 **CodeCompass** é um assistente conversacional de onboarding que ajuda desenvolvedores novos a entender uma codebase legada de forma guiada e contextualizada. O sistema indexa repositórios Git, extrai embeddings semânticos do código-fonte e do histórico de commits, e fornece uma interface web para chat, tours guiados, grafo de dependências e análise de métricas.
 
 <img width="667" height="372" alt="image" src="https://github.com/user-attachments/assets/dab435b0-3e2c-41f1-a6fb-771fc131a5b5" />
-<img width="667" height="372" alt="image" src="https://github.com/user-attachments/assets/9cc157e8-29ed-4fa0-a9b2-c29d79415241" />
-
 
 Captura de tela fase MVP
 
@@ -40,7 +37,8 @@ Captura de tela fase MVP
 
 Captura de tela da fase Atual
 
-<img width="1714" height="949" alt="image" src="https://github.com/user-attachments/assets/3c985d74-a82c-47b1-b06f-60f48b6305d6" />
+<img width="1994" height="940" alt="image" src="https://github.com/user-attachments/assets/407bbe18-f7c3-4aca-a6e8-f996c396e857" />
+
 
 
 
