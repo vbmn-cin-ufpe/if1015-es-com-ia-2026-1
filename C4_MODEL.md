@@ -85,12 +85,12 @@ flowchart LR
 
 **Descrição de cada contêiner:**
 
-| Contêiner         | Tecnologia                         | Porta | Responsabilidade                                                                                                                        |
-| ----------------- | ---------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend SPA**  | React 18 + TypeScript 5.8 + Vite 6 | :5173 | Interface com 10 abas: Chat RAG, Tour, Grafo, Drift, Histórico, Métricas, Repositório, Watchlist, Admin. Dark mode + sidebar colapsável |
-| **Backend API**   | Python 3.11 + FastAPI 0.115        | :8000 | 11 routers REST; pipeline de indexação/RAG; drift arquitetural; audit middleware; webhooks HMAC; watchlist + notificações               |
-| **PostgreSQL 16** | PostgreSQL                         | :5432 | Persistência relacional: usuários, sessões, repos, commits, métricas, audit_log, webhooks, watchlist, snapshots do grafo                |
-| **ChromaDB 0.5**  | ChromaDB                           | :8001 | Vector store para embeddings de código; busca semântica por cosine similarity para o RAG                                                |
+| Contêiner         | Tecnologia                         | Porta | Responsabilidade                                                                                                                                                                                                                                            |
+| ----------------- | ---------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend SPA**  | React 18 + TypeScript 5.8 + Vite 6 | :5173 | Interface com 16 abas: Repositório, Chat RAG, Tour, Grafo, Impacto, Busca, Hotspots, Branch, Gerar Docs, Dívida Técnica, Drift Arq., Watchlist, Histórico, Métricas, Operacional, Admin.                                                                    |
+| **Backend API**   | Python 3.11 + FastAPI 0.115        | :8000 | 18 routers REST; RAG pipeline; hotspots; dívida técnica multidimensional + LLM; análise de branch com risk score; geração de docs via LLM; busca semântica; relatórios HTML; drift arquitetural; audit middleware; webhooks HMAC; watchlist + notificações. |
+| **PostgreSQL 16** | PostgreSQL                         | :5432 | Persistência relacional: usuários, sessões, repos, commits, métricas, audit_log, webhooks, watchlist, snapshots do grafo, snapshots de tech-debt                                                                                                            |
+| **ChromaDB 0.5**  | ChromaDB                           | :8001 | Vector store para embeddings de código; busca semântica por cosine similarity para o RAG                                                                                                                                                                    |
 
 **Infraestrutura:** Todos os 4 contêineres são orquestrados pelo `docker-compose.yml` na raiz do repositório. O frontend consome apenas o backend (sem acesso direto a banco ou vector store).
 
@@ -102,28 +102,48 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph HTTP["Controllers - HTTP Layer"]
+    subgraph HTTP["Controllers - HTTP Layer (18)"]
         auth_ctrl["auth_controller\nPOST /signup /signin /sessions"]
         repo_ctrl["repo_controller\nPOST/GET /repos"]
         chat_ctrl["chat_controller\nPOST /chat/ask"]
         tour_ctrl["tour_controller\nPOST/GET /tours"]
         graph_ctrl["graph_controller\nGET /graph /diff /interpret"]
+        history_ctrl["history_controller\nGET /repos/history /why"]
+        metrics_ctrl["metrics_controller\nGET/POST /repos/metrics"]
+        hotspot_ctrl["hotspot_controller\nGET /repos/hotspots"]
+        tech_debt_ctrl["tech_debt_controller\nGET/POST /repos/tech-debt"]
+        branch_ctrl["branch_controller\nPOST /repos/analyze-branch"]
+        search_ctrl["search_controller\nGET /repos/search"]
+        doc_ctrl["doc_controller\nPOST /repos/generate-doc"]
+        report_ctrl["report_controller\nGET /repos/report"]
         admin_ctrl["admin_controller\nGET/PATCH /admin/*"]
-        watch_ctrl["watchlist_controller"]
+        watch_ctrl["watchlist_controller\nPOST/DELETE /repos/watch"]
         webhook_ctrl["webhook_controller\nHMAC-SHA256"]
+        ops_ctrl["ops_controller\nGET /ops/liveness /readiness"]
+        health_ctrl["health_controller\nGET /health"]
     end
 
-    subgraph SVC["Services - Domain Layer"]
+    subgraph SVC["Services - Domain Layer (24+)"]
         auth_svc["auth_service\nbcrypt + JWT sessions"]
+        token_svc["token_service\nJWT issue/decode"]
+        plan_enforcer["plan_enforcer\nlimites de plano"]
         repo_svc["repo_service\ngit clone > chunk > embed > store"]
+        chunk_svc["chunking_service\ntree-sitter 15 langs"]
         chat_svc["chat_service\nRAG pipeline"]
+        embed_svc["embedding_service\nOpenAI / local"]
+        retrieval_svc["retrieval_service\nbusca vetorial"]
         tour_svc["tour_service\nLLM walkthroughs"]
         graph_svc["graph_service\ngrafo de dependencias"]
         drift_svc["drift_service\ndiff de snapshots"]
         hist_svc["history_service\ncommits + LLM"]
-        embed_svc["embedding_service\nOpenAI / local"]
-        retrieval_svc["retrieval_service\nbusca vetorial"]
+        hotspot_svc["hotspot_service\nchurn x complexity score"]
+        tech_debt_svc["tech_debt_service\nmultidimensional + LLM"]
+        branch_svc["branch_analysis_service\nrisk score + LLM"]
+        doc_svc["doc_generator_service\nMarkdown via LLM"]
+        report_svc["report_service\nHTML report"]
+        metrics_svc["metrics_aggregation_service\nKPIs de onboarding"]
         notif_svc["notification_service\ne-mail alerts"]
+        analyzers["analyzers\nChurn/Complexity/Coupling"]
     end
 
     subgraph INFRA["Infrastructure - Adapters"]
@@ -134,6 +154,9 @@ flowchart LR
         audit_repo["audit_repository\naudit_log table"]
         watchlist_repo["watchlist_repository"]
         webhook_repo["webhook_repository\nHMAC secrets"]
+        tech_debt_repo["tech_debt_repository\nsnapshots table"]
+        user_repo["user_repository\nusers table"]
+        email_gw["email_gateway\nSMTP"]
     end
 
     PG[("PostgreSQL 16")]
@@ -141,6 +164,7 @@ flowchart LR
     LLM_API(["LLM API"])
     EMBED_API(["Embeddings API"])
     GIT_REMOTE(["GitHub / Git Remote"])
+    EMAIL_EXT(["E-mail SMTP"])
 
     auth_ctrl --> auth_svc
     repo_ctrl --> repo_svc
@@ -148,21 +172,47 @@ flowchart LR
     tour_ctrl --> tour_svc
     graph_ctrl --> graph_svc
     graph_ctrl --> drift_svc
+    history_ctrl --> hist_svc
+    metrics_ctrl --> metrics_svc
+    hotspot_ctrl --> hotspot_svc
+    tech_debt_ctrl --> tech_debt_svc
+    branch_ctrl --> branch_svc
+    search_ctrl --> retrieval_svc
+    doc_ctrl --> doc_svc
+    report_ctrl --> report_svc
     admin_ctrl --> audit_repo
     watch_ctrl --> watchlist_repo
     webhook_ctrl --> webhook_repo
     webhook_ctrl --> repo_svc
 
+    auth_svc --> token_svc
+    auth_svc --> user_repo
+    repo_svc --> chunk_svc
     repo_svc --> embed_svc
     repo_svc --> git_client
     repo_svc --> notif_svc
     chat_svc --> retrieval_svc
     chat_svc --> llm_client
-    retrieval_svc --> chroma_adp
-    embed_svc --> chroma_adp
+    tour_svc --> analyzers
     tour_svc --> llm_client
     drift_svc --> graph_svc
+    hist_svc --> git_client
+    hist_svc --> llm_client
+    hotspot_svc --> analyzers
+    tech_debt_svc --> hotspot_svc
+    tech_debt_svc --> tech_debt_repo
+    tech_debt_svc --> llm_client
+    branch_svc --> git_client
+    branch_svc --> llm_client
+    doc_svc --> llm_client
+    doc_svc --> chroma_adp
+    report_svc --> tech_debt_repo
+    metrics_svc --> pg_adp
     notif_svc --> watchlist_repo
+    notif_svc --> email_gw
+    embed_svc --> chroma_adp
+    retrieval_svc --> chroma_adp
+    graph_svc --> pg_adp
 
     llm_client --> LLM_API
     embed_svc --> EMBED_API
@@ -171,7 +221,10 @@ flowchart LR
     audit_repo --> PG
     watchlist_repo --> PG
     webhook_repo --> PG
+    tech_debt_repo --> PG
+    user_repo --> PG
     git_client --> GIT_REMOTE
+    email_gw --> EMAIL_EXT
 ```
 
 **Diagrama de fluxo — Indexação de Repositório:**
@@ -358,13 +411,13 @@ webhook_controller
 
 ## Índice de Documentos
 
-| Documento                                       | Descrição                                            |
-| ----------------------------------------------- | ---------------------------------------------------- |
-| [README.md](../README.md)                       | Visão geral, stack, features por fase, como executar |
-| [COMO_FUNCIONA.md](../COMO_FUNCIONA.md)         | Arquitetura narrativa + fluxos detalhados            |
-| [COMO_RODAR.md](../COMO_RODAR.md)               | Setup passo a passo do zero                          |
-| [CATALOGO_PROMPTS.md](../CATALOGO_PROMPTS.md)   | Todos os 9 prompts da aplicação documentados         |
-| [C4_MODEL.md](../C4_MODEL.md)                   | Este documento — C4 Model completo                   |
-| [ARCHITECTURE.md](../ARCHITECTURE.md)           | Arquitetura hexagonal, SOLID, DI patterns            |
-| [PROPOSTA_v1.md](../PROPOSTA_v1.md)             | Proposta inicial, problema e solução                 |
-| [WORKFLOW_DOCUMENT.md](../WORKFLOW_DOCUMENT.md) | Registro de uso de IA e economicidade                |
+| Documento                                    | Descrição                                            |
+| -------------------------------------------- | ---------------------------------------------------- |
+| [README.md](README.md)                       | Visão geral, stack, features por fase, como executar |
+| [COMO_FUNCIONA.md](COMO_FUNCIONA.md)         | Arquitetura narrativa + fluxos detalhados            |
+| [COMO_RODAR.md](COMO_RODAR.md)               | Setup passo a passo do zero                          |
+| [CATALOGO_PROMPTS.md](CATALOGO_PROMPTS.md)   | Todos os 9 prompts da aplicação documentados         |
+| [C4_MODEL.md](C4_MODEL.md)                   | Este documento — C4 Model completo                   |
+| [ARCHITECTURE.md](ARCHITECTURE.md)           | Arquitetura hexagonal, SOLID, DI patterns            |
+| [PROPOSTA_v1.md](PROPOSTA_v1.md)             | Proposta inicial, problema e solução                 |
+| [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md) | Registro de uso de IA e economicidade                |
