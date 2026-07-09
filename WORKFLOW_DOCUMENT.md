@@ -1,4 +1,4 @@
-# Workflow de Desenvolvimento Assistido por IA — [Nome da Equipe — PREENCHER]
+# Workflow de Desenvolvimento Assistido por IA — Equipe 5 - CodeCompass
 
 ## Sobre este documento
 
@@ -637,6 +637,22 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 > **Sobre Abacus AI:** 12.443 créditos totais entre Jun/10 e Jul/08 de 2026 (log exportado da plataforma). Conversão estimada em ~$0,001/crédito com base nos preços dos modelos utilizados (Claude Sonnet 4.5: $3/M input, $15/M output — Anthropic). Sem taxa de conversão oficial publicada pela Abacus AI, este valor é uma estimativa conservadora.
 >
 > **Sobre GitHub Copilot:** A assinatura Business ($19/mês) é paga pela organização `ava-client-brazil-cnh` — custo direto ao desenvolvedor = R$0. O valor é incluído aqui porque representa o **custo econômico real** do desenvolvimento assistido por IA, independente de quem paga. Qualquer comparação honesta de custo deve incluí-lo.
+
+#### Screenshots dos gastos com IA 
+
+### OpenAi
+<img width="2288" height="931" alt="image" src="https://github.com/user-attachments/assets/4ae4e17a-1053-49e9-8c5e-08a2751e7ab2" />
+
+### Abacus AI
+<img width="2239" height="838" alt="image" src="https://github.com/user-attachments/assets/479a16d1-2af9-4e54-a9cb-9d208657e06e" />
+<img width="2243" height="869" alt="image" src="https://github.com/user-attachments/assets/634016a1-7ba4-490f-a571-df1d4117f05e" />
+<img width="2243" height="817" alt="image" src="https://github.com/user-attachments/assets/d15129cf-e362-454d-a4ce-6b1020f5584b" />
+<img width="2245" height="859" alt="image" src="https://github.com/user-attachments/assets/51d197d8-bdab-444b-bdab-6d57282e011c" />
+
+
+
+
+
 
 #### Custo real por fase — Ferramentas + Esforço humano
 
