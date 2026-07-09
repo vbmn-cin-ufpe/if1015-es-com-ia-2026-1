@@ -1,4 +1,4 @@
-# Workflow de Desenvolvimento Assistido por IA — [Nome da Equipe — PREENCHER]
+# Workflow de Desenvolvimento Assistido por IA — Equipe 5 - CodeCompass
 
 ## Sobre este documento
 
