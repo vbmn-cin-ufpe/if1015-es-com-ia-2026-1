@@ -203,12 +203,12 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo de ferramentas IA:** ~$18 USD — GitHub Copilot Business ($15, **maior alocação do projeto**: esta foi a fase de maior volume de código gerado — 8 specs, ~26.575 linhas de código total) + Abacus AI Jun/10–15 ($3) = **~R$103**
-- **Nota:** GitHub Copilot Agent Mode é cobrado via **assinatura plana** ($19/mês Business). O modelo ativo era Claude Sonnet 4.6 (não Claude Opus 4). Não há cobrança por token ao usuário — o valor anterior de $22.74 estava calculado com precos de Opus 4 por token e era **fictício**.
-- **Custo humano das 11.4h (perfil pleno, R$38/h):** ~R$433 (11.4h × R$38)
-- **Custo total com IA:** **~R$536**
+- **Custo de ferramentas IA:** ~$18 USD — GitHub Copilot Business ($15, **maior alocação do projeto**: esta foi a fase de maior volume de código gerado — 8 specs, ~26.575 linhas de código total) + Abacus AI Jun/10–15 ($3) = **~R$103** ($18 × R$5,70 = R$102,60)
+- **Nota:** GitHub Copilot Agent Mode é cobrado via **assinatura plana** ($19/mês Business). O modelo ativo era Claude Sonnet 4.6 (não Claude Opus 4 — o documento originalmente usou preços errados). Não há cobrança por token ao usuário — o valor anterior de $22.74 estava calculado com precos de Opus 4 por token e era **fictício**.
+- **Custo humano das 11.4h (perfil pleno, R$38/h):** ~R$433 (11.4h × R$38 = R$433,20)
+- **Custo total com IA:** **~R$536** (R$103 + R$433)
 - **Custo contrafactual sem IA:** **~R$7.424** — corrigido: Sênior R$62/h (backend complexo + RAG + observabilidade), Pleno R$38/h (métricas, auth, testes)
-- **Razão de economicidade:** **13,8x** (cada R$1 gasto com IA equivaleu a ~R$13,80 sem IA)
+- **Razão de economicidade:** **13,9x** (cada R$1 gasto com IA equivaleu a ~R$13,90 sem IA — 7.424÷536=13,85)
 - **Saving estimado:** ~R$6.888 (92,8%)
 
 > **Limitações desta análise parcial:**
@@ -586,12 +586,12 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo de ferramentas IA:** ~$12 USD — Copilot Business ($11, inclui os dias finais do projeto Jul/04–09) + Abacus AI app API Jul/01–08 ($1 — aplicação CodeCompass chamando Abacus durante testes de PROMPT-010 e análise de dívida técnica) + **OpenAI API $0,13 confirmado** (indexação via text-embedding-3-small — único custo confirmado por screenshot) = **~R$68**
+- **Custo de ferramentas IA:** ~$12,13 USD — Copilot Business ($11) + Abacus AI app API Jul/01–08 ($1 — aplicação CodeCompass chamando Abacus durante testes de PROMPT-010 e análise de dívida técnica) + **OpenAI API $0,13 confirmado** (indexação via text-embedding-3-small — único custo confirmado por screenshot) = **~R$69** ($12,13 × R$5,70 = R$69,14)
 - **Custo humano das 3.0h (perfil pleno, R$38/h):** ~R$114 (3.0h × R$38)
-- **Custo total com IA:** **~R$182**
+- **Custo total com IA:** **~R$183** (R$69 + R$114)
 - **Custo contrafactual sem IA:** **~R$2.486** — corrigido: Sênior R$62/h para BubbleChart SVG avançado, TechDebt v2 backend e PROMPT-010 (trabalho de alto nível técnico), Pleno R$38/h para componentes frontend e testes
-- **Razão de economicidade:** **13,7x** (cada R$1 gasto com IA equivaleu a ~R$13,70 sem IA)
-- **Saving estimado:** ~R$2.304 (92,7%)
+- **Razão de economicidade:** **13,6x** (cada R$1 gasto com IA equivaleu a ~R$13,60 sem IA — 2.486÷183=13,59)
+- **Saving estimado:** ~R$2.303 (92,6%)
 
 ### Lições aprendidas
 
@@ -606,7 +606,7 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 
 Este projeto demonstrou de forma concreta que engenharia de software com IA generativa não é apenas uma aceleração de produtividade marginal — é uma mudança qualitativa na forma como sistemas complexos são projetados e construídos. Em aproximadamente 6 semanas de trabalho distribuídas em 6 fases, uma plataforma completa de análise de código foi erguida do zero: backend Python/FastAPI com arquitetura hexagonal, frontend React/TypeScript, pipeline RAG, análise de grafos de dependência, detecção de drift arquitetural, dívida técnica multidimensional com LLM, audit log, webhooks HMAC, watchlist com notificações e 80+ testes unitários.
 
-O custo total de ferramentas IA foi **~$69,13 USD** (~R$395 — Copilot Business $57 + Abacus AI ~$12 + OpenAI $0,13 confirmado) para uma equivalência de trabalho estimada em **~329 horas** de desenvolvimento profissional (perfis Sênior/Pleno, taxas mercado Recife/PE 2026), representando uma economia de **~89,9%** frente ao desenvolvimento tradicional. A razão de economicidade de **~9,9x** sustentou-se ao longo de todo o semestre — não foi um pico isolado de uma fase. _(Nota: versões anteriores deste documento reportavam 19,4x/94,8% com base em salários de SP/RJ e custos por token fictícios para o Copilot — os valores acima foram corrigidos e são verificáveis.)_
+O custo total de ferramentas IA foi **~$69,13 USD** (~R$394 — Copilot Business $57 + Abacus AI ~$12 + OpenAI $0,13 confirmado) para uma equivalência de trabalho estimada em **~329 horas** de desenvolvimento profissional (perfis Sênior/Pleno, taxas mercado Recife/PE 2026), representando uma economia de **~89,9%** frente ao desenvolvimento tradicional. A razão de economicidade de **~9,9x** sustentou-se ao longo de todo o semestre — não foi um pico isolado de uma fase. _(Nota: versões anteriores deste documento reportavam 19,4x/94,8% com base em salários de SP/RJ e custos por token fictícios para o Copilot — os valores acima foram corrigidos e são verificáveis.)_
 
 A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. Decisões de arquitetura, priorização de features, validação de segurança, escolha de patterns e design de prompts continuaram sendo trabalho humano. O que a IA assumiu foi a tradução dessas decisões em código correto, consistente e testado.
 
@@ -632,7 +632,7 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 | Abacus AI — UI (ChatLLM) | Jun 10–Jul/2026 | ~10.600 créditos consumidos (UI)   | ~$8,00      | ~R$46       | Log de créditos exportado da Abacus AI     |
 | Abacus AI — API (app)    | Jun–Jul/2026    | ~1.800 créditos consumidos (API)   | ~$4,00      | ~R$23       | Log de créditos exportado da Abacus AI     |
 | OpenAI API               | Jun 24–Jul/2026 | $0,119 embeddings + $0,007 GPT-5.5 | **$0,13**   | **~R$0,74** | **Confirmado — screenshot plataforma**     |
-| **Total ferramentas**    |                 |                                    | **~$69,13** | **~R$395**  |                                            |
+| **Total ferramentas**    |                 |                                    | **~$69,13** | **~R$394**  |                                            |
 
 > **Sobre Abacus AI:** 12.443 créditos totais entre Jun/10 e Jul/08 de 2026 (log exportado da plataforma). Conversão estimada em ~$0,001/crédito com base nos preços dos modelos utilizados (Claude Sonnet 4.5: $3/M input, $15/M output — Anthropic). Sem taxa de conversão oficial publicada pela Abacus AI, este valor é uma estimativa conservadora.
 >
@@ -642,12 +642,12 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 
 | Fase                  | Copilot (prop.)  | Abacus AI + OpenAI            | Total ferramentas | Esforço humano c/ IA | **Custo total c/ IA** |
 | --------------------- | ---------------- | ----------------------------- | ----------------- | -------------------- | --------------------- |
-| Pré-proposta          | ~$5 (~R$29)      | ~$1,00 (~R$6)                 | ~R$35             | 7,0h × R$38 = R$266  | **~R$301**            |
+| Pré-proposta          | ~$5 (~R$29)      | ~$1,00 (~R$6)                 | ~R$34             | 7,0h × R$38 = R$266  | **~R$300**            |
 | Exposição (8 SPECs)   | ~$15 (~R$86)     | ~$3,00 (~R$17)                | ~R$103            | 11,4h × R$38 = R$433 | **~R$536**            |
 | Composição            | ~$8 (~R$46)      | ~$2,50 (~R$14)                | ~R$60             | 4,2h × R$38 = R$160  | **~R$220**            |
 | Ensaio                | ~$8 (~R$46)      | ~$2,50 (~R$14)                | ~R$60             | 3,8h × R$38 = R$144  | **~R$204**            |
 | Ressonância           | ~$10 (~R$57)     | ~$2,13 (~R$12)                | ~R$69             | 5,8h × R$38 = R$220  | **~R$289**            |
-| Melhorias e Qualidade | ~$11 (~R$63)     | ~$1,00 (~R$6) + R$0,74 OpenAI | ~R$70             | 3,0h × R$38 = R$114  | **~R$184**            |
+| Melhorias e Qualidade | ~$11 (~R$63)     | ~$1,00 (~R$6) + R$0,74 OpenAI | ~R$69             | 3,0h × R$38 = R$114  | **~R$183**            |
 | **Total**             | **$57 (~R$325)** | **~$12,13 (~R$69)**           | **~R$394**        | **35,2h (~R$1.338)** | **~R$1.732**          |
 
 #### Custo contrafactual — Estimativa sem IA (taxas mercado Recife/PE 2026)
@@ -656,12 +656,12 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 
 | Fase                  | Horas sem IA | Perfil médio | Custo sem IA | Custo c/ IA | Saving    | Razão     |
 | --------------------- | ------------ | ------------ | ------------ | ----------- | --------- | --------- |
-| Pré-proposta          | 31h          | Pleno/Sênior | R$1.458      | R$301       | 79,4%     | 4,9x      |
-| Exposição (8 SPECs)   | 136h         | Sênior/Pleno | R$7.424      | R$536       | 92,8%     | 13,8x     |
+| Pré-proposta          | 31h          | Pleno/Sênior | R$1.458      | R$300       | 79,4%     | 4,9x      |
+| Exposição (8 SPECs)   | 136h         | Sênior/Pleno | R$7.424      | R$536       | 92,8%     | 13,9x     |
 | Composição            | 19h          | Sênior       | R$1.058      | R$220       | 79,2%     | 4,8x      |
 | Ensaio                | 27h          | Pleno/Sênior | R$1.290      | R$204       | 84,2%     | 6,3x      |
 | Ressonância           | 67h          | Sênior/Pleno | R$3.410      | R$289       | 91,5%     | 11,8x     |
-| Melhorias e Qualidade | 49h          | Sênior/Pleno | R$2.486      | R$184       | 92,6%     | 13,5x     |
+| Melhorias e Qualidade | 49h          | Sênior/Pleno | R$2.486      | R$183       | 92,6%     | 13,6x     |
 | **Total**             | **329h**     |              | **R$17.126** | **R$1.732** | **89,9%** | **~9,9x** |
 
 #### Análise comparativa final
