@@ -38,6 +38,31 @@ Diretrizes:
 - Não invente código ou comportamentos que não aparecem no contexto
 """
 
+# Locale → system prompt language instruction mapping
+_LOCALE_LANGUAGE_MAP: dict[str, str] = {
+    "pt-BR": "Português do Brasil",
+    "en-US": "English",
+    "es-MX": "Spanish (Mexican Spanish / Español de México)",
+}
+
+_SYSTEM_PROMPT_TEMPLATE = """\
+You are a software engineering assistant specialized in developer onboarding.
+You MUST respond in {language} — this is mandatory.
+
+Guidelines:
+- Base your answer on the provided context; if insufficient, state what is missing
+- Use Markdown (##, ###, lists, code blocks) to organize your response
+- Reference specific files and functions when present in the context
+- Be concise: overview first, then relevant details
+- Do not invent code or behaviors not present in the context
+"""
+
+
+def _build_system_prompt(locale: str = "pt-BR") -> str:
+    """Return a locale-aware system prompt for the LLM."""
+    language = _LOCALE_LANGUAGE_MAP.get(locale, "Portuguese (Brazilian Portuguese)")
+    return _SYSTEM_PROMPT_TEMPLATE.format(language=language)
+
 
 class LlmClient:
     """Unified LLM client. Supports Abacus AI (native SDK), OpenAI, and Anthropic."""
@@ -98,19 +123,24 @@ class LlmClient:
 
     # ── Public API ───────────────────────────────────────────────────────────
 
-    def generate_answer(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+    def generate_answer(self, question: str, context_chunks: list[dict[str, Any]], locale: str = "pt-BR") -> str:
         if not context_chunks:
-            return "Não encontrei contexto suficiente para responder. Tente reformular sua pergunta."
+            _no_context = {
+                "pt-BR": "Não encontrei contexto suficiente para responder. Tente reformular sua pergunta.",
+                "en-US": "I couldn't find enough context to answer. Please try rephrasing your question.",
+                "es-MX": "No encontré suficiente contexto para responder. Por favor reformula tu pregunta.",
+            }
+            return _no_context.get(locale, _no_context["pt-BR"])
 
         if self._client is None:
             return self._generate_fallback(question, context_chunks)
 
         if self._provider == "abacus":
-            return self._generate_with_abacus(question, context_chunks)
+            return self._generate_with_abacus(question, context_chunks, locale)
         elif self._provider == "anthropic":
-            return self._generate_with_anthropic(question, context_chunks)
+            return self._generate_with_anthropic(question, context_chunks, locale)
         elif self._provider == "openai":
-            return self._generate_with_openai(question, context_chunks)
+            return self._generate_with_openai(question, context_chunks, locale)
         return self._generate_fallback(question, context_chunks)
 
     def generate_raw(self, prompt: str, system_prompt: str) -> str:
@@ -179,8 +209,8 @@ class LlmClient:
 
     def _build_user_prompt(self, question: str, context: str) -> str:
         return (
-            f"Pergunta: {question}\n\n"
-            f"Contexto da codebase:\n{context}"
+            f"Question: {question}\n\n"
+            f"Codebase context:\n{context}"
         )
 
     def _fire_usage(self, tokens_in: int, tokens_out: int) -> None:
@@ -195,12 +225,13 @@ class LlmClient:
         """Rough token estimate when the API doesn't return exact counts."""
         return max(1, len(text.split()) * 4 // 3)
 
-    def _generate_with_abacus(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+    def _generate_with_abacus(self, question: str, context_chunks: list[dict[str, Any]], locale: str = "pt-BR") -> str:
         context = self._build_context(context_chunks)
         prompt = self._build_user_prompt(question, context)
+        system = _build_system_prompt(locale)
         try:
             response = self._client.evaluate_prompt(
-                system_message=SYSTEM_PROMPT,
+                system_message=system,
                 prompt=prompt,
                 llm_name=self._settings.llm_model,
             )
@@ -211,20 +242,21 @@ class LlmClient:
             t_out = total - t_in
             self._fire_usage(t_in, t_out)
             logger.info("Abacus AI response: %d tokens (model=%s)", total, response.llm_name)
-            return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
+            return answer.strip() if answer else "Sorry, I couldn't generate a response."
         except Exception as exc:
             logger.error("Error calling Abacus AI: %s", exc)
-            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
+            return self._generate_fallback(question, context_chunks)
 
-    def _generate_with_anthropic(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+    def _generate_with_anthropic(self, question: str, context_chunks: list[dict[str, Any]], locale: str = "pt-BR") -> str:
         context = self._build_context(context_chunks)
         prompt = self._build_user_prompt(question, context)
+        system = _build_system_prompt(locale)
         try:
             response = self._client.messages.create(
                 model=self._settings.llm_model,
                 max_tokens=self._settings.llm_max_tokens,
                 temperature=self._settings.llm_temperature,
-                system=SYSTEM_PROMPT,
+                system=system,
                 messages=[{"role": "user", "content": prompt}],
             )
             answer = "".join(b.text for b in response.content if hasattr(b, "text"))
@@ -236,21 +268,22 @@ class LlmClient:
                 )
             else:
                 self._fire_usage(self._estimate_tokens(prompt), self._estimate_tokens(answer or ""))
-            return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
+            return answer.strip() if answer else "Sorry, I couldn't generate a response."
         except Exception as exc:
             logger.error("Error calling Anthropic API: %s", exc)
-            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
+            return self._generate_fallback(question, context_chunks)
 
-    def _generate_with_openai(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
+    def _generate_with_openai(self, question: str, context_chunks: list[dict[str, Any]], locale: str = "pt-BR") -> str:
         context = self._build_context(context_chunks)
         prompt = self._build_user_prompt(question, context)
+        system = _build_system_prompt(locale)
         try:
             response = self._client.chat.completions.create(
                 model=self._settings.llm_model,
                 max_tokens=self._settings.llm_max_tokens,
                 temperature=self._settings.llm_temperature,
                 messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": system},
                     {"role": "user", "content": prompt},
                 ],
             )
@@ -263,10 +296,10 @@ class LlmClient:
                 )
             else:
                 self._fire_usage(self._estimate_tokens(prompt), self._estimate_tokens(answer or ""))
-            return answer.strip() if answer else "Desculpe, não consegui gerar uma resposta."
+            return answer.strip() if answer else "Sorry, I couldn't generate a response."
         except Exception as exc:
             logger.error("Error calling OpenAI API: %s", exc)
-            return f"Erro ao gerar resposta: {exc}\n\n{self._generate_fallback(question, context_chunks)}"
+            return self._generate_fallback(question, context_chunks)
 
     def _generate_fallback(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
         best = context_chunks[0]
