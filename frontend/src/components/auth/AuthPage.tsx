@@ -1,8 +1,10 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signin, signup, forgotPassword, resetPassword } from "../../services/authApi";
 import { useAuthStore } from "../../store/authStore";
-import { Icon, inputCls, btnPrimary } from "../ui";
+import { useUiStore } from "../../store/uiStore";
+import { useI18n } from "../../i18n";
+import { Icon, inputCls, btnPrimary, LanguageSelector } from "../ui";
 
 // -- Types -------------------------------------------------------------------
 
@@ -33,10 +35,10 @@ const PLANS: PlanDef[] = [
     id: "free",
     name: "Free",
     icon: "seedling",
-    price: "Grátis",
-    priceLabel: "Para sempre",
-    repos: "2 repositórios",
-    questions: "5 perguntas/dia",
+    price: "auth_planFree_price",
+    priceLabel: "auth_planFree_priceLabel",
+    repos: "auth_plan2Repos",
+    questions: "auth_plan5Questions",
     canDelete: false,
     accent: "border-emerald-400 dark:border-emerald-500",
     iconBg: "bg-emerald-100 dark:bg-emerald-900/50",
@@ -48,10 +50,10 @@ const PLANS: PlanDef[] = [
     id: "paid",
     name: "Pro",
     icon: "rocket",
-    price: "Pago",
-    priceLabel: "Mais popular",
-    repos: "10 repositórios",
-    questions: "100 perguntas/dia",
+    price: "auth_planPro_price",
+    priceLabel: "auth_planPro_priceLabel",
+    repos: "auth_plan10Repos",
+    questions: "auth_plan100Questions",
     canDelete: true,
     highlight: true,
     badge: "⭐ Popular",
@@ -65,10 +67,10 @@ const PLANS: PlanDef[] = [
     id: "enterprise",
     name: "Enterprise",
     icon: "building",
-    price: "Premium",
-    priceLabel: "Poder total",
-    repos: "50 repositórios",
-    questions: "500 perguntas/dia",
+    price: "auth_planEnterprise_price",
+    priceLabel: "auth_planEnterprise_priceLabel",
+    repos: "auth_plan50Repos",
+    questions: "auth_plan500Questions",
     canDelete: true,
     accent: "border-amber-500 dark:border-amber-400",
     iconBg: "bg-amber-100 dark:bg-amber-900/50",
@@ -150,6 +152,7 @@ function SuccessMsg({ msg }: { msg: string }) {
 // -- Step indicator ----------------------------------------------------------
 
 function StepIndicator({ step, planDef }: { step: SignupStep; planDef: PlanDef }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="flex items-center gap-1.5">
@@ -161,7 +164,7 @@ function StepIndicator({ step, planDef }: { step: SignupStep; planDef: PlanDef }
           </div>
         )}
         <span className={`text-xs font-medium ${step === "plan" ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400"}`}>
-          Escolha do plano
+          {t('auth_planChoiceStep')}
         </span>
       </div>
       <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
@@ -170,7 +173,7 @@ function StepIndicator({ step, planDef }: { step: SignupStep; planDef: PlanDef }
           step === "details" ? "bg-indigo-600 text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-400"
         }`}>2</div>
         <span className={`text-xs font-medium ${step === "details" ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400"}`}>
-          Criar conta
+          {t('auth_createAccountStep')}
         </span>
       </div>
     </div>
@@ -187,7 +190,8 @@ function PlanSelector({
   onContinue: () => void;
   onLogin: () => void;
 }) {
-  const planDef = PLANS.find((p) => p.id === selected)!;
+  const { t } = useI18n();
+  const planDef = PLANS.find((p) => p.id === selected)!;;
   return (
     <div className="space-y-3">
       <StepIndicator step="plan" planDef={planDef} />
@@ -223,9 +227,9 @@ function PlanSelector({
                   <span className="font-bold text-gray-900 dark:text-gray-100">{plan.name}</span>
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                     isSelected ? plan.badgeBg : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  }`}>{plan.price}</span>
+                  }`}>{t(plan.price as any)}</span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{plan.priceLabel}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t(plan.priceLabel as any)}</p>
               </div>
               <motion.div
                 initial={false}
@@ -236,10 +240,10 @@ function PlanSelector({
               </motion.div>
             </div>
             <ul className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1">
-              {[plan.repos, plan.questions, ...(plan.canDelete ? ["Deletar repositórios"] : [])].map((f) => (
+              {[plan.repos, plan.questions, ...(plan.canDelete ? ['auth_planCanDelete'] : [])].map((f) => (
                 <li key={f} className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                   <Icon name="check" className={`text-[10px] transition-colors ${isSelected ? plan.iconText : "text-gray-300 dark:text-gray-600"}`} />
-                  {f}
+                  {t(f as any)}
                 </li>
               ))}
             </ul>
@@ -248,15 +252,15 @@ function PlanSelector({
       })}
 
       <button type="button" onClick={onContinue} className={`${btnPrimary} w-full justify-center mt-1`}>
-        Continuar <Icon name="arrow-right" />
+        {t('auth_continueBtn')} <Icon name="arrow-right" />
       </button>
-      <Divider label="Já tem conta?" />
+      <Divider label={t('auth_hasAccount')} />
       <button
         type="button"
         onClick={onLogin}
         className="w-full text-sm text-center text-indigo-600 dark:text-indigo-400 hover:underline"
       >
-        Entrar na minha conta
+        {t('auth_goToMyAccount')}
       </button>
     </div>
   );
@@ -272,6 +276,7 @@ function SignupDetailsForm({
   onSwitch: (v: View) => void;
 }) {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -287,13 +292,12 @@ function SignupDetailsForm({
     : /[A-Z]/.test(password) && /\d/.test(password) ? 4
     : 3;
   const strengthColors = ["", "bg-red-400", "bg-amber-400", "bg-yellow-400", "bg-emerald-500"];
-  const strengthLabels = ["", "Muito curta", "Fraca", "Razoável", "Forte"];
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (password !== confirm) { setError("As senhas não coincidem"); return; }
-    if (password.length < 8) { setError("A senha deve ter ao menos 8 caracteres"); return; }
+    if (password !== confirm) { setError(t('auth_err_passwordsNoMatch')); return; }
+    if (password.length < 8) { setError(t('auth_err_passwordTooShort')); return; }
     setLoading(true);
     try {
       const r = await signup(email, password, plan);
@@ -303,7 +307,7 @@ function SignupDetailsForm({
       });
       if (!r.email_verified) onSwitch("verify_notice");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Falha no cadastro");
+      setError(err instanceof Error ? err.message : t('auth_err_signupFailed'));
     } finally {
       setLoading(false);
     }
@@ -315,36 +319,36 @@ function SignupDetailsForm({
 
       <div className={`flex items-center gap-2 rounded-lg px-3 py-2 border ${planDef.accent} ${planDef.cardSelected}`}>
         <Icon name={planDef.icon} className={`text-sm ${planDef.iconText}`} />
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Plano {planDef.name}</span>
+        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('auth_planLabel')} {planDef.name}</span>
         <button
           type="button"
           onClick={onBack}
           className="ml-auto text-xs text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline"
         >
-          ← Trocar
+          {t('auth_changePlan')}
         </button>
       </div>
 
       <div>
-        <FieldLabel>E-mail</FieldLabel>
+        <FieldLabel>{t('auth_email')}</FieldLabel>
         <div className="relative">
           <Icon name="envelope" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type="email" autoComplete="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com" className={`${inputCls} pl-9`}
+            placeholder={t('auth_emailPlaceholder')} className={`${inputCls} pl-9`}
           />
         </div>
       </div>
 
       <div>
-        <FieldLabel>Senha</FieldLabel>
+        <FieldLabel>{t('auth_password')}</FieldLabel>
         <div className="relative">
           <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type={showPw ? "text" : "password"} autoComplete="new-password" required
             value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mín. 8 caracteres" className={`${inputCls} pl-9 pr-10`}
+            placeholder={t('auth_newPasswordPlaceholder')} className={`${inputCls} pl-9 pr-10`}
           />
           <button
             type="button" tabIndex={-1}
@@ -366,19 +370,19 @@ function SignupDetailsForm({
                 />
               ))}
             </div>
-            <span className="text-xs text-gray-400">{strengthLabels[pwStrength]}</span>
+            <span className="text-xs text-gray-400">{["", t('auth_pwStrength_1'), t('auth_pwStrength_2'), t('auth_pwStrength_3'), t('auth_pwStrength_4')][pwStrength]}</span>
           </div>
         )}
       </div>
 
       <div>
-        <FieldLabel>Confirmar senha</FieldLabel>
+        <FieldLabel>{t('auth_confirmPassword')}</FieldLabel>
         <div className="relative">
           <Icon name="lock-open" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type={showPw ? "text" : "password"} autoComplete="new-password" required
             value={confirm} onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Repita a senha"
+            placeholder={t('auth_repeatPasswordPlaceholder')}
             className={`${inputCls} pl-9 ${
               confirm.length > 0
                 ? password === confirm
@@ -404,16 +408,16 @@ function SignupDetailsForm({
         className={`${btnPrimary} w-full justify-center`}
       >
         {loading
-          ? <><Icon name="spinner" className="animate-spin" /> Criando conta…</>
-          : <><Icon name="user-plus" /> Criar conta</>}
+          ? <><Icon name="spinner" className="animate-spin" /> {t('auth_creatingBtn')}</>
+          : <><Icon name="user-plus" /> {t('auth_createAccountBtn')}</>}
       </button>
-      <Divider label="Já tem conta?" />
+      <Divider label={t('auth_hasAccount')} />
       <button
         type="button"
         onClick={() => onSwitch("login")}
         className="w-full text-sm text-center text-indigo-600 dark:text-indigo-400 hover:underline"
       >
-        Entrar na minha conta
+        {t('auth_goToMyAccount')}
       </button>
     </form>
   );
@@ -469,6 +473,7 @@ function SignupForm({ onSwitch }: { onSwitch: (v: View) => void }) {
 
 function LoginForm({ onSwitch }: { onSwitch: (v: View) => void }) {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -486,7 +491,7 @@ function LoginForm({ onSwitch }: { onSwitch: (v: View) => void }) {
         email_verified: r.email_verified, repos_indexed_count: 0, questions_asked_count: 0,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Credenciais inválidas");
+      setError(err instanceof Error ? err.message : t('auth_err_invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -495,24 +500,24 @@ function LoginForm({ onSwitch }: { onSwitch: (v: View) => void }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <FieldLabel>E-mail</FieldLabel>
+        <FieldLabel>{t('auth_email')}</FieldLabel>
         <div className="relative">
           <Icon name="envelope" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type="email" autoComplete="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com" className={`${inputCls} pl-9`}
+            placeholder={t('auth_emailPlaceholder')} className={`${inputCls} pl-9`}
           />
         </div>
       </div>
       <div>
-        <FieldLabel>Senha</FieldLabel>
+        <FieldLabel>{t('auth_password')}</FieldLabel>
         <div className="relative">
           <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type={showPw ? "text" : "password"} autoComplete="current-password" required
             value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••" className={`${inputCls} pl-9 pr-10`}
+            placeholder={t('auth_passwordPlaceholder')} className={`${inputCls} pl-9 pr-10`}
           />
           <button
             type="button" tabIndex={-1}
@@ -527,23 +532,23 @@ function LoginForm({ onSwitch }: { onSwitch: (v: View) => void }) {
           onClick={() => onSwitch("forgot")}
           className="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline float-right"
         >
-          Esqueceu a senha?
+          {t('auth_forgotPasswordLink')}
         </button>
         <div className="clear-both" />
       </div>
       <ErrorMsg msg={error} />
       <button type="submit" disabled={loading} className={`${btnPrimary} w-full justify-center`}>
         {loading
-          ? <><Icon name="spinner" className="animate-spin" /> Entrando…</>
-          : <><Icon name="right-to-bracket" /> Entrar</>}
+          ? <><Icon name="spinner" className="animate-spin" /> {t('auth_enteringBtn')}</>
+          : <><Icon name="right-to-bracket" /> {t('auth_signInBtn')}</>}
       </button>
-      <Divider label="Não tem conta?" />
+      <Divider label={t('auth_noAccount')} />
       <button
         type="button"
         onClick={() => onSwitch("signup")}
         className="w-full text-sm text-center text-indigo-600 dark:text-indigo-400 hover:underline"
       >
-        Criar conta gratuita
+        {t('auth_createFreeAccount')}
       </button>
     </form>
   );
@@ -552,6 +557,7 @@ function LoginForm({ onSwitch }: { onSwitch: (v: View) => void }) {
 // -- Forgot password ---------------------------------------------------------
 
 function ForgotForm({ onSwitch }: { onSwitch: (v: View) => void }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -565,7 +571,7 @@ function ForgotForm({ onSwitch }: { onSwitch: (v: View) => void }) {
       await forgotPassword(email);
       setSent(true);
     } catch {
-      setError("Erro ao enviar código. Tente novamente.");
+      setError(t('auth_err_sendCodeFailed'));
     } finally {
       setLoading(false);
     }
@@ -578,20 +584,20 @@ function ForgotForm({ onSwitch }: { onSwitch: (v: View) => void }) {
           <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center mx-auto mb-4">
             <Icon name="paper-plane" className="text-indigo-500 text-2xl" />
           </div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Código enviado!</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('auth_codeSent')}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Se {email} estiver cadastrado, você receberá um código em breve.
+            {t('auth_codeDesc', { email })}
           </p>
         </div>
         <button type="button" onClick={() => onSwitch("reset")} className={`${btnPrimary} w-full justify-center`}>
-          <Icon name="key" /> Inserir código
+          <Icon name="key" /> {t('auth_enterCodeBtn')}
         </button>
         <button
           type="button"
           onClick={() => onSwitch("login")}
           className="w-full text-sm text-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
         >
-          Voltar ao login
+          {t('auth_backToLogin')}
         </button>
       </div>
     );
@@ -633,6 +639,7 @@ function ForgotForm({ onSwitch }: { onSwitch: (v: View) => void }) {
 // -- Reset password ----------------------------------------------------------
 
 function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -645,15 +652,15 @@ function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (newPw.length < 8) { setError("A nova senha deve ter ao menos 8 caracteres"); return; }
-    if (newPw !== confirmPw) { setError("As senhas não coincidem"); return; }
+    if (newPw.length < 8) { setError(t('auth_err_newPasswordTooShort')); return; }
+    if (newPw !== confirmPw) { setError(t('auth_err_passwordsNoMatch')); return; }
     setLoading(true);
     try {
       await resetPassword(email, code, newPw);
-      setSuccess("Senha redefinida com sucesso!");
+      setSuccess(t('auth_resetSuccess'));
       setTimeout(() => onSwitch("login"), 2000);
     } catch {
-      setError("Código inválido ou expirado. Tente novamente.");
+      setError(t('auth_err_invalidCode'));
     } finally {
       setLoading(false);
     }
@@ -662,34 +669,34 @@ function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <FieldLabel>E-mail da conta</FieldLabel>
+        <FieldLabel>{t('auth_emailAccount')}</FieldLabel>
         <div className="relative">
           <Icon name="envelope" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type="email" required
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="seu@email.com" className={`${inputCls} pl-9`}
+            placeholder={t('auth_emailPlaceholder')} className={`${inputCls} pl-9`}
           />
         </div>
       </div>
       <div>
-        <FieldLabel>Código de 6 dígitos</FieldLabel>
+        <FieldLabel>{t('auth_code6digits')}</FieldLabel>
         <input
           type="text" required maxLength={6} pattern="\d{6}" inputMode="numeric"
           value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          placeholder="000000"
+          placeholder={t('auth_codePlaceholder')}
           className={`${inputCls} text-center text-2xl tracking-[0.5em] font-mono`}
         />
-        <p className="text-xs text-gray-400 mt-1">Verifique seu e-mail. O código expira em 15 minutos.</p>
+        <p className="text-xs text-gray-400 mt-1">{t('auth_codeHint')}</p>
       </div>
       <div>
-        <FieldLabel>Nova senha</FieldLabel>
+        <FieldLabel>{t('auth_newPassword')}</FieldLabel>
         <div className="relative">
           <Icon name="lock" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type={showPw ? "text" : "password"} required
             value={newPw} onChange={(e) => setNewPw(e.target.value)}
-            placeholder="Mín. 8 caracteres" className={`${inputCls} pl-9 pr-10`}
+            placeholder={t('auth_newPasswordPlaceholder')} className={`${inputCls} pl-9 pr-10`}
           />
           <button
             type="button" tabIndex={-1}
@@ -701,13 +708,13 @@ function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
         </div>
       </div>
       <div>
-        <FieldLabel>Confirmar nova senha</FieldLabel>
+        <FieldLabel>{t('auth_confirmNewPassword')}</FieldLabel>
         <div className="relative">
           <Icon name="lock-open" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
           <input
             type={showPw ? "text" : "password"} required
             value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
-            placeholder="Repita a nova senha"
+            placeholder={t('auth_repeatNewPasswordPlaceholder')}
             className={`${inputCls} pl-9 ${
               confirmPw.length > 0
                 ? newPw === confirmPw
@@ -733,15 +740,15 @@ function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
         className={`${btnPrimary} w-full justify-center`}
       >
         {loading
-          ? <><Icon name="spinner" className="animate-spin" /> Redefinindo…</>
-          : <><Icon name="key" /> Redefinir senha</>}
+          ? <><Icon name="spinner" className="animate-spin" /> {t('auth_resettingBtn')}</>
+          : <><Icon name="key" /> {t('auth_resetBtn')}</>}
       </button>
       <button
         type="button"
         onClick={() => onSwitch("forgot")}
         className="w-full text-sm text-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
       >
-        ← Reenviar código
+        {t('auth_sendCodeBtn')}
       </button>
     </form>
   );
@@ -751,68 +758,42 @@ function ResetForm({ onSwitch }: { onSwitch: (v: View) => void }) {
 
 function VerifyNotice() {
   const user = useAuthStore((s) => s.user);
+  const { t } = useI18n();
   return (
     <div className="text-center py-4 space-y-4">
       <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center mx-auto">
         <Icon name="envelope-open" className="text-amber-500 text-2xl" />
       </div>
       <div>
-        <p className="font-semibold text-gray-800 dark:text-gray-100">Confirme seu e-mail</p>
+        <p className="font-semibold text-gray-800 dark:text-gray-100">{t('auth_verifyNoticeTitle')}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Enviamos um link de confirmação para <strong>{user?.email}</strong>.
-          <br />Clique no link para ativar sua conta.
+          {t('auth_verifyNoticeDesc')}
         </p>
       </div>
-      <p className="text-xs text-gray-400 dark:text-gray-500">
-        Pode continuar usando o CodeCompass enquanto isso — algumas funcionalidades podem ficar restritas até a confirmação.
-      </p>
     </div>
   );
 }
 
-// -- View configs ------------------------------------------------------------
-
-const VIEW_CONFIG: Record<View, { title: string; subtitle: string }> = {
-  login:         { title: "Bem-vindo de volta",   subtitle: "Acesse sua conta" },
-  signup:        { title: "Criar conta",          subtitle: "Comece a explorar seu código com IA" },
-  forgot:        { title: "Recuperar senha",      subtitle: "Vamos te ajudar a entrar de volta" },
-  reset:         { title: "Nova senha",           subtitle: "Insira o código enviado por e-mail" },
-  verify_notice: { title: "Verifique seu e-mail", subtitle: "Quase lá!" },
-};
+// -- View configs — defined inside AuthPage using t() ─────────────────────
 
 // -- Dark mode hook ----------------------------------------------------------
-
-function useDarkMode() {
-  const [dark, setDark] = useState(() =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-  );
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored === "dark") {
-      document.documentElement.classList.add("dark");
-      setDark(true);
-    } else if (stored === "light") {
-      document.documentElement.classList.remove("dark");
-      setDark(false);
-    }
-  }, []);
-
-  function toggle() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-  }
-
-  return { dark, toggle };
-}
+// (removed — dark mode is now managed by useUiStore for consistency across pages)
 
 // -- Main AuthPage -----------------------------------------------------------
 
 export function AuthPage() {
   const [view, setView] = useState<View>("login");
-  const { dark, toggle } = useDarkMode();
+  const { darkMode: dark, toggleDark: toggle } = useUiStore();
+  const { t } = useI18n();
+
+  const VIEW_CONFIG: Record<View, { title: string; subtitle: string }> = {
+    login:         { title: t('auth_loginTitle'),        subtitle: t('auth_loginTitle') },
+    signup:        { title: t('auth_signupTitle'),       subtitle: t('auth_signupTitle') },
+    forgot:        { title: t('auth_forgotTitle'),       subtitle: t('auth_forgotTitle') },
+    reset:         { title: t('auth_resetTitle'),        subtitle: t('auth_resetTitle') },
+    verify_notice: { title: t('auth_verifyNoticeTitle'), subtitle: t('auth_verifyNoticeTitle') },
+  };
+
   const cfg = VIEW_CONFIG[view];
 
   return (
@@ -823,22 +804,25 @@ export function AuthPage() {
         <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-200/30 dark:bg-purple-900/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Dark mode toggle */}
-      <button
-        type="button"
-        onClick={toggle}
-        title={dark ? "Modo claro" : "Modo escuro"}
-        className="fixed top-4 right-4 z-50 w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-center text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-      >
-        <motion.div
-          key={dark ? "sun" : "moon"}
-          initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-          animate={{ rotate: 0, opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
+      {/* Top-right controls: language selector + dark mode */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <LanguageSelector />
+        <button
+          type="button"
+          onClick={toggle}
+          title={dark ? t('header_lightMode') : t('header_darkMode')}
+          className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center justify-center text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <Icon name={dark ? "sun" : "moon"} className="text-sm" />
-        </motion.div>
-      </button>
+          <motion.div
+            key={dark ? "sun" : "moon"}
+            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Icon name={dark ? "sun" : "moon"} className="text-sm" />
+          </motion.div>
+        </button>
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
