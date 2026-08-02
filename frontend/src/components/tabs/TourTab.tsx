@@ -19,6 +19,7 @@ import {
     btnSecondary,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -379,6 +380,7 @@ function ImportancePanel({ step }: { step: TourStep }) {
 // ── Main export ────────────────────────────────────────────────────────────
 
 export function TourTab({ repositoryId, status }: Props) {
+    const { t } = useI18n();
     const [tour, setTour] = useState<TourResponse | null>(null);
     const [savedTours, setSavedTours] = useState<TourSummary[]>([]);
     const [step, setStep] = useState(0);

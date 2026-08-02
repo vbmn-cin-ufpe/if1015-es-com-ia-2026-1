@@ -14,6 +14,7 @@ import {
     btnSecondary,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -233,6 +234,16 @@ function EndpointRow({ opKey, op, max }: {
 type SortKey = "requests" | "latency" | "errors";
 
 export function OpsTab() {
+    const { t } = useI18n();
+    function statusLabel(s: string): string {
+        const map: Record<string, string> = {
+            ok: 'OK', healthy: t('ops_healthy'), ready: t('ops_healthy'),
+            operational: t('ops_healthy'), warning: t('ops_attention'),
+            degraded: t('ops_degraded'), error: t('ops_error'),
+            fail: t('ops_error'), down: t('ops_error'),
+        };
+        return map[s.toLowerCase()] ?? s.toUpperCase();
+}
     const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
     const [summary, setSummary] = useState<OperationalSummary | null>(null);
     const [loading, setLoading] = useState(false);

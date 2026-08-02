@@ -20,6 +20,7 @@ import {
     inputCls,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -364,6 +365,11 @@ const THINKING_ICONS = [
 // ── ChatTab ──────────────────────────────────────────────────────────────────
 
 export function ChatTab({ repositoryId, status }: Props) {
+    const { t, locale } = useI18n();
+    const THINKING_LABELS = [
+        t('chat_thinking_1'), t('chat_thinking_2'), t('chat_thinking_3'),
+        t('chat_thinking_4'), t('chat_thinking_5'),
+    ];
     // ── Zustand store ──────────────────────────────────────────────────────
     const { input, history, setInput, addEntry, resetForRepo, clearHistory } =
         useChatStore();
@@ -411,7 +417,7 @@ export function ChatTab({ repositoryId, status }: Props) {
         }, 1800);
 
         try {
-            const response = await askQuestion(repositoryId, q, token);
+            const response = await askQuestion(repositoryId, q, token, locale);
             const ms = Date.now() - t0;
             setElapsedMs(ms);
             addEntry(q, response, repositoryId);

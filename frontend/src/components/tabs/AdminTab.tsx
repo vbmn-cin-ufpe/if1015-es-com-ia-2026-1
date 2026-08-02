@@ -41,6 +41,7 @@ import {
   btnSecondary,
   Icon,
 } from "../ui"
+import { useI18n } from "../../i18n"
 
 const PLAN_OPTIONS = ["free", "paid", "enterprise"]
 const ROLE_OPTIONS = ["free", "admin"]
@@ -1378,6 +1379,18 @@ function LlmQualitySection() {
 }
 
 export function AdminTab() {
+  const { t } = useI18n()
+  const ADMIN_TABS = [
+    { id: "users" as const,     label: t('admin_users'),      icon: "users" },
+    { id: "health" as const,    label: t('admin_repoHealth'), icon: "heart-pulse" },
+    { id: "usage" as const,     label: t('admin_usage'),      icon: "chart-line" },
+    { id: "llm" as const,       label: t('admin_llmQuality'), icon: "star-half-stroke" },
+    { id: "custos" as const,    label: t('admin_llmCosts'),   icon: "dollar-sign" },
+    { id: "fila" as const,      label: t('admin_queue'),      icon: "list-check" },
+    { id: "planos" as const,    label: t('admin_plans'),      icon: "sliders" },
+    { id: "auditoria" as const, label: t('admin_audit'),      icon: "clipboard-list" },
+    { id: "webhooks" as const,  label: t('admin_webhooks'),   icon: "bolt" },
+  ]
   const [adminSection, setAdminSection] = useState<AdminSection>("users")
   const [users, setUsers] = useState<UserSummary[]>([])
   const [stats, setStats] = useState<AdminStats | null>(null)

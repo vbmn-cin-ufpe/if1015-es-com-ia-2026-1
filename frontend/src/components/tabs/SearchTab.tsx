@@ -11,7 +11,7 @@ import {
     ErrorBanner,
     Icon,
 } from "../ui"
-
+import { useI18n } from "../../i18n"
 interface Props {
     repositoryId: string
     status: string
@@ -389,6 +389,7 @@ function SearchHistoryBar({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function SearchTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
     const navigate = useNavigate()
     const [query, setQuery] = useState("")
     const [pendingQuery, setPendingQuery] = useState("")

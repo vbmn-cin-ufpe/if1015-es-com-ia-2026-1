@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { EmptyState, ThinkingDots, ErrorBanner, Icon } from "../ui"
+import { useI18n } from "../../i18n"
 import {
   analyseBranch,
   listBranches,
@@ -212,6 +213,7 @@ function ResultPanel({ result }: { result: BranchAnalysisResult }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function BranchAnalysisTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
   const [branch, setBranch] = useState("")
   const [base, setBase] = useState("main")
   const [result, setResult] = useState<BranchAnalysisResult | null>(null)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, Icon, EmptyState, ErrorBanner, ThinkingDots, btnPrimary, btnSecondary } from "../ui"
+import { useI18n } from "../../i18n"
 import {
   getMyWatchlist,
   watchModule,
@@ -72,6 +73,7 @@ function WatchButton({
 export { WatchButton }
 
 export function WatchlistTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [watchlist, setWatchlist] = useState<WatchEntry[]>([])

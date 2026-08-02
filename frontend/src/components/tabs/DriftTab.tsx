@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, Icon, EmptyState, ErrorBanner, ThinkingDots, btnPrimary, btnSecondary } from "../ui"
+import { useI18n } from "../../i18n"
 import {
   listGraphSnapshots,
   getGraphDiff,
@@ -69,6 +70,7 @@ function ChangeList({ title, icon, color, items }: {
 }
 
 export function DriftTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])

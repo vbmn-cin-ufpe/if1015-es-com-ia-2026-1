@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, Icon, EmptyState, ErrorBanner, ThinkingDots, btnPrimary } from "../ui"
+import { useI18n } from "../../i18n"
 import { getTechDebtHistory, analyseTechDebt, TechDebtSnapshot } from "../../services/techDebtApi"
 import { getReportUrl } from "../../services/reportApi"
 
@@ -225,6 +226,7 @@ function LlmSummaryCard({ summary }: { summary: string }) {
 // ---- Main component -------------------------------------------------------
 
 export function TechDebtTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
   const [loading, setLoading] = useState(false)
   const [analysing, setAnalysing] = useState(false)
   const [error, setError] = useState("")

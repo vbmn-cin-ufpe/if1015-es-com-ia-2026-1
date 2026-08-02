@@ -17,6 +17,7 @@ import {
     inputCls,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -398,6 +399,7 @@ function MonthSeparator({ label, count }: { label: string; count: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function HistoryTab({ repositoryId, status }: Props) {
+    const { t } = useI18n();
     const [entries, setEntries] = useState<TimelineEntry[]>([]);
     const [allEntries, setAllEntries] = useState<TimelineEntry[]>([]);
     const [total, setTotal] = useState(0);

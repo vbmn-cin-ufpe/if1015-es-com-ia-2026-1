@@ -21,6 +21,7 @@ import {
     inputCls,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 // â”€â”€ constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -181,6 +182,17 @@ interface Props {
 export function RepoTab({ repositoryId, status, onIndexed }: Props) {
     const navigate = useNavigate();
     const token = useAuthStore((s) => s.token) ?? "";
+    const { t } = useI18n();
+    const statusLabel: Record<string, string> = {
+        queued:    t('repo_statusQueued'),
+        cloning:   t('repo_statusCloning'),
+        detecting: t('repo_statusDetecting'),
+        chunking:  t('repo_statusChunking'),
+        embedding: t('repo_statusEmbedding'),
+        storing:   t('repo_statusStoring'),
+        completed: t('repo_statusCompleted'),
+        failed:    t('repo_statusFailed'),
+    };
     const [url, setUrl] = useState("");
     const [loading, setLoading] = useState(false);
     const [stepLabel, setStepLabel] = useState(STATUS_LABEL.queued);
@@ -230,13 +242,13 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
         setRepoData(null);
         setLoading(true);
         setProgress(STATUS_PROGRESS.queued);
-        setStepLabel(STATUS_LABEL.queued);
+        setStepLabel(statusLabel.queued);
         try {
             const r = await indexRepository(url.trim(), token);
             onIndexed(r.repository_id, r.job_status);
             startPolling(r.repository_id);
         } catch {
-            setErrorMsg("Falha ao iniciar indexação. Verifique a URL e tente novamente.");
+            setErrorMsg(t('repo_indexFailHint'));
             setLoading(false);
         }
     }
@@ -270,8 +282,8 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                             <Icon name="code-branch" />
                         </span>
                         <div>
-                            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Indexar Repositório</h2>
-                            <p className="text-xs text-gray-400">Suporta: Python, JavaScript, TypeScript, Java, Go e Rust</p>
+                            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">{t('repo_indexTitle')}</h2>
+                            <p className="text-xs text-gray-400">{t('repo_supported')}</p>
                         </div>
                     </div>
                 </div>
@@ -291,9 +303,9 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                         </div>
                         <button type="submit" disabled={loading || !url.trim()} className={btnPrimary}>
                             {loading ? (
-                                <><Icon name="spinner" className="animate-spin" /> Indexando…</>
+                                <><Icon name="spinner" className="animate-spin" /> {t('repo_indexingBtn')}</>
                             ) : (
-                                <><Icon name="code-branch" /> Indexar</>
+                                <><Icon name="code-branch" /> {t('repo_indexBtn')}</>
                             )}
                         </button>
                     </form>

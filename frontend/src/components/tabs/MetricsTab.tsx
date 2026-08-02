@@ -17,6 +17,7 @@ import {
     inputCls,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -247,6 +248,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (n: number) 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MetricsTab({ repositoryId, status }: Props) {
+    const { t } = useI18n();
     const [metricsData, setMetricsData] = useState<MetricsPayload | null>(null);
     const [qualityReport, setQuality] = useState<QualityReport | null>(null);
     const [loading, setLoading] = useState(false);
