@@ -36,16 +36,7 @@ const STATUS_PROGRESS: Record<string, number> = {
     failed: 0,
 };
 
-const STATUS_LABEL: Record<string, string> = {
-    queued: "Aguardando início…",
-    cloning: "Clonando repositório…",
-    detecting: "Detectando linguagens…",
-    chunking: "Construindo chunks de código…",
-    embedding: "Gerando embeddings semânticos…",
-    storing: "Armazenando vetores no ChromaDB…",
-    completed: "Indexação concluída!",
-    failed: "Falha na indexação",
-};
+// STATUS_LABEL removed — use t() inside component instead
 
 /** Lang name â†’ [tailwind bg, tailwind text] */
 const LANG_STYLE: Record<string, [string, string]> = {
@@ -64,44 +55,7 @@ const LANG_STYLE: Record<string, [string, string]> = {
     php:        ["bg-violet-100 dark:bg-violet-900/40","text-violet-700 dark:text-violet-300"],
 };
 
-/** Feature cards for navigation after completion */
-const FEATURE_CARDS = [
-    {
-        route: "/chat",
-        icon: "comments",
-        label: "Chat",
-        desc: "Faça perguntas em linguagem natural sobre qualquer parte do repositório",
-        color: "indigo",
-    },
-    {
-        route: "/tour",
-        icon: "route",
-        label: "Tour guiado",
-        desc: "Guia automático de onboarding pelos módulos mais importantes",
-        color: "emerald",
-    },
-    {
-        route: "/graph",
-        icon: "diagram-project",
-        label: "Grafo de dependências",
-        desc: "Mapa visual das dependências entre os módulos do projeto",
-        color: "violet",
-    },
-    {
-        route: "/history",
-        icon: "clock-rotate-left",
-        label: "Histórico de commits",
-        desc: "Linha do tempo de mudanças e evolução do repositório",
-        color: "amber",
-    },
-    {
-        route: "/metrics",
-        icon: "chart-bar",
-        label: "Métricas",
-        desc: "Complexidade, acoplamento e outras métricas de qualidade",
-        color: "rose",
-    },
-] as const;
+// FEATURE_CARDS moved inside component to support i18n
 
 const COLOR_MAP: Record<string, string> = {
     indigo: "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400",
@@ -127,10 +81,10 @@ const LABEL_COLOR_MAP: Record<string, string> = {
 
 // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function formatDate(iso?: string | null): string {
+function formatDate(iso?: string | null, locale = "en-US"): string {
     if (!iso) return "—";
     try {
-        return new Intl.DateTimeFormat("pt-BR", {
+        return new Intl.DateTimeFormat(locale, {
             day: "2-digit", month: "short", year: "numeric",
             hour: "2-digit", minute: "2-digit",
         }).format(new Date(iso));
@@ -182,7 +136,7 @@ interface Props {
 export function RepoTab({ repositoryId, status, onIndexed }: Props) {
     const navigate = useNavigate();
     const token = useAuthStore((s) => s.token) ?? "";
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const statusLabel: Record<string, string> = {
         queued:    t('repo_statusQueued'),
         cloning:   t('repo_statusCloning'),
@@ -193,9 +147,16 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
         completed: t('repo_statusCompleted'),
         failed:    t('repo_statusFailed'),
     };
+    const featureCards = [
+        { route: "/chat",    icon: "comments",          label: t('nav_chat'),    desc: t('repo_featureChat_desc'),    color: "indigo" },
+        { route: "/tour",    icon: "route",             label: t('nav_tour'),    desc: t('repo_featureTour_desc'),    color: "emerald" },
+        { route: "/graph",   icon: "diagram-project",   label: t('nav_graph'),   desc: t('repo_featureGraph_desc'),   color: "violet" },
+        { route: "/history", icon: "clock-rotate-left", label: t('nav_history'), desc: t('repo_featureHistory_desc'), color: "amber" },
+        { route: "/metrics", icon: "chart-bar",         label: t('nav_metrics'), desc: t('repo_featureMetrics_desc'), color: "rose" },
+    ] as const;
     const [url, setUrl] = useState("");
     const [loading, setLoading] = useState(false);
-    const [stepLabel, setStepLabel] = useState(STATUS_LABEL.queued);
+    const [stepLabel, setStepLabel] = useState(statusLabel.queued);
     const [progress, setProgress] = useState(0);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [repoData, setRepoData] = useState<RepoStatusResponse | null>(null);
@@ -221,7 +182,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                 const r = await getRepositoryStatus(repoId, token);
                 const pct = STATUS_PROGRESS[r.index_status] ?? 50;
                 setProgress(pct);
-                setStepLabel(STATUS_LABEL[r.index_status] ?? "Processando…");
+                setStepLabel(statusLabel[r.index_status] ?? t('repo_processing'));
                 onIndexed(repoId, r.index_status);
 
                 if (r.index_status === "completed" || r.index_status === "failed") {
@@ -261,7 +222,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
             setRepoData(r);
             if (r.error_message) setErrorMsg(r.error_message);
         } catch {
-            setErrorMsg("Falha ao verificar status");
+            setErrorMsg(t('repo_refreshFailed'));
         }
     }
 
@@ -323,7 +284,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                     {errorMsg && (
                         <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3">
                             <p className="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5 mb-0.5">
-                                <Icon name="triangle-exclamation" /> Erro
+                                <Icon name="triangle-exclamation" /> {t('repo_errorLabel')}
                             </p>
                             <p className="text-xs text-red-700 dark:text-red-300 font-mono break-all">{errorMsg}</p>
                         </div>
@@ -360,7 +321,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                         <div className="flex items-center gap-2 shrink-0">
                             <Badge status={status || "pending"} />
                             <button onClick={onRefresh} className={`${btnSecondary} text-xs`}>
-                                <Icon name="rotate" /> Atualizar
+                                <Icon name="rotate" /> {t('repo_refresh')}
                             </button>
                         </div>
                     </div>
@@ -377,25 +338,25 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                                 <StatCard
                                     icon="file-code"
                                     iconColor="text-indigo-500"
-                                    label="Arquivos indexados"
+                                    label={t('repo_statFiles')}
                                     value={stats.source_files != null ? String(stats.source_files) : "—"}
                                 />
                                 <StatCard
                                     icon="puzzle-piece"
                                     iconColor="text-violet-500"
-                                    label="Chunks de código"
+                                    label={t('repo_statChunks')}
                                     value={stats.chunks != null ? String(stats.chunks) : "—"}
                                 />
                                 <StatCard
                                     icon="database"
                                     iconColor="text-emerald-500"
-                                    label="Vetores semânticos"
+                                    label={t('repo_statVectors')}
                                     value={stats.vectors != null ? String(stats.vectors) : "—"}
                                 />
                                 <StatCard
                                     icon="weight-hanging"
                                     iconColor="text-amber-500"
-                                    label="Tamanho total"
+                                    label={t('repo_statSize')}
                                     value={formatSize(stats.total_size_kb as number | undefined)}
                                 />
                             </motion.div>
@@ -406,18 +367,18 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                             <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
                                 <Icon name="calendar-plus" className="text-indigo-400 shrink-0" />
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Indexado em</p>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('repo_indexedAt')}</p>
                                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {formatDate(repoData?.created_at)}
+                                        {formatDate(repoData?.created_at, locale)}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
                                 <Icon name="calendar-check" className="text-emerald-400 shrink-0" />
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">Atualizado em</p>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('repo_updatedAt')}</p>
                                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {formatDate(repoData?.updated_at)}
+                                        {formatDate(repoData?.updated_at, locale)}
                                     </p>
                                 </div>
                             </div>
@@ -425,7 +386,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2.5">
                                     <Icon name="stopwatch" className="text-violet-400 shrink-0" />
                                     <div>
-                                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">Tempo de indexação</p>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t('repo_indexingTime')}</p>
                                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
                                             {stats.elapsed_seconds as number}s
                                         </p>
@@ -446,7 +407,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                         {languages.length > 0 && (
                             <div>
                                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                    <Icon name="code" className="text-indigo-400" /> Linguagens detectadas
+                                    <Icon name="code" className="text-indigo-400" /> {t('repo_languages')}
                                 </p>
                                 {/* Bar chart */}
                                 <div className="flex rounded-lg overflow-hidden h-3 mb-3 bg-gray-100 dark:bg-gray-700">
@@ -498,7 +459,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                 <div>
                     <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                         <Icon name="rocket" className="text-indigo-400" />
-                        Explorar o repositório
+                        {t('repo_exploreTitle')}
                     </p>
                     <motion.div
                         variants={staggerContainer}
@@ -506,7 +467,7 @@ export function RepoTab({ repositoryId, status, onIndexed }: Props) {
                         animate="show"
                         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     >
-                        {FEATURE_CARDS.map((card) => (
+                        {featureCards.map((card) => (
                             <motion.button
                                 key={card.route}
                                 variants={fadeUp}
