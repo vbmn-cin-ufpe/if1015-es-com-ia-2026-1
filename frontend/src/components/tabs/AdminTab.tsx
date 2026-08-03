@@ -41,6 +41,7 @@ import {
   btnSecondary,
   Icon,
 } from "../ui"
+import { useI18n } from "../../i18n"
 
 const PLAN_OPTIONS = ["free", "paid", "enterprise"]
 const ROLE_OPTIONS = ["free", "admin"]
@@ -87,6 +88,7 @@ function EditModal({
   const [emailVerified, setEmailVerified] = useState(user.email_verified)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const { t } = useI18n()
 
   async function onSave() {
     setSaving(true)
@@ -95,7 +97,7 @@ function EditModal({
       const updated = await updateAdminUser(user.user_id, { role, plan, email_verified: emailVerified })
       onSaved(updated)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Falha ao salvar.")
+      setError(e instanceof Error ? e.message : t('admin_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -116,12 +118,12 @@ function EditModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 w-full max-w-sm shadow-2xl"
       >
-        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">Editar usuário</h3>
+        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">{t('admin_editUser')}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-5 font-mono truncate">{user.email}</p>
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Plano</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">{t('auth_planLabel')}</label>
             <div className="flex gap-2 flex-wrap">
               {PLAN_OPTIONS.map((p) => (
                 <button
@@ -140,7 +142,7 @@ function EditModal({
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Role</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">{t('admin_roleWord')}</label>
             <div className="flex gap-2 flex-wrap">
               {ROLE_OPTIONS.map((r) => (
                 <button
@@ -165,16 +167,16 @@ function EditModal({
               onChange={(e) => setEmailVerified(e.target.checked)}
               className="accent-emerald-600 w-4 h-4"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">E-mail verificado</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">{t('admin_emailVerifiedLabel')}</span>
           </label>
         </div>
 
         {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
 
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className={`${btnSecondary} flex-1 justify-center`}>Cancelar</button>
+          <button onClick={onClose} className={`${btnSecondary} flex-1 justify-center`}>{t('admin_cancelBtn')}</button>
           <button onClick={onSave} disabled={saving} className={`${btnPrimary} flex-1 justify-center`}>
-            {saving ? <><Icon name="spinner" className="animate-spin" /> Salvando…</> : "Salvar"}
+            {saving ? <><Icon name="spinner" className="animate-spin" /> {t('admin_savingBtn')}</> : t('admin_saveBtn')}
           </button>
         </div>
       </motion.div>
@@ -196,6 +198,7 @@ function UserRow({
   onResetPw: (id: string) => void
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const { t } = useI18n()
 
   return (
     <motion.tr
@@ -235,14 +238,14 @@ function UserRow({
         <div className="flex items-center gap-1 justify-end">
           <button
             onClick={() => onEdit(user)}
-            title="Editar"
+            title={t('admin_editBtn')}
             className="p-1.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           >
             <Icon name="pen-to-square" />
           </button>
           <button
             onClick={() => onResetPw(user.user_id)}
-            title="Resetar senha"
+            title={t('admin_resetPasswordTitle')}
             className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
           >
             <Icon name="key" />
@@ -250,7 +253,7 @@ function UserRow({
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              title="Deletar"
+              title={t('repo_deleteBtn')}
               className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
             >
               <Icon name="trash" />
@@ -261,13 +264,13 @@ function UserRow({
                 onClick={() => { onDelete(user.user_id); setConfirmDelete(false) }}
                 className="px-2 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold transition-colors"
               >
-                Confirmar
+                {t('admin_confirmBtn')}
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
                 className="px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 text-[10px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                Cancelar
+                {t('admin_cancelBtn')}
               </button>
             </div>
           )}
@@ -284,13 +287,14 @@ function LlmCostSection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [days, setDays] = useState(30)
+  const { t } = useI18n()
 
   const load = useCallback(() => {
     setLoading(true)
     setError("")
     getLlmCosts(days)
       .then(setData)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }, [days])
 
@@ -299,30 +303,30 @@ function LlmCostSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <label className="text-xs text-slate-400">Período:</label>
+        <label className="text-xs text-slate-400">{t('admin_period')}</label>
         {[7, 30, 90].map(d => (
           <button
             key={d}
             onClick={() => setDays(d)}
             className={`text-xs px-3 py-1 rounded-lg border transition ${days === d ? "bg-violet-700 border-violet-500 text-white" : "border-slate-600 text-slate-300 hover:bg-slate-700"}`}
-          >{d} dias</button>
+          >{t('admin_daysOption', { days: String(d) })}</button>
         ))}
         <button onClick={load} className="text-xs px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
-          <Icon name="rotate" className="mr-1" />Atualizar
+          <Icon name="rotate" className="mr-1" />{t('common_refresh')}
         </button>
       </div>
 
       {error && <ErrorBanner message={error} />}
-      {loading && <div className="py-8 flex justify-center"><ThinkingDots label="Carregando custos…" /></div>}
+      {loading && <div className="py-8 flex justify-center"><ThinkingDots label={t('admin_loadingCosts')} /></div>}
 
       {data && !loading && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Custo Total", value: `$${data.total_cost_usd.toFixed(4)}`, icon: "dollar-sign", color: "text-emerald-400" },
-              { label: "Chamadas", value: String(data.total_calls), icon: "bolt", color: "text-blue-400" },
-              { label: "Tokens (entrada)", value: data.total_tokens_in.toLocaleString(), icon: "arrow-right-to-bracket", color: "text-purple-400" },
-              { label: "Projeção 30d", value: `$${data.monthly_projection_usd.toFixed(4)}`, icon: "chart-bar", color: "text-orange-400" },
+              { label: t('admin_totalCostLabel'), value: `$${data.total_cost_usd.toFixed(4)}`, icon: "dollar-sign", color: "text-emerald-400" },
+              { label: t('admin_callsLabel'), value: String(data.total_calls), icon: "bolt", color: "text-blue-400" },
+              { label: t('admin_tokensInLabel'), value: data.total_tokens_in.toLocaleString(), icon: "arrow-right-to-bracket", color: "text-purple-400" },
+              { label: t('admin_monthlyProjection'), value: `$${data.monthly_projection_usd.toFixed(4)}`, icon: "chart-bar", color: "text-orange-400" },
             ].map(({ label, value, icon, color }) => (
               <div key={label} className="bg-slate-800 rounded-xl p-4 border border-slate-700">
                 <Icon name={icon} className={`${color} text-xl mb-1`} />
@@ -335,7 +339,7 @@ function LlmCostSection() {
           {/* By provider */}
           {Object.keys(data.by_provider).length > 0 && (
             <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <h4 className="text-xs font-semibold text-slate-300 mb-3">Custo por Provedor</h4>
+              <h4 className="text-xs font-semibold text-slate-300 mb-3">{t('admin_costByProvider')}</h4>
               {Object.entries(data.by_provider).map(([prov, cost]) => (
                 <div key={prov} className="flex justify-between text-sm py-1 border-b border-slate-700 last:border-0">
                   <span className="text-slate-300 capitalize">{prov}</span>
@@ -348,7 +352,7 @@ function LlmCostSection() {
           {/* Daily cost */}
           {Object.keys(data.by_day).length > 0 && (
             <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <h4 className="text-xs font-semibold text-slate-300 mb-3">Custo Diário</h4>
+              <h4 className="text-xs font-semibold text-slate-300 mb-3">{t('admin_dailyCost')}</h4>
               <div className="space-y-1 max-h-48 overflow-y-auto">
                 {Object.entries(data.by_day).reverse().map(([day, cost]) => (
                   <div key={day} className="flex justify-between text-xs py-0.5">
@@ -363,17 +367,17 @@ function LlmCostSection() {
           {/* Recent calls */}
           {data.recent.length > 0 && (
             <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-              <h4 className="text-xs font-semibold text-slate-300 mb-3">Chamadas Recentes</h4>
+              <h4 className="text-xs font-semibold text-slate-300 mb-3">{t('admin_recentCalls')}</h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-700 text-slate-400">
-                      <th className="text-left py-1 px-2">Endpoint</th>
-                      <th className="text-left py-1 px-2">Provedor</th>
-                      <th className="text-right py-1 px-2">Tokens In</th>
-                      <th className="text-right py-1 px-2">Tokens Out</th>
-                      <th className="text-right py-1 px-2">Custo</th>
-                      <th className="text-left py-1 px-2">Hora</th>
+                      <th className="text-left py-1 px-2">{t('admin_endpointCol')}</th>
+                      <th className="text-left py-1 px-2">{t('admin_providerCol')}</th>
+                      <th className="text-right py-1 px-2">{t('admin_tokensInCol')}</th>
+                      <th className="text-right py-1 px-2">{t('admin_tokensOutCol')}</th>
+                      <th className="text-right py-1 px-2">{t('admin_costCol')}</th>
+                      <th className="text-left py-1 px-2">{t('admin_timeCol')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -405,13 +409,14 @@ function IngestionQueueSection() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [autoRefresh, setAutoRefresh] = useState(false)
+  const { t } = useI18n()
 
   const load = useCallback(() => {
     setLoading(true)
     setError("")
     getIngestionQueue()
       .then(setData)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -438,7 +443,7 @@ function IngestionQueueSection() {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <button onClick={load} className="text-xs px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1">
-          <Icon name="rotate" className={loading ? "animate-spin" : ""} />Atualizar
+          <Icon name="rotate" className={loading ? "animate-spin" : ""} />{t('common_refresh')}
         </button>
         <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
           <input
@@ -447,11 +452,11 @@ function IngestionQueueSection() {
             onChange={e => setAutoRefresh(e.target.checked)}
             className="accent-violet-500"
           />
-          Auto-refresh (3s)
+          {t('admin_autoRefreshLabel')}
         </label>
         {data && (
           <span className="text-xs text-slate-400 ml-auto">
-            {data.active} ativo(s) · {data.total} total
+            {t('admin_queueSummary', { active: String(data.active), total: String(data.total) })}
           </span>
         )}
       </div>
@@ -461,7 +466,7 @@ function IngestionQueueSection() {
       {data && (
         <div className="space-y-3">
           {data.items.length === 0 ? (
-            <EmptyState icon="list-check" message="Nenhum repositório na fila." />
+            <EmptyState icon="list-check" message={t('admin_queueEmpty')} />
           ) : (
             data.items.map(item => (
               <div key={item.repository_id} className="bg-slate-800 rounded-xl p-4 border border-slate-700">
@@ -504,13 +509,14 @@ function PlanLimitsSection() {
   const [editing, setEditing] = useState<PlanLimit | null>(null)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState("")
+  const { t } = useI18n()
 
   const load = useCallback(() => {
     setLoading(true)
     setError("")
     getPlanLimits()
       .then(setPlans)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -527,10 +533,10 @@ function PlanLimitsSection() {
       })
       setPlans(prev => prev.map(p => p.plan === updated.plan ? updated : p))
       setEditing(null)
-      setToast(`Plano "${updated.plan}" atualizado com sucesso!`)
+      setToast(t('admin_planUpdated', { plan: updated.plan }))
       setTimeout(() => setToast(""), 3000)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Falha ao salvar")
+      setError(e instanceof Error ? e.message : t('admin_saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -545,7 +551,7 @@ function PlanLimitsSection() {
   return (
     <div className="space-y-4">
       {error && <ErrorBanner message={error} />}
-      {loading && <div className="py-8 flex justify-center"><ThinkingDots label="Carregando planos…" /></div>}
+      {loading && <div className="py-8 flex justify-center"><ThinkingDots label={t('admin_loadingPlans')} /></div>}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {plans.map(p => (
@@ -556,22 +562,22 @@ function PlanLimitsSection() {
                 onClick={() => setEditing({ ...p })}
                 className="text-xs px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition flex items-center gap-1"
               >
-                <Icon name="pen" />Editar
+                <Icon name="pen" />{t('admin_editBtn')}
               </button>
             </div>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">Max repos:</span>
+                <span className="text-slate-400">{t('admin_maxRepos')}:</span>
                 <span className="font-semibold">{p.max_repos}</span>
               </div>
               <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">Max perguntas:</span>
+                <span className="text-slate-400">{t('admin_maxQuestions')}:</span>
                 <span className="font-semibold">{p.max_questions}</span>
               </div>
               <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">Pode deletar repos:</span>
+                <span className="text-slate-400">{t('admin_canDeleteRepos')}:</span>
                 <span className={p.can_delete_repo ? "text-emerald-400 font-semibold" : "text-slate-500"}>
-                  {p.can_delete_repo ? "Sim" : "Não"}
+                  {p.can_delete_repo ? t('admin_yes') : t('admin_no')}
                 </span>
               </div>
             </div>
@@ -595,11 +601,11 @@ function PlanLimitsSection() {
               className="bg-slate-900 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl"
             >
               <h3 className="text-base font-bold text-white mb-4 capitalize">
-                Editar plano <span className="text-purple-400">{editing.plan}</span>
+                {t('admin_editPlanTitle')} <span className="text-purple-400">{editing.plan}</span>
               </h3>
               <div className="space-y-3">
                 <label className="block">
-                  <span className="text-xs text-slate-400">Max repos</span>
+                  <span className="text-xs text-slate-400">{t('admin_maxRepos')}</span>
                   <input
                     type="number"
                     min={1}
@@ -609,7 +615,7 @@ function PlanLimitsSection() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-xs text-slate-400">Max perguntas</span>
+                  <span className="text-xs text-slate-400">{t('admin_maxQuestions')}</span>
                   <input
                     type="number"
                     min={1}
@@ -625,19 +631,19 @@ function PlanLimitsSection() {
                     onChange={e => setEditing({ ...editing, can_delete_repo: e.target.checked })}
                     className="accent-violet-500"
                   />
-                  Pode deletar repositórios
+                  {t('admin_canDeleteRepos')}
                 </label>
               </div>
               <div className="flex gap-2 mt-5">
                 <button
                   onClick={() => setEditing(null)}
                   className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm hover:bg-slate-800 transition"
-                >Cancelar</button>
+                >{t('admin_cancelBtn')}</button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
                   className="flex-1 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-sm font-semibold transition disabled:opacity-50"
-                >{saving ? "Salvando…" : "Salvar"}</button>
+                >{saving ? t('admin_savingBtn') : t('admin_saveBtn')}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -672,6 +678,7 @@ function AuditLogSection() {
   const [filterResource, setFilterResource] = useState("")
   const [days, setDays] = useState(30)
   const [limit, setLimit] = useState(100)
+  const { t, locale } = useI18n()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -686,7 +693,7 @@ function AuditLogSection() {
       })
       setEntries(res.entries)
     } catch (e: any) {
-      setError(e.message || "Erro ao carregar audit log")
+      setError(e.message || t('admin_auditLoadFailed'))
     } finally {
       setLoading(false)
     }
@@ -704,8 +711,8 @@ function AuditLogSection() {
           <Icon name="clipboard-list" className="text-amber-600 dark:text-amber-400 text-xl" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Audit Log</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Histórico de ações administrativas e de usuários</p>
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{t('admin_auditLogTitle')}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('admin_auditLogDesc')}</p>
         </div>
       </div>
 
@@ -717,19 +724,19 @@ function AuditLogSection() {
           <input
             value={filterUser}
             onChange={e => setFilterUser(e.target.value)}
-            placeholder="Filtrar por user_id / email"
+            placeholder={t('admin_filterUserPlaceholder')}
             className={inputCls + " flex-1 min-w-[160px]"}
           />
           <input
             value={filterAction}
             onChange={e => setFilterAction(e.target.value)}
-            placeholder="Ação (ex: POST)"
+            placeholder={t('admin_filterActionPlaceholder')}
             className={inputCls + " w-32"}
           />
           <input
             value={filterResource}
             onChange={e => setFilterResource(e.target.value)}
-            placeholder="Recurso (ex: repos)"
+            placeholder={t('admin_filterResourcePlaceholder')}
             className={inputCls + " w-36"}
           />
           <select
@@ -737,9 +744,9 @@ function AuditLogSection() {
             onChange={e => setDays(Number(e.target.value))}
             className={inputCls + " w-28"}
           >
-            <option value={7}>7 dias</option>
-            <option value={30}>30 dias</option>
-            <option value={90}>90 dias</option>
+            <option value={7}>{t('admin_daysOption', { days: '7' })}</option>
+            <option value={30}>{t('admin_daysOption', { days: '30' })}</option>
+            <option value={90}>{t('admin_daysOption', { days: '90' })}</option>
           </select>
           <select
             value={limit}
@@ -751,31 +758,31 @@ function AuditLogSection() {
             <option value={200}>200</option>
           </select>
           <button onClick={load} className={btnSecondary + " text-xs"} disabled={loading}>
-            <Icon name="rotate" className={`mr-1 ${loading ? "animate-spin" : ""}`} />Buscar
+            <Icon name="rotate" className={`mr-1 ${loading ? "animate-spin" : ""}`} />{t('common_search')}
           </button>
         </div>
 
         {loading ? (
-          <div className="py-8 flex justify-center"><ThinkingDots label="Carregando…" /></div>
+          <div className="py-8 flex justify-center"><ThinkingDots label={t('common_loading')} /></div>
         ) : entries.length === 0 ? (
-          <EmptyState icon="clipboard-list" message="Nenhuma entrada encontrada para os filtros selecionados." />
+          <EmptyState icon="clipboard-list" message={t('admin_auditEmpty')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] uppercase tracking-wide text-gray-400">
-                  <th className="py-2 px-2">Data/Hora</th>
-                  <th className="py-2 px-2">Usuário</th>
-                  <th className="py-2 px-2">Ação</th>
-                  <th className="py-2 px-2">Recurso</th>
-                  <th className="py-2 px-2">ID Recurso</th>
-                  <th className="py-2 px-2">IP</th>
+                  <th className="py-2 px-2">{t('admin_dateTimeCol')}</th>
+                  <th className="py-2 px-2">{t('admin_userCol')}</th>
+                  <th className="py-2 px-2">{t('admin_actionCol')}</th>
+                  <th className="py-2 px-2">{t('admin_resourceCol')}</th>
+                  <th className="py-2 px-2">{t('admin_resourceIdCol')}</th>
+                  <th className="py-2 px-2">{t('admin_ipCol')}</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.map(e => (
                   <tr key={e.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="py-2 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{new Date(e.timestamp).toLocaleString("pt-BR")}</td>
+                    <td className="py-2 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{new Date(e.timestamp).toLocaleString(locale)}</td>
                     <td className="py-2 px-2 text-xs text-gray-700 dark:text-gray-300 max-w-[140px] truncate" title={e.user_email}>{e.user_email || e.user_id}</td>
                     <td className="py-2 px-2">
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">{e.action}</span>
@@ -787,7 +794,7 @@ function AuditLogSection() {
                 ))}
               </tbody>
             </table>
-            <p className="text-[10px] text-gray-400 mt-2 text-right">{entries.length} resultado(s)</p>
+            <p className="text-[10px] text-gray-400 mt-2 text-right">{t('admin_resultsCount', { count: String(entries.length) })}</p>
           </div>
         )}
       </div>
@@ -807,6 +814,7 @@ function WebhookSection() {
   const [creating, setCreating] = useState(false)
   const [secretModal, setSecretModal] = useState<WebhookCreated | null>(null)
   const [copiedField, setCopiedField] = useState("")
+  const { t, locale } = useI18n()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -815,7 +823,7 @@ function WebhookSection() {
       const data = await listWebhooks()
       setWebhooks(data)
     } catch (e: any) {
-      setError(e.message || "Erro ao carregar webhooks")
+      setError(e.message || t('admin_webhookErrorLoad'))
     } finally {
       setLoading(false)
     }
@@ -834,19 +842,19 @@ function WebhookSection() {
       setRepoUrl("")
       setRepoId("")
     } catch (e: any) {
-      setError(e.message || "Erro ao criar webhook")
+      setError(e.message || t('admin_webhookErrorCreate'))
     } finally {
       setCreating(false)
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Remover este webhook?")) return
+    if (!confirm(t('admin_webhookConfirmRemove'))) return
     try {
       await deleteWebhook(id)
       setWebhooks(prev => prev.filter(w => w.id !== id))
     } catch (e: any) {
-      setError(e.message || "Erro ao remover")
+      setError(e.message || t('admin_webhookErrorRemove'))
     }
   }
 
@@ -864,8 +872,8 @@ function WebhookSection() {
           <Icon name="bolt" className="text-indigo-600 dark:text-indigo-400 text-xl" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Webhooks</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Reindexação automática ao receber push events</p>
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{t('admin_webhooks')}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('admin_webhookDesc')}</p>
         </div>
       </div>
       {error && <ErrorBanner message={error} />}
@@ -873,20 +881,20 @@ function WebhookSection() {
       {/* Create form */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-          <Icon name="plus-circle" className="text-indigo-500" />Criar Webhook
+          <Icon name="plus-circle" className="text-indigo-500" />{t('admin_createWebhookTitle')}
         </h4>
         <div className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               value={repoId}
               onChange={e => setRepoId(e.target.value)}
-              placeholder="Repository ID (UUID)"
+              placeholder={t('admin_repoIdPlaceholder')}
               className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
             <input
               value={repoUrl}
               onChange={e => setRepoUrl(e.target.value)}
-              placeholder="URL do repositório (ex: https://github.com/…)"
+              placeholder={t('admin_repoUrlPlaceholder')}
               className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
@@ -905,7 +913,7 @@ function WebhookSection() {
               disabled={!repoUrl.trim() || !repoId.trim() || creating}
               className={btnPrimary + " flex-1"}
             >
-              {creating ? <ThinkingDots /> : <><Icon name="bolt" className="mr-1.5" />Criar</>}
+              {creating ? <ThinkingDots /> : <><Icon name="bolt" className="mr-1.5" />{t('admin_createBtn')}</>}
             </button>
           </div>
         </div>
@@ -915,7 +923,7 @@ function WebhookSection() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-            <Icon name="list" className="text-indigo-500" />Webhooks ({webhooks.length})
+            <Icon name="list" className="text-indigo-500" />{t('admin_webhooksCount', { count: String(webhooks.length) })}
           </h4>
           <button onClick={load} className={btnSecondary + " text-xs"} disabled={loading}>
             <Icon name="rotate" className={loading ? "animate-spin" : ""} />
@@ -924,7 +932,7 @@ function WebhookSection() {
         {loading ? (
           <div className="py-6 flex justify-center"><ThinkingDots /></div>
         ) : webhooks.length === 0 ? (
-          <EmptyState icon="bolt" message="Nenhum webhook cadastrado." />
+          <EmptyState icon="bolt" message={t('admin_webhookEmpty')} />
         ) : (
           <div className="space-y-2">
             {webhooks.map(wh => (
@@ -933,7 +941,7 @@ function WebhookSection() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-mono">{wh.provider}</span>
                     <span className={`text-xs px-2 py-0.5 rounded font-medium ${wh.active ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300" : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"}`}>
-                      {wh.active ? "Ativo" : "Inativo"}
+                      {wh.active ? t('admin_active') : t('admin_inactive')}
                     </span>
                   </div>
                   <button
@@ -945,7 +953,7 @@ function WebhookSection() {
                 </div>
                 <p className="text-xs font-mono text-gray-500 dark:text-gray-400 truncate">{wh.repository_url}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">URL do webhook:</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{t('admin_webhookUrlLabel')}</span>
                   <code className="text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
                     {getWebhookUrl(wh.id)}
                   </code>
@@ -957,7 +965,7 @@ function WebhookSection() {
                   </button>
                 </div>
                 {wh.last_triggered_at && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Último push: {new Date(wh.last_triggered_at).toLocaleString("pt-BR")}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{t('admin_lastPush', { date: new Date(wh.last_triggered_at).toLocaleString(locale) })}</p>
                 )}
               </div>
             ))}
@@ -984,11 +992,11 @@ function WebhookSection() {
             >
               <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                 <Icon name="triangle-exclamation" className="text-xl" />
-                <h3 className="font-bold text-gray-900 dark:text-white">Salve o secret agora!</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white">{t('admin_secretModalTitle')}</h3>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Este secret HMAC só é exibido uma vez. Salve-o em segurança.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('admin_secretModalDesc')}</p>
               <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Secret HMAC</label>
+                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('admin_secretHmacLabel')}</label>
                 <div className="flex gap-2">
                   <code className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-emerald-700 dark:text-emerald-300 break-all">
                     {secretModal.secret}
@@ -1002,7 +1010,7 @@ function WebhookSection() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">URL do Webhook</label>
+                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('admin_webhookUrlModalLabel')}</label>
                 <div className="flex gap-2">
                   <code className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-700 dark:text-indigo-300 break-all">
                     {getWebhookUrl(secretModal.id)}
@@ -1015,8 +1023,8 @@ function WebhookSection() {
                   </button>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500">Configure no GitHub: Settings → Webhooks → Add webhook. Content type: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">application/json</code></p>
-              <button onClick={() => setSecretModal(null)} className={btnPrimary + " w-full"}>Entendido, fechei</button>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('admin_webhookGithubInstructions')} <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">application/json</code></p>
+              <button onClick={() => setSecretModal(null)} className={btnPrimary + " w-full"}>{t('admin_webhookDoneBtn')}</button>
             </motion.div>
           </motion.div>
         )}
@@ -1047,17 +1055,18 @@ function ReposHealthSection() {
   const [data, setData] = useState<ReturnType<typeof Object.create> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const { t } = useI18n()
 
   useEffect(() => {
     setLoading(true)
     setError("")
     getReposHealth()
       .then(setData)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="py-12 flex justify-center"><ThinkingDots label="Carregando saúde dos repositórios…" /></div>
+  if (loading) return <div className="py-12 flex justify-center"><ThinkingDots label={t('admin_loadingRepos')} /></div>
   if (error) return <ErrorBanner message={error} />
   if (!data) return null
 
@@ -1089,11 +1098,11 @@ function ReposHealthSection() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] uppercase tracking-wide text-gray-400">
-                <th className="px-3 py-2">Repositório</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2 text-right">Chunks</th>
-                <th className="px-3 py-2 text-right">Arquivos</th>
-                <th className="px-3 py-2">Atualizado</th>
+                <th className="px-3 py-2">{t('admin_repoCol')}</th>
+                <th className="px-3 py-2">{t('admin_statusCol')}</th>
+                <th className="px-3 py-2 text-right">{t('admin_chunksCol')}</th>
+                <th className="px-3 py-2 text-right">{t('common_files')}</th>
+                <th className="px-3 py-2">{t('admin_updatedCol')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1119,7 +1128,7 @@ function ReposHealthSection() {
             </tbody>
           </table>
           {repos.length === 0 && (
-            <div className="py-8"><EmptyState icon="folder-open" title="Nenhum repositório encontrado" /></div>
+            <div className="py-8"><EmptyState icon="folder-open" title={t('admin_reposNotFound')} /></div>
           )}
         </div>
       </Card>
@@ -1134,6 +1143,7 @@ function UsageDashboardSection() {
   const [data, setData] = useState<UsageSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const { t } = useI18n()
 
   useEffect(() => {
     load()
@@ -1144,7 +1154,7 @@ function UsageDashboardSection() {
     setError("")
     getUsageDashboard(days)
       .then(setData)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }
 
@@ -1159,7 +1169,7 @@ function UsageDashboardSection() {
     <div className="space-y-4">
       {/* Period selector */}
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-500 dark:text-gray-400">Período:</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t('admin_period')}</span>
         {[7, 14, 30, 90].map((d) => (
           <button
             key={d}
@@ -1170,13 +1180,13 @@ function UsageDashboardSection() {
                 : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-400"
             }`}
           >
-            {d}d
+            {t('admin_daysOption', { days: String(d) })}
           </button>
         ))}
       </div>
 
       {error && <ErrorBanner message={error} />}
-      {loading && <div className="py-8 flex justify-center"><ThinkingDots label="Carregando dados de uso…" /></div>}
+      {loading && <div className="py-8 flex justify-center"><ThinkingDots label={t('admin_loadingUsage')} /></div>}
 
       {data && !loading && (
         <>
@@ -1184,21 +1194,21 @@ function UsageDashboardSection() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
               <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">{data.total_events.toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-wide text-indigo-500">Total de eventos</p>
+              <p className="text-[10px] uppercase tracking-wide text-indigo-500">{t('admin_totalEvents')}</p>
             </div>
             <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
               <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{data.total_sessions.toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-wide text-emerald-500">Sessões únicas</p>
+              <p className="text-[10px] uppercase tracking-wide text-emerald-500">{t('admin_uniqueSessions')}</p>
             </div>
             <div className="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 rounded-xl p-4">
               <p className="text-2xl font-bold text-sky-700 dark:text-sky-300">{data.daily_buckets.length}</p>
-              <p className="text-[10px] uppercase tracking-wide text-sky-500">Dias com atividade</p>
+              <p className="text-[10px] uppercase tracking-wide text-sky-500">{t('admin_activeDays')}</p>
             </div>
           </div>
 
           {/* Event type breakdown */}
           {topEvents.length > 0 && (
-            <Card title="Eventos por tipo">
+            <Card title={t('admin_eventsByType')}>
               <div className="space-y-2">
                 {topEvents.map(([type, count]) => (
                   <div key={type}>
@@ -1222,7 +1232,7 @@ function UsageDashboardSection() {
 
           {/* Daily sparkline */}
           {data.daily_buckets.length > 0 && (
-            <Card title="Atividade diária">
+            <Card title={t('admin_dailyActivity')}>
               <div className="flex items-end gap-1 h-16">
                 {data.daily_buckets.map((b) => {
                   const maxEvts = Math.max(...data.daily_buckets.map((x) => x.event_count))
@@ -1232,7 +1242,7 @@ function UsageDashboardSection() {
                       <div
                         className="w-full rounded-t bg-indigo-400 dark:bg-indigo-500 transition-all"
                         style={{ height: `${Math.max(pct, 4)}%` }}
-                        title={`${b.date}: ${b.event_count} eventos`}
+                        title={t('admin_eventsTooltip', { date: b.date, count: String(b.event_count) })}
                       />
                       {/* tooltip */}
                       <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -1261,6 +1271,7 @@ function LlmQualitySection() {
   const [data, setData] = useState<LlmFeedbackResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const { t } = useI18n()
 
   useEffect(() => {
     load()
@@ -1271,7 +1282,7 @@ function LlmQualitySection() {
     setError("")
     getLlmFeedback(days)
       .then(setData)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Erro ao carregar"))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t('admin_errorLoading')))
       .finally(() => setLoading(false))
   }
 
@@ -1279,7 +1290,7 @@ function LlmQualitySection() {
     <div className="space-y-4">
       {/* Period selector */}
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-500 dark:text-gray-400">Período:</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t('admin_period')}</span>
         {[7, 30, 90].map((d) => (
           <button
             key={d}
@@ -1290,39 +1301,39 @@ function LlmQualitySection() {
                 : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-400"
             }`}
           >
-            {d}d
+            {t('admin_daysOption', { days: String(d) })}
           </button>
         ))}
       </div>
 
       {error && <ErrorBanner message={error} />}
-      {loading && <div className="py-8 flex justify-center"><ThinkingDots label="Carregando feedback…" /></div>}
+      {loading && <div className="py-8 flex justify-center"><ThinkingDots label={t('admin_loadingFeedback')} /></div>}
 
       {data && !loading && (
         <>
           {data.total === 0 ? (
-            <EmptyState icon="star-half-stroke" title="Sem feedback ainda" description="Os usuários ainda não avaliaram respostas do LLM." />
+            <EmptyState icon="star-half-stroke" title={t('admin_noFeedback')} description={t('admin_noFeedbackDesc')} />
           ) : (
             <>
               {/* KPI cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center">
                   <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{data.total}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-gray-400">Total</p>
+                  <p className="text-[10px] uppercase tracking-wide text-gray-400">{t('admin_totalLabel')}</p>
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-center">
                   <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{data.positive}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-emerald-500">Positivo</p>
+                  <p className="text-[10px] uppercase tracking-wide text-emerald-500">{t('admin_positiveLabel')}</p>
                 </div>
                 <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
                   <p className="text-2xl font-bold text-red-700 dark:text-red-300">{data.negative}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-red-500">Negativo</p>
+                  <p className="text-[10px] uppercase tracking-wide text-red-500">{t('admin_negativeLabel')}</p>
                 </div>
                 <div className={`border rounded-xl p-4 text-center ${data.positive_rate >= 0.7 ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800" : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"}`}>
                   <p className={`text-2xl font-bold ${data.positive_rate >= 0.7 ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}`}>
                     {(data.positive_rate * 100).toFixed(0)}%
                   </p>
-                  <p className={`text-[10px] uppercase tracking-wide ${data.positive_rate >= 0.7 ? "text-emerald-500" : "text-amber-500"}`}>Taxa positiva</p>
+                  <p className={`text-[10px] uppercase tracking-wide ${data.positive_rate >= 0.7 ? "text-emerald-500" : "text-amber-500"}`}>{t('admin_positiveRate')}</p>
                 </div>
               </div>
 
@@ -1330,8 +1341,8 @@ function LlmQualitySection() {
               <Card>
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: "Utilidade média", value: data.avg_usefulness },
-                    { label: "Correção média", value: data.avg_correctness },
+                    { label: t('admin_avgUsefulness'), value: data.avg_usefulness },
+                    { label: t('admin_avgCorrectness'), value: data.avg_correctness },
                   ].map(({ label, value }) => (
                     <div key={label}>
                       <div className="flex justify-between text-xs mb-1">
@@ -1352,7 +1363,7 @@ function LlmQualitySection() {
               </Card>
 
               {/* Recent feedback */}
-              <Card title="Feedback recente">
+              <Card title={t('admin_recentFeedback')}>
                 <div className="space-y-2 max-h-72 overflow-y-auto">
                   {data.records.slice(0, 20).map((r) => (
                     <div key={r.feedback_id} className="flex items-start gap-3 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
@@ -1378,6 +1389,18 @@ function LlmQualitySection() {
 }
 
 export function AdminTab() {
+  const { t } = useI18n()
+  const ADMIN_TABS = [
+    { id: "users" as const,     label: t('admin_users'),      icon: "users" },
+    { id: "health" as const,    label: t('admin_repoHealth'), icon: "heart-pulse" },
+    { id: "usage" as const,     label: t('admin_usage'),      icon: "chart-line" },
+    { id: "llm" as const,       label: t('admin_llmQuality'), icon: "star-half-stroke" },
+    { id: "custos" as const,    label: t('admin_llmCosts'),   icon: "dollar-sign" },
+    { id: "fila" as const,      label: t('admin_queue'),      icon: "list-check" },
+    { id: "planos" as const,    label: t('admin_plans'),      icon: "sliders" },
+    { id: "auditoria" as const, label: t('admin_audit'),      icon: "clipboard-list" },
+    { id: "webhooks" as const,  label: t('admin_webhooks'),   icon: "bolt" },
+  ]
   const [adminSection, setAdminSection] = useState<AdminSection>("users")
   const [users, setUsers] = useState<UserSummary[]>([])
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -1406,7 +1429,7 @@ export function AdminTab() {
       setUsers(usersResp.users)
       setStats(statsResp)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Falha ao carregar dados de administração.")
+      setError(e instanceof Error ? e.message : t('admin_loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -1421,25 +1444,25 @@ export function AdminTab() {
     try {
       await deleteAdminUser(userId)
       setUsers((prev) => prev.filter((u) => u.user_id !== userId))
-      showToast("Usuário removido com sucesso.")
+      showToast(t('admin_userRemoved'))
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Falha ao deletar usuário.")
+      setError(e instanceof Error ? e.message : t('admin_deleteUserFailed'))
     }
   }
 
   async function handleResetPw(userId: string) {
     try {
       await resetUserPassword(userId)
-      showToast("E-mail de redefinição de senha enviado.")
+      showToast(t('admin_resetPwSent'))
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Falha ao resetar senha.")
+      setError(e instanceof Error ? e.message : t('admin_resetPwFailed'))
     }
   }
 
   function handleSaved(updated: UserSummary) {
     setUsers((prev) => prev.map((u) => u.user_id === updated.user_id ? updated : u))
     setEditUser(null)
-    showToast("Usuário atualizado com sucesso.")
+    showToast(t('admin_userUpdated'))
   }
 
   const filtered = users.filter((u) => {
@@ -1457,8 +1480,8 @@ export function AdminTab() {
           <Icon name="shield-halved" className="text-white text-base" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">Painel de Administração</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Gerencie usuários, planos e permissões</p>
+          <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">{t('admin_title')}</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('admin_subtitle')}</p>
         </div>
       </div>
 
@@ -1512,11 +1535,11 @@ export function AdminTab() {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard icon="users" label="Total usuários" value={String(stats.total_users)}
+          <StatCard icon="users" label={t('admin_totalUsers')} value={String(stats.total_users)}
             color="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300" />
-          <StatCard icon="folder-open" label="Repos indexados" value={String(stats.total_repos_indexed)}
+          <StatCard icon="folder-open" label={t('admin_reposIndexedLabel')} value={String(stats.total_repos_indexed)}
             color="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300" />
-          <StatCard icon="comments" label="Perguntas feitas" value={String(stats.total_questions_asked)}
+          <StatCard icon="comments" label={t('admin_questionsAskedLabel')} value={String(stats.total_questions_asked)}
             color="bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-300" />
           <StatCard
             icon="crown"
@@ -1532,7 +1555,7 @@ export function AdminTab() {
         {/* Toolbar */}
         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center gap-3">
           <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mr-auto">
-            Usuários <span className="text-gray-400 font-normal">({filtered.length})</span>
+            {t('admin_users')} <span className="text-gray-400 font-normal">({filtered.length})</span>
           </p>
 
           {/* Search */}
@@ -1541,7 +1564,7 @@ export function AdminTab() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por email…"
+              placeholder={t('admin_searchEmail')}
               className="text-xs pl-7 pr-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-400 w-44"
             />
           </div>
@@ -1552,7 +1575,7 @@ export function AdminTab() {
             onChange={(e) => setFilterPlan(e.target.value)}
             className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none"
           >
-            <option value="">Todos planos</option>
+            <option value="">{t('admin_allPlans')}</option>
             {PLAN_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
 
@@ -1562,11 +1585,11 @@ export function AdminTab() {
             onChange={(e) => setFilterRole(e.target.value)}
             className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none"
           >
-            <option value="">Todos roles</option>
+            <option value="">{t('admin_allRoles')}</option>
             {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
 
-          <button onClick={loadAll} className={`${btnSecondary} text-xs`} title="Recarregar">
+          <button onClick={loadAll} className={`${btnSecondary} text-xs`} title={t('admin_reloadTitle')}>
             <Icon name="arrows-rotate" />
           </button>
         </div>
@@ -1574,24 +1597,24 @@ export function AdminTab() {
         {/* Table */}
         {loading ? (
           <div className="py-12 flex justify-center">
-            <ThinkingDots label="Carregando usuários…" />
+            <ThinkingDots label={t('admin_loadingUsers')} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-8">
-            <EmptyState icon="users" title="Nenhum usuário encontrado" description="Ajuste os filtros para ver resultados." />
+            <EmptyState icon="users" title={t('admin_usersNotFound')} description={t('admin_adjustFilters')} />
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700 text-[10px] uppercase tracking-wide text-gray-400">
-                  <th className="px-4 py-2">Usuário</th>
-                  <th className="px-4 py-2">Plano</th>
-                  <th className="px-4 py-2">Role</th>
-                  <th className="px-4 py-2 text-center">Verificado</th>
-                  <th className="px-4 py-2 text-center">Repos</th>
-                  <th className="px-4 py-2 text-center">Perguntas</th>
-                  <th className="px-4 py-2 text-right">Ações</th>
+                  <th className="px-4 py-2">{t('admin_userCol')}</th>
+                  <th className="px-4 py-2">{t('auth_planLabel')}</th>
+                  <th className="px-4 py-2">{t('admin_roleWord')}</th>
+                  <th className="px-4 py-2 text-center">{t('admin_verifiedCol')}</th>
+                  <th className="px-4 py-2 text-center">{t('admin_reposCol')}</th>
+                  <th className="px-4 py-2 text-center">{t('quota_questions')}</th>
+                  <th className="px-4 py-2 text-right">{t('admin_actionsCol')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1616,7 +1639,7 @@ export function AdminTab() {
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Distribuição por plano</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('admin_planDistribution')}</p>
             <div className="space-y-2">
               {Object.entries(stats.by_plan).map(([plan, count]) => {
                 const pct = Math.round((count / stats.total_users) * 100)
@@ -1640,7 +1663,7 @@ export function AdminTab() {
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Distribuição por role</p>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">{t('admin_roleDistribution')}</p>
             <div className="space-y-2">
               {Object.entries(stats.by_role).map(([role, count]) => {
                 const pct = Math.round((count / stats.total_users) * 100)

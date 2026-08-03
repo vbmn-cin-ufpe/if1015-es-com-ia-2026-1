@@ -7,6 +7,8 @@ import {
     scaleInTransition,
 } from "../../animations";
 
+export { LanguageSelector } from "./LanguageSelector";
+
 // ── Icon (Font Awesome 6 wrapper) ────────────────────────────────────────────
 
 export function Icon({

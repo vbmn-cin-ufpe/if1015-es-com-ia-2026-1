@@ -15,6 +15,7 @@ import {
     btnSecondary,
     inputCls,
 } from "../ui";
+import { useI18n } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -190,6 +191,7 @@ function nclr(inDeg: number, maxDeg: number, dark: boolean) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 export function GraphTab({ repositoryId, status }: Props) {
+    const { t } = useI18n();
     const [graph, setGraph] = useState<GraphPayload | null>(null);
     const [positions, setPositions] = useState<NodePos[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -240,7 +242,7 @@ export function GraphTab({ repositoryId, status }: Props) {
             setPan({ x: 0, y: 0 });
             setZoom(1);
         } catch {
-            setError("Não foi possível carregar o grafo de dependências.");
+            setError(t('graph_loadError'));
         } finally {
             setLoading(false);
         }
@@ -305,7 +307,7 @@ export function GraphTab({ repositoryId, status }: Props) {
         return (
             <Card>
                 <div className="py-12 flex justify-center">
-                    <ThinkingDots label="Calculando grafo de dependências…" />
+                    <ThinkingDots label={t('graph_calculating')} />
                 </div>
             </Card>
         );
@@ -375,16 +377,16 @@ export function GraphTab({ repositoryId, status }: Props) {
                         <input
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            placeholder="Filtrar módulos…"
+                            placeholder={t('graph_filterPlaceholder')}
                             className={`${inputCls} max-w-xs pl-8`}
                         />
                     </div>
                     <button
                         onClick={loadGraph}
                         className={btnSecondary}
-                        title="Recarregar grafo"
+                        title={t('graph_reload')}
                     >
-                        <Icon name="arrows-rotate" /> Recarregar
+                        <Icon name="arrows-rotate" /> {t('graph_reload')}
                     </button>
                     <button
                         onClick={() => {
@@ -392,9 +394,9 @@ export function GraphTab({ repositoryId, status }: Props) {
                             setZoom(1);
                         }}
                         className={btnSecondary}
-                        title="Centralizar visão"
+                        title={t('graph_centerView')}
                     >
-                        <Icon name="crosshairs" /> Centralizar
+                        <Icon name="crosshairs" /> {t('graph_centerView')}
                     </button>
                     <button
                         onClick={() => {
@@ -402,9 +404,9 @@ export function GraphTab({ repositoryId, status }: Props) {
                             setZoom(0.5);
                         }}
                         className={btnSecondary}
-                        title="Visão geral (zoom out)"
+                        title={t('graph_overview')}
                     >
-                        <Icon name="maximize" /> Visão geral
+                        <Icon name="maximize" /> {t('graph_overview')}
                     </button>
                     <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
                         <Icon name="scroll" className="mr-1" />
@@ -429,7 +431,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                                 name="circle-half-stroke"
                                 className="text-orange-400 text-xs"
                             />{" "}
-                            Intermediário
+                            {t('graph_intermediate')}
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="inline-block w-3 h-3 rounded-sm border-2 border-green-500 bg-green-50 dark:bg-green-950" />
@@ -752,20 +754,19 @@ export function GraphTab({ repositoryId, status }: Props) {
                     {selectedId && (
                         <div className="absolute top-3 left-3 bg-orange-50 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-700 rounded-lg px-3 py-1.5 text-xs text-orange-700 dark:text-orange-300 shadow-sm">
                             <Icon name="arrow-pointer" className="mr-1" />
-                            <strong>{outOf.size + intoOf.size}</strong> conexão
-                            {outOf.size + intoOf.size !== 1 ? "ões" : ""}{" "}
+                            <strong>{outOf.size + intoOf.size}</strong> {outOf.size + intoOf.size !== 1 ? t('graph_connections') : t('graph_connection')}{" "}
                             diretas &nbsp;·&nbsp;
                             <span className="opacity-60">
                                 <Icon
                                     name="arrow-up-right-from-square"
                                     className="mr-0.5"
                                 />
-                                {outOf.size} saída  · 
+                                {outOf.size} {t('graph_output').replace('↗ ','')}  · 
                                 <Icon
                                     name="arrow-down-left"
                                     className="mr-0.5"
                                 />
-                                {intoOf.size} entrada
+                                {intoOf.size} {t('graph_input').replace('↙ ', '')}
                             </span>
                         </div>
                     )}
@@ -776,7 +777,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                     <div className="w-72 shrink-0 space-y-3">
                         {loadingDetail && (
                             <Card>
-                                <ThinkingDots label="Carregando detalhes…" />
+                                <ThinkingDots label={t('graph_loadingDetails')} />
                             </Card>
                         )}
 
@@ -809,7 +810,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                                                 {detail.metrics.in_degree}
                                             </p>
                                             <p className="text-rose-500 dark:text-rose-400 mt-0.5">
-                                                ↙ Entrada
+                                                {t('graph_input')}
                                             </p>
                                         </div>
                                         <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 rounded-lg p-2.5">
@@ -817,7 +818,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                                                 {detail.metrics.out_degree}
                                             </p>
                                             <p className="text-indigo-500 dark:text-indigo-400 mt-0.5">
-                                                ↗ Saída
+                                                {t('graph_output')}
                                             </p>
                                         </div>
                                         <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 rounded-lg p-2.5">
@@ -869,7 +870,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                                                 name="arrow-down-to-bracket"
                                                 className="text-indigo-400"
                                             />
-                                            Quem usa este módulo
+                                            {t('graph_whoUses')}
                                             <span className="ml-auto text-gray-400 font-normal">
                                                 {
                                                     detail.inbound_dependencies
@@ -904,7 +905,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                                                 name="arrow-up-from-bracket"
                                                 className="text-orange-400"
                                             />
-                                            Módulos que este usa
+                                            {t('graph_usedBy')}
                                             <span className="ml-auto text-gray-400 font-normal">
                                                 {
                                                     detail.outbound_dependencies
@@ -944,7 +945,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                     <strong className="text-gray-700 dark:text-gray-300">
                         {graph.node_count}
                     </strong>{" "}
-                    módulos
+                    {t('graph_modulesCount')}
                 </span>
                 <span className="flex items-center gap-1.5">
                     <Icon
@@ -954,7 +955,7 @@ export function GraphTab({ repositoryId, status }: Props) {
                     <strong className="text-gray-700 dark:text-gray-300">
                         {graph.edge_count}
                     </strong>{" "}
-                    dependências
+                    {t('graph_depsCount')}
                 </span>
                 {filterSet && (
                     <span className="flex items-center gap-1.5">

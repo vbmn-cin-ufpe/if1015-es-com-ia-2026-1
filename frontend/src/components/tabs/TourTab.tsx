@@ -19,6 +19,8 @@ import {
     btnSecondary,
     Icon,
 } from "../ui";
+import { useI18n } from "../../i18n";
+import type { Translations } from "../../i18n";
 
 interface Props {
     repositoryId: string;
@@ -71,31 +73,32 @@ function fileIcon(fname: string): { label: string; color: string } {
 
 // ── Module type badge ──────────────────────────────────────────────────────
 
-function moduleTypeBadge(name: string): { label: string; cls: string } {
+function moduleTypeBadge(name: string, t: (key: keyof Translations, vars?: Record<string, string>) => string): { label: string; cls: string } {
     const n = name.toLowerCase();
     if (n.includes("controller") || n.includes("route") || n.includes("handler") || n.includes("endpoint"))
-        return { label: "Controller", cls: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" };
+        return { label: t('tour_badgeController'), cls: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" };
     if (n.includes("service") || n.includes("use-case") || n.includes("usecase") || n.includes("interactor"))
-        return { label: "Service", cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" };
+        return { label: t('tour_badgeService'), cls: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" };
     if (n.includes("model") || n.includes("entity") || n.includes("schema") || n.includes("domain"))
-        return { label: "Model", cls: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" };
+        return { label: t('tour_badgeModel'), cls: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" };
     if (n.includes("util") || n.includes("helper") || n.includes("common") || n.includes("shared"))
-        return { label: "Utilitário", cls: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" };
+        return { label: t('tour_badgeUtil'), cls: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" };
     if (n.includes("module") || n.includes("core") || n.includes("app") || n.includes("main"))
-        return { label: "Core", cls: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" };
+        return { label: t('tour_badgeCore'), cls: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" };
     if (n.includes("guard") || n.includes("middleware") || n.includes("interceptor") || n.includes("filter"))
-        return { label: "Middleware", cls: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" };
+        return { label: t('tour_badgeMiddleware'), cls: "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300" };
     if (n.includes("test") || n.includes("spec") || n.includes("mock"))
-        return { label: "Teste", cls: "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300" };
+        return { label: t('tour_badgeTest'), cls: "bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300" };
     if (n.includes("infra") || n.includes("repository") || n.includes("adapter") || n.includes("client"))
-        return { label: "Infra", cls: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" };
-    return { label: "Módulo", cls: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" };
+        return { label: t('tour_badgeInfra'), cls: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" };
+    return { label: t('tour_badgeModule'), cls: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300" };
 }
 
 // ── VS Code-style file tree ────────────────────────────────────────────────
 
-function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: string }) {
+function FileTree({ files }: { files: TourFileDetail[]; moduleName: string }) {
     const [activeFile, setActiveFile] = useState<string | null>(null);
+    const { t } = useI18n();
 
     const relevant = files.filter((f) => isRelevantFile(f.path));
     const sorted = [...relevant].sort((a, b) => scoreFile(b) - scoreFile(a));
@@ -123,28 +126,28 @@ function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: 
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="#888">
                         <path d="M14.5 3H7.707L6.5 1.5h-5A1.5 1.5 0 0 0 0 3v10a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V4.5A1.5 1.5 0 0 0 14.5 3zm0 10h-13V3h4.293l1.207 1.5H14.5V13z" />
                     </svg>
-                    Explorer
+                    {t('tour_explorerLabel')}
                 </span>
                 <div className="flex items-center gap-2">
                     {filteredCount > 0 && (
-                        <span className="text-[10px] text-[#666]" title={`${filteredCount} arquivos irrelevantes ocultados`}>
-                            {filteredCount} oculto{filteredCount > 1 ? "s" : ""}
+                        <span className="text-[10px] text-[#666]" title={t('tour_hiddenTitle', { count: String(filteredCount) })}>
+                            {filteredCount} {t('tour_hiddenLabel')}
                         </span>
                     )}
-                    <span className="text-[10px] text-[#666]">{relevant.length} arq.</span>
+                    <span className="text-[10px] text-[#666]">{t('tour_filesCount', { count: String(relevant.length) })}</span>
                 </div>
             </div>
 
             {/* Legend */}
             <div className="flex items-center gap-3 px-3 py-1.5 bg-[#1e1e1e] border-b border-[#2a2a2a]">
                 <span className="flex items-center gap-1 text-[9px] text-[#666]">
-                    <span className="inline-block w-2 h-1.5 rounded-sm bg-[#f14c4c]" /> complexidade
+                    <span className="inline-block w-2 h-1.5 rounded-sm bg-[#f14c4c]" /> {t('tour_complexity')}
                 </span>
                 <span className="flex items-center gap-1 text-[9px] text-[#666]">
-                    <span className="inline-block w-2 h-1.5 rounded-sm bg-[#569cd6]" /> commits
+                    <span className="inline-block w-2 h-1.5 rounded-sm bg-[#569cd6]" /> {t('tour_commits')}
                 </span>
                 <span className="flex items-center gap-1 text-[9px] text-[#666]">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> mais crítico
+                    <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> {t('tour_critical')}
                 </span>
             </div>
 
@@ -184,7 +187,7 @@ function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: 
                                             {isLast ? "└" : "├"}
                                         </span>
                                         {isHot && (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 animate-pulse" title="Arquivo mais crítico" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 animate-pulse" title={t('tour_critical')} />
                                         )}
                                         <span
                                             className="shrink-0 text-[9px] font-bold px-1 py-0.5 rounded leading-none"
@@ -202,14 +205,14 @@ function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: 
                                     {isFocused && (
                                         <div className="px-3 pb-2 pl-9 space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[#f14c4c] text-[9px] w-16 shrink-0">complexidade</span>
+                                                <span className="text-[#f14c4c] text-[9px] w-16 shrink-0">{t('tour_complexity')}</span>
                                                 <div className="flex-1 h-1 bg-[#333] rounded-full overflow-hidden">
                                                     <div className="h-full bg-[#f14c4c] rounded-full" style={{ width: `${complexityPct}%` }} />
                                                 </div>
                                                 <span className="text-[#f14c4c] text-[9px] w-6 text-right font-bold">{f.complexity}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[#569cd6] text-[9px] w-16 shrink-0">commits</span>
+                                                <span className="text-[#569cd6] text-[9px] w-16 shrink-0">{t('tour_commits')}</span>
                                                 <div className="flex-1 h-1 bg-[#333] rounded-full overflow-hidden">
                                                     <div className="h-full bg-[#569cd6] rounded-full" style={{ width: `${commitPct}%` }} />
                                                 </div>
@@ -217,7 +220,7 @@ function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: 
                                             </div>
                                             {f.dependencies > 0 && (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[#c586c0] text-[9px] w-16 shrink-0">deps</span>
+                                                    <span className="text-[#c586c0] text-[9px] w-16 shrink-0">{t('tour_deps')}</span>
                                                     <div className="flex-1 h-1 bg-[#333] rounded-full overflow-hidden">
                                                         <div className="h-full bg-[#c586c0] rounded-full" style={{ width: `${(f.dependencies / maxDeps) * 100}%` }} />
                                                     </div>
@@ -233,7 +236,7 @@ function FileTree({ files, moduleName }: { files: TourFileDetail[]; moduleName: 
                 ))}
 
                 {relevant.length === 0 && (
-                    <div className="px-4 py-6 text-center text-[#666] text-xs">Nenhum arquivo de código encontrado</div>
+                    <div className="px-4 py-6 text-center text-[#666] text-xs">{t('tour_noFiles')}</div>
                 )}
             </div>
         </div>
@@ -247,19 +250,20 @@ function ModuleNavigator({ tour, currentStep, onSelect }: {
     currentStep: number;
     onSelect: (i: number) => void;
 }) {
+    const { t } = useI18n();
     return (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
             <div className="px-3 py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                     <Icon name="list-check" className="text-indigo-400" />
-                    Módulos do tour
+                    {t('tour_moduleNav')}
                 </p>
             </div>
             <div className="divide-y divide-gray-50 dark:divide-gray-700/50 max-h-[520px] overflow-y-auto">
                 {tour.steps.map((s, i) => {
                     const isActive = i === currentStep;
                     const isDone = i < currentStep;
-                    const badge = moduleTypeBadge(s.module_name);
+                    const badge = moduleTypeBadge(s.module_name, t);
                     const shortName = s.module_name.replace(/\\/g, "/").split("/").pop() ?? s.module_name;
                     return (
                         <button
@@ -305,6 +309,7 @@ function ModuleNavigator({ tour, currentStep, onSelect }: {
 
 function ImportancePanel({ step }: { step: TourStep }) {
     const [showMetrics, setShowMetrics] = useState(false);
+    const { t } = useI18n();
 
     return (
         <div className="rounded-xl overflow-hidden border border-indigo-100 dark:border-indigo-800 shadow-sm">
@@ -314,7 +319,7 @@ function ImportancePanel({ step }: { step: TourStep }) {
                     <Icon name="bullseye" className="text-white text-[10px]" />
                 </span>
                 <p className="text-[10px] font-bold text-white uppercase tracking-widest flex-1">
-                    Por que este módulo é importante?
+                    {t('tour_whyImportant')}
                 </p>
             </div>
 
@@ -325,10 +330,10 @@ function ImportancePanel({ step }: { step: TourStep }) {
                         <div className="flex items-center gap-2">
                             <span className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
                                 <Icon name="wand-magic-sparkles" className="text-indigo-500" />
-                                Análise do código
+                                {t('tour_codeAnalysis')}
                             </span>
                             <span className="text-[9px] bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full font-medium border border-indigo-200 dark:border-indigo-700">
-                                IA · baseada nos arquivos reais
+                                {t('tour_aiLabel')}
                             </span>
                         </div>
                         <div className="bg-white dark:bg-gray-800/60 rounded-lg p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
@@ -342,13 +347,13 @@ function ImportancePanel({ step }: { step: TourStep }) {
                             className="flex items-center gap-1.5 text-[11px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-200 transition-colors mt-1"
                         >
                             <Icon name={showMetrics ? "chevron-up" : "chevron-down"} className="text-[9px]" />
-                            {showMetrics ? "Ocultar" : "Ver"} análise de métricas
+                            {showMetrics ? t('tour_metricsToggle_hide') : t('tour_metricsToggle_show')} {t('tour_metricsLabel')}
                         </button>
                         {showMetrics && (
                             <div className="border-t border-indigo-100 dark:border-indigo-800/50 pt-3">
                                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 flex items-center gap-1.5">
                                     <Icon name="chart-bar" className="text-indigo-400" />
-                                    Diagnóstico por métricas
+                                    {t('tour_metricsDiagnosis')}
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
                                     {step.rationale}
@@ -361,13 +366,13 @@ function ImportancePanel({ step }: { step: TourStep }) {
                     <div className="space-y-2">
                         <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
                             <Icon name="chart-bar" className="text-indigo-400" />
-                            Diagnóstico por métricas
+                            {t('tour_metricsDiagnosis')}
                         </p>
                         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                             {step.rationale}
                         </p>
                         <p className="text-[10px] text-indigo-400 dark:text-indigo-500 italic mt-1">
-                            Configure LLM_API_KEY para obter análise baseada no código real do módulo.
+                            {t('tour_llmHint')}
                         </p>
                     </div>
                 )}
@@ -379,6 +384,7 @@ function ImportancePanel({ step }: { step: TourStep }) {
 // ── Main export ────────────────────────────────────────────────────────────
 
 export function TourTab({ repositoryId, status }: Props) {
+    const { t, locale } = useI18n();
     const [tour, setTour] = useState<TourResponse | null>(null);
     const [savedTours, setSavedTours] = useState<TourSummary[]>([]);
     const [step, setStep] = useState(0);
@@ -406,15 +412,15 @@ export function TourTab({ repositoryId, status }: Props) {
         setError("");
         setLoading(true);
         try {
-            const t = await generateTour(repositoryId, {
+            const newTour = await generateTour(repositoryId, {
                 topK, complexityWeight: complexityW,
                 churnWeight: churnW, couplingWeight: couplingW,
             });
-            setTour(t);
+            setTour(newTour);
             setStep(0);
             await loadSavedTours();
         } catch {
-            setError("Falha ao gerar tour. Tente novamente.");
+            setError(t('tour_errGenerate'));
         } finally {
             setLoading(false);
         }
@@ -424,12 +430,12 @@ export function TourTab({ repositoryId, status }: Props) {
         setError("");
         setLoading(true);
         try {
-            const t = await generateNoviceTour(repositoryId, topK);
-            setTour(t);
+            const noviceTour = await generateNoviceTour(repositoryId, topK);
+            setTour(noviceTour);
             setStep(0);
             await loadSavedTours();
         } catch {
-            setError("Falha ao gerar tour para novatos. Tente novamente.");
+            setError(t('tour_errGenerate'));
         } finally {
             setLoading(false);
         }
@@ -442,7 +448,7 @@ export function TourTab({ repositoryId, status }: Props) {
             setTour(await getTour(id));
             setStep(0);
         } catch {
-            setError("Falha ao carregar tour.");
+            setError(t('tour_errLoad'));
         } finally {
             setLoading(false);
         }
@@ -453,8 +459,8 @@ export function TourTab({ repositoryId, status }: Props) {
             <Card>
                 <EmptyState
                     icon="route"
-                    title="Indexe um repositório primeiro"
-                    description="O tour guiado estará disponível após a indexação ser concluída."
+                    title={t('metrics_noRepo')}
+                    description={t('tour_noRepoDesc')}
                 />
             </Card>
         );
@@ -467,8 +473,8 @@ export function TourTab({ repositoryId, status }: Props) {
                     <div className="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
                         <Icon name="route" className="text-2xl text-indigo-500 animate-pulse" />
                     </div>
-                    <ThinkingDots label="Analisando módulos e gerando tour guiado…" />
-                    <p className="text-sm text-gray-400">Isso pode levar alguns segundos</p>
+                    <ThinkingDots label={t('tour_generating')} />
+                    <p className="text-sm text-gray-400">{t('tour_loadingHint')}</p>
                 </div>
             </Card>
         );
@@ -483,37 +489,36 @@ export function TourTab({ repositoryId, status }: Props) {
                             <Icon name="route" className="text-lg" />
                         </span>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Configurar Tour Guiado</h2>
-                            <p className="text-xs text-gray-400">Personalize os critérios de seleção dos módulos</p>
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{t('tour_configTitle')}</h2>
+                            <p className="text-xs text-gray-400">{t('tour_configSubtitle')}</p>
                         </div>
                     </div>
 
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                        O tour analisa automaticamente os módulos mais críticos do repositório — por complexidade,
-                        frequência de mudanças e acoplamento — e gera um roteiro de onboarding personalizado.
+                        {t('tour_configDesc')}
                     </p>
 
                     <div className="mb-6">
                         <div className="flex justify-between mb-1.5">
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                <Icon name="layer-group" className="text-indigo-400" /> Número de módulos no tour
+                                <Icon name="layer-group" className="text-indigo-400" /> {t('tour_topkLabel')}
                             </label>
                             <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{topK}</span>
                         </div>
                         <input type="range" min={3} max={15} value={topK}
                             onChange={(e) => setTopK(Number(e.target.value))}
                             className="w-full accent-indigo-600" />
-                        <p className="text-xs text-gray-400 mt-1">Recomendado: 5 a 8 para onboarding inicial</p>
+                        <p className="text-xs text-gray-400 mt-1">{t('tour_topkRecommended')}</p>
                     </div>
 
                     <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                        <Icon name="sliders" className="text-indigo-400" /> Critérios de seleção
+                        <Icon name="sliders" className="text-indigo-400" /> {t('tour_selectionCriteria')}
                     </p>
                     <div className="space-y-4 mb-5">
                         {[
-                            { label: "Complexidade do código", icon: "fire", color: "text-red-400", desc: "Módulos com maior complexidade ciclomática", val: complexityW, set: setComplexityW },
-                            { label: "Frequência de mudanças", icon: "arrows-rotate", color: "text-blue-400", desc: "Módulos mais frequentemente modificados", val: churnW, set: setChurnW },
-                            { label: "Acoplamento entre módulos", icon: "link", color: "text-purple-400", desc: "Módulos com mais dependências externas", val: couplingW, set: setCouplingW },
+                            { label: t('tour_complexityLabel'), icon: "fire", color: "text-red-400", desc: t('tour_complexityDesc'), val: complexityW, set: setComplexityW },
+                            { label: t('tour_churnLabel'), icon: "arrows-rotate", color: "text-blue-400", desc: t('tour_churnDesc'), val: churnW, set: setChurnW },
+                            { label: t('tour_couplingLabel'), icon: "link", color: "text-purple-400", desc: t('tour_couplingDesc'), val: couplingW, set: setCouplingW },
                         ].map(({ label, icon, color, desc, val, set }) => (
                             <div key={label}>
                                 <div className="flex justify-between mb-1">
@@ -539,21 +544,21 @@ export function TourTab({ repositoryId, status }: Props) {
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                             <Icon name="graduation-cap" className="text-emerald-600 dark:text-emerald-400 text-xl shrink-0" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Sou novo no projeto</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Tour otimizado para quem está chegando — começa pelos módulos mais acessíveis e bem conectados</p>
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('tour_noviceTitle')}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('tour_noviceDesc')}</p>
                             </div>
                             <button onClick={onGenerateNovice} className="shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium flex items-center gap-1.5 transition-colors">
-                                <Icon name="graduation-cap" /> Tour Novato
+                                <Icon name="graduation-cap" /> {t('tour_noviceBtn')}
                             </button>
                         </div>
 
                         <div className="flex items-center justify-between">
                             <span className={`text-sm font-medium flex items-center gap-1.5 ${weightsOk ? "text-emerald-600" : "text-amber-600"}`}>
                                 <Icon name={weightsOk ? "circle-check" : "triangle-exclamation"} />
-                                {weightsOk ? "Pesos válidos (soma = 100%)" : `Soma atual: ${(weightSum * 100).toFixed(0)}% (deve ser 100%)`}
+                                {weightsOk ? t('tour_weightsValid') : t('tour_weightsInvalid').replace('{pct}', (weightSum * 100).toFixed(0))}
                             </span>
                             <button onClick={onGenerate} disabled={!weightsOk} className={btnPrimary}>
-                                <Icon name="route" /> Gerar Tour Personalizado
+                                <Icon name="route" /> {t('tour_generateBtn')}
                             </button>
                         </div>
                     </div>
@@ -562,19 +567,19 @@ export function TourTab({ repositoryId, status }: Props) {
 
                 {!toursLoaded && (
                     <button onClick={loadSavedTours} className={btnSecondary}>
-                        <Icon name="clock-rotate-left" /> Ver tours anteriores
+                        <Icon name="clock-rotate-left" /> {t('tour_prevToursBtn')}
                     </button>
                 )}
                 {toursLoaded && savedTours.length > 0 && (
-                    <Card title="Tours anteriores">
+                    <Card title={t('tour_prevToursBtn')}>
                         <div className="space-y-2">
-                            {savedTours.map((t) => (
-                                <button key={t.tour_id} onClick={() => onOpenSaved(t.tour_id)}
+                            {savedTours.map((savedTour) => (
+                                <button key={savedTour.tour_id} onClick={() => onOpenSaved(savedTour.tour_id)}
                                     className="w-full text-left flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t.title}</p>
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{savedTour.title}</p>
                                         <p className="text-xs text-gray-500 mt-0.5">
-                                            {t.step_count} módulos{t.created_at ? ` · ${new Date(t.created_at).toLocaleString("pt-BR")}` : ""}
+                                            {savedTour.step_count} {t('common_modules')}{savedTour.created_at ? ` · ${new Date(savedTour.created_at).toLocaleString(locale)}` : ""}
                                         </p>
                                     </div>
                                     <Icon name="arrow-right" className="text-indigo-400" />
@@ -584,7 +589,7 @@ export function TourTab({ repositoryId, status }: Props) {
                     </Card>
                 )}
                 {toursLoaded && savedTours.length === 0 && (
-                    <p className="text-sm text-gray-400 text-center py-2">Nenhum tour salvo ainda.</p>
+                    <p className="text-sm text-gray-400 text-center py-2">{t('tour_noSavedTours')}</p>
                 )}
             </div>
         );
@@ -594,7 +599,7 @@ export function TourTab({ repositoryId, status }: Props) {
 
     const currentStepData = tour.steps[step];
     const pct = Math.round(((step + 1) / tour.step_count) * 100);
-    const badge = moduleTypeBadge(currentStepData?.module_name ?? "");
+    const badge = moduleTypeBadge(currentStepData?.module_name ?? "", t);
 
     return (
         <div className="space-y-3">
@@ -607,11 +612,11 @@ export function TourTab({ repositoryId, status }: Props) {
                     </div>
                     <button onClick={() => setTour(null)}
                         className="text-gray-300 hover:text-gray-500 dark:hover:text-gray-300 text-2xl leading-none shrink-0 mt-0.5"
-                        title="Fechar tour">×</button>
+                        title={t('tour_closeTour')}>×</button>
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                    <span>Módulo <strong className="text-indigo-600 dark:text-indigo-400">{step + 1}</strong> de {tour.step_count}</span>
-                    <span>{pct}% concluído</span>
+                    <span>{t('tour_moduleWord')} <strong className="text-indigo-600 dark:text-indigo-400">{step + 1}</strong> {t('tour_ofLabel')} {tour.step_count}</span>
+                    <span>{t('tour_percentComplete', { pct: String(pct) })}</span>
                 </div>
                 <ProgressBar value={step + 1} max={tour.step_count} />
             </div>
@@ -633,7 +638,7 @@ export function TourTab({ repositoryId, status }: Props) {
                             <div className="px-5 py-4">
                                 <div className="flex items-center gap-2 flex-wrap mb-3">
                                     <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-semibold">
-                                        #{step + 1} de {tour.step_count}
+                                        #{step + 1} {t('tour_ofLabel')} {tour.step_count}
                                     </span>
                                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
                                     <span className="ml-auto text-xs font-mono text-gray-400 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 px-2.5 py-1 rounded-full">
@@ -656,18 +661,18 @@ export function TourTab({ repositoryId, status }: Props) {
                                 </div>
                                 {currentStepData.file_count !== undefined && (
                                     <p className="text-xs text-gray-400">
-                                        {currentStepData.file_count} {currentStepData.file_count === 1 ? "arquivo" : "arquivos"} neste módulo
+                                        {t('tour_fileCountLabel', { count: String(currentStepData.file_count) })}
                                     </p>
                                 )}
 
                                 {/* Score breakdown */}
                                 {currentStepData.score_breakdown && (
                                     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pontuação por critério</p>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t('tour_scoreBreakdown')}</p>
                                         {[
-                                            { key: "complexity", label: "Complexidade", color: "bg-red-400", icon: "fire", iconCls: "text-red-400" },
-                                            { key: "churn", label: "Mudanças", color: "bg-blue-400", icon: "arrows-rotate", iconCls: "text-blue-400" },
-                                            { key: "coupling", label: "Acoplamento", color: "bg-purple-400", icon: "link", iconCls: "text-purple-400" },
+                                            { key: "complexity", label: t('common_complexity'), color: "bg-red-400", icon: "fire", iconCls: "text-red-400" },
+                                            { key: "churn", label: t('tour_scoreChurn'), color: "bg-blue-400", icon: "arrows-rotate", iconCls: "text-blue-400" },
+                                            { key: "coupling", label: t('tour_scoreCoupling'), color: "bg-purple-400", icon: "link", iconCls: "text-purple-400" },
                                         ].map(({ key, label, color, icon, iconCls }) => {
                                             const val = (currentStepData.score_breakdown as Record<string, number>)[key] ?? 0;
                                             return (
@@ -697,7 +702,7 @@ export function TourTab({ repositoryId, status }: Props) {
                                 <span className="flex items-center justify-center w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-900/30">
                                     <Icon name="book-open" className="text-amber-500 text-[10px]" />
                                 </span>
-                                Como explorar este módulo
+                                {t('tour_howToExplore')}
                             </p>
                             <ol className="space-y-3">
                                 {currentStepData.recommendations.map((rec, i) => (
@@ -725,8 +730,8 @@ export function TourTab({ repositoryId, status }: Props) {
                     ) : currentStepData?.files && currentStepData.files.length > 0 ? (
                         <div className="bg-[#1e1e1e] rounded-xl overflow-hidden border border-[#3c3c3c] shadow-lg">
                             <div className="flex items-center justify-between px-3 py-2 bg-[#252526] border-b border-[#3c3c3c]">
-                                <span className="text-[11px] font-bold text-[#bbb] uppercase tracking-widest">Explorer</span>
-                                <span className="text-[10px] text-[#666]">{currentStepData.files.filter(isRelevantFile).length} arq.</span>
+                                <span className="text-[11px] font-bold text-[#bbb] uppercase tracking-widest">{t('tour_explorerLabel')}</span>
+                                <span className="text-[10px] text-[#666]">{t('tour_filesCount', { count: String(currentStepData.files.filter(isRelevantFile).length) })}</span>
                             </div>
                             <div className="max-h-64 overflow-y-auto font-mono">
                                 {currentStepData.files.filter(isRelevantFile).map((f, i, arr) => {
@@ -751,13 +756,13 @@ export function TourTab({ repositoryId, status }: Props) {
                     {currentStepData && (
                         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                                <Icon name="chart-bar" className="text-gray-400" /> Métricas do módulo
+                                <Icon name="chart-bar" className="text-gray-400" /> {t('tour_moduleMetrics')}
                             </p>
                             <div className="space-y-2">
                                 {[
-                                    { bg: "bg-red-50 dark:bg-red-900/20", border: "border-red-100 dark:border-red-800", icon: "fire", iconCls: "text-red-400", label: "Complexidade média", sub: "ciclomática por arquivo", textCls: "text-red-500", valCls: "text-red-700 dark:text-red-400", value: (currentStepData.metrics.complexity["avg_complexity"] as number | undefined)?.toFixed(1) ?? "—" },
-                                    { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-100 dark:border-blue-800", icon: "arrows-rotate", iconCls: "text-blue-400", label: "Total de commits", sub: "frequência de mudanças", textCls: "text-blue-500", valCls: "text-blue-700 dark:text-blue-400", value: String((currentStepData.metrics.churn["total_commits"] as number | undefined) ?? 0) },
-                                    { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-purple-100 dark:border-purple-800", icon: "link", iconCls: "text-purple-400", label: "Dependências únicas", sub: "acoplamento externo", textCls: "text-purple-500", valCls: "text-purple-700 dark:text-purple-400", value: String((currentStepData.metrics.coupling["unique_dependencies"] as number | undefined) ?? 0) },
+                                    { bg: "bg-red-50 dark:bg-red-900/20", border: "border-red-100 dark:border-red-800", icon: "fire", iconCls: "text-red-400", label: t('tour_avgComplexity'), sub: t('tour_avgComplexityDesc'), textCls: "text-red-500", valCls: "text-red-700 dark:text-red-400", value: (currentStepData.metrics.complexity["avg_complexity"] as number | undefined)?.toFixed(1) ?? "—" },
+                                    { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-100 dark:border-blue-800", icon: "arrows-rotate", iconCls: "text-blue-400", label: t('tour_totalCommits'), sub: t('tour_totalCommitsDesc'), textCls: "text-blue-500", valCls: "text-blue-700 dark:text-blue-400", value: String((currentStepData.metrics.churn["total_commits"] as number | undefined) ?? 0) },
+                                    { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-purple-100 dark:border-purple-800", icon: "link", iconCls: "text-purple-400", label: t('tour_uniqueDeps'), sub: t('tour_uniqueDepsDesc'), textCls: "text-purple-500", valCls: "text-purple-700 dark:text-purple-400", value: String((currentStepData.metrics.coupling["unique_dependencies"] as number | undefined) ?? 0) },
                                 ].map(({ bg, border, icon, iconCls, label, sub, textCls, valCls, value }) => (
                                     <div key={label} className={`flex items-center justify-between ${bg} border ${border} rounded-lg px-3 py-2.5`}>
                                         <div>
@@ -779,7 +784,7 @@ export function TourTab({ repositoryId, status }: Props) {
             <div className="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 shadow-sm">
                 <button onClick={() => setStep((s) => s - 1)} disabled={step === 0}
                     className={`${btnSecondary} disabled:opacity-40 disabled:cursor-not-allowed`}>
-                    <Icon name="chevron-left" /> Anterior
+                    <Icon name="chevron-left" /> {t('tour_prevBtn')}
                 </button>
                 <div className="flex-1 text-center">
                     <span className="text-sm text-gray-500">
@@ -795,12 +800,12 @@ export function TourTab({ repositoryId, status }: Props) {
                 </div>
                 {step < tour.step_count - 1 ? (
                     <button onClick={() => setStep((s) => s + 1)} className={btnPrimary}>
-                        Próximo <Icon name="chevron-right" />
+                        {t('tour_nextBtn')} <Icon name="chevron-right" />
                     </button>
                 ) : (
                     <button onClick={() => setTour(null)}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors">
-                        <Icon name="check" /> Concluir tour
+                        <Icon name="check" /> {t('tour_finishBtn')}
                     </button>
                 )}
             </div>

@@ -18,7 +18,7 @@ class ChatService:
         self._retrieval = retrieval_service
         self._llm = llm_client
 
-    def ask(self, repository_id: str, question: str) -> ChatAskResponse:
+    def ask(self, repository_id: str, question: str, locale: str = "pt-BR") -> ChatAskResponse:
         repo = self._metadata.get_repository(repository_id)
         if repo is None:
             raise ValueError("repository not found")
@@ -26,7 +26,7 @@ class ChatService:
             raise ValueError("repository is not indexed yet")
 
         chunks = self._retrieval.retrieve(repository_id=repository_id, question=question, top_k=5)
-        answer = self._llm.generate_answer(question=question, context_chunks=chunks)
+        answer = self._llm.generate_answer(question=question, context_chunks=chunks, locale=locale)
         sources = [
             ChatSource(
                 chunk_id=item["chunk_id"],

@@ -7,6 +7,9 @@ import {
 } from "./animations";
 import { signout, getMe, verifyEmail } from "./services/authApi";
 import { useAuthStore } from "./store/authStore";
+import { useUiStore } from "./store/uiStore";
+import { useI18n } from "./i18n";
+import type { Translations } from "./i18n";
 import { AuthPage } from "./components/auth/AuthPage";
 import { RepoTab } from "./components/tabs/RepoTab";
 import { ChatTab } from "./components/tabs/ChatTab";
@@ -29,26 +32,27 @@ import {
     btnPrimary,
     btnSecondary,
     Icon,
+    LanguageSelector,
 } from "./components/ui";
 
-const TABS = [
-    { path: "/",         label: "Repositório", icon: "folder-open" },
-    { path: "/chat",     label: "Chat",        icon: "comments" },
-    { path: "/tour",     label: "Tour",        icon: "route" },
-    { path: "/graph",    label: "Grafo",       icon: "diagram-project" },
-    { path: "/impact",   label: "Impacto",     icon: "circle-nodes" },
-    { path: "/search",    label: "Busca",          icon: "magnifying-glass" },
-    { path: "/hotspots",  label: "Hotspots",       icon: "fire" },
-    { path: "/branch",    label: "Branch",         icon: "code-branch" },
-    { path: "/docs",      label: "Gerar Docs",     icon: "book-open" },
-    { path: "/tech-debt", label: "Dívida Técnica", icon: "bug" },
-    { path: "/drift",     label: "Drift Arq.",     icon: "code-compare" },
-    { path: "/watchlist", label: "Watchlist",       icon: "bell" },
-    { path: "/history",   label: "Histórico",      icon: "clock-rotate-left" },
-    { path: "/metrics",   label: "Métricas",       icon: "chart-bar" },
-    { path: "/ops",       label: "Operacional", icon: "server",         adminOnly: true },
-    { path: "/admin",     label: "Admin",       icon: "shield-halved",  adminOnly: true },
-] as const;
+const TABS: { path: string; labelKey: keyof Translations; icon: string; adminOnly?: true }[] = [
+    { path: "/",          labelKey: "nav_repository", icon: "folder-open" },
+    { path: "/chat",      labelKey: "nav_chat",       icon: "comments" },
+    { path: "/tour",      labelKey: "nav_tour",       icon: "route" },
+    { path: "/graph",     labelKey: "nav_graph",      icon: "diagram-project" },
+    { path: "/impact",    labelKey: "nav_impact",     icon: "circle-nodes" },
+    { path: "/search",    labelKey: "nav_search",     icon: "magnifying-glass" },
+    { path: "/hotspots",  labelKey: "nav_hotspots",   icon: "fire" },
+    { path: "/branch",    labelKey: "nav_branch",     icon: "code-branch" },
+    { path: "/docs",      labelKey: "nav_docs",       icon: "book-open" },
+    { path: "/tech-debt", labelKey: "nav_techDebt",   icon: "bug" },
+    { path: "/drift",     labelKey: "nav_drift",      icon: "code-compare" },
+    { path: "/watchlist", labelKey: "nav_watchlist",  icon: "bell" },
+    { path: "/history",   labelKey: "nav_history",    icon: "clock-rotate-left" },
+    { path: "/metrics",   labelKey: "nav_metrics",    icon: "chart-bar" },
+    { path: "/ops",       labelKey: "nav_ops",        icon: "server",        adminOnly: true },
+    { path: "/admin",     labelKey: "nav_admin",      icon: "shield-halved", adminOnly: true },
+];
 
 const PLAN_BADGE: Record<string, { label: string; color: string }> = {
     free:       { label: "Free",       color: "text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400" },
@@ -67,25 +71,12 @@ export default function App() {
 function AppRoot() {
     const token = useAuthStore((s) => s.token);
     const location = useLocation();
-    const [darkMode, setDarkMode] = useState(
-        () => localStorage.getItem("darkMode") === "true",
-    );
-
-    useEffect(() => {
-        if (darkMode) {
-            document.documentElement.classList.add("dark");
-            localStorage.setItem("darkMode", "true");
-        } else {
-            document.documentElement.classList.remove("dark");
-            localStorage.setItem("darkMode", "false");
-        }
-    }, [darkMode]);
 
     // Email verification link works regardless of auth state
     if (location.pathname === "/verify-email") return <VerifyEmailPage />;
 
     if (!token) return <AuthPage />;
-    return <AppShell darkMode={darkMode} onToggleDark={() => setDarkMode((d) => !d)} />;
+    return <AppShell />;
 }
 
 // ── Email verification page ───────────────────────────────────────────────────
@@ -186,10 +177,12 @@ function VerifyEmailPage() {
     );
 }
 
-function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark: () => void }): JSX.Element {
+function AppShell(): JSX.Element {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, token, clear, updateUser } = useAuthStore();
+    const { darkMode, toggleDark } = useUiStore();
+    const { t } = useI18n();
     const [repositoryId, setRepositoryId] = useState("");
     const [status, setStatus] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -240,9 +233,10 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <LanguageSelector />
                         <button
-                            onClick={onToggleDark}
-                            title={darkMode ? "Modo claro" : "Modo escuro"}
+                            onClick={toggleDark}
+                            title={darkMode ? t('header_lightMode') : t('header_darkMode')}
                             className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-base"
                         >
                             <Icon name={darkMode ? "sun" : "moon"} />
@@ -273,7 +267,7 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                                     </span>
                                 )}
                                 <button onClick={onSignout} className={btnSecondary + " text-xs"}>
-                                    <Icon name="right-from-bracket" /> Sair
+                                    <Icon name="right-from-bracket" /> {t('header_signOut')}
                                 </button>
                             </div>
                         )}
@@ -296,7 +290,7 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                                 key={tab.path}
                                 to={tab.path}
                                 end={tab.path === "/"}
-                                title={!sidebarOpen ? tab.label : undefined}
+                                title={!sidebarOpen ? t(tab.labelKey) : undefined}
                                 className={({ isActive }) =>
                                     "w-full flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-colors " +
                                     (isActive
@@ -305,7 +299,7 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                                 }
                             >
                                 <Icon name={tab.icon} className="flex-shrink-0 w-5 text-center" />
-                                {sidebarOpen && <span className="truncate">{tab.label}</span>}
+                                {sidebarOpen && <span className="truncate">{t(tab.labelKey)}</span>}
                             </NavLink>
                         ))}
                     </nav>
@@ -315,14 +309,14 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                         <div className="flex-shrink-0 px-3 py-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
                             <QuotaBar
                                 icon="folder-open"
-                                label="Repositórios"
+                                label={t('quota_repos')}
                                 used={user.repos_indexed_count}
                                 max={user.plan === "enterprise" ? 50 : user.plan === "paid" ? 10 : 2}
                                 admin={isAdmin}
                             />
                             <QuotaBar
                                 icon="comments"
-                                label="Perguntas"
+                                label={t('quota_questions')}
                                 used={user.questions_asked_count}
                                 max={user.plan === "enterprise" ? 500 : user.plan === "paid" ? 100 : 5}
                                 admin={isAdmin}
@@ -337,7 +331,7 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setSidebarOpen((o) => !o)}
                             className="w-full flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            title={sidebarOpen ? "Recolher sidebar" : "Expandir sidebar"}
+                            title={sidebarOpen ? t('header_collapse') : t('header_expand')}
                         >
                             <motion.span
                                 animate={{ rotate: sidebarOpen ? 0 : 180 }}
@@ -355,7 +349,7 @@ function AppShell({ darkMode, onToggleDark }: { darkMode: boolean; onToggleDark:
                                     transition={{ duration: 0.18 }}
                                     className="overflow-hidden whitespace-nowrap"
                                 >
-                                    Recolher
+                                    {t('header_collapse')}
                                 </motion.span>
                             )}
                             </AnimatePresence>

@@ -20,7 +20,11 @@ def ask(
 ) -> ChatAskResponse:
     """Ask a question about the codebase."""
     try:
-        result = chat_service.ask(repository_id=payload.repository_id, question=payload.question)
+        result = chat_service.ask(
+            repository_id=payload.repository_id,
+            question=payload.question,
+            locale=payload.locale,
+        )
         # Increment quota counter
         if not user.is_admin:
             get_user_repository_instance().increment_questions_count(user.user_id)

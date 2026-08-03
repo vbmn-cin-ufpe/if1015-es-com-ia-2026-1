@@ -28,6 +28,7 @@ class RepositoryStatusResponse(BaseModel):
 class ChatAskRequest(BaseModel):
     repository_id: str = Field(min_length=1)
     question: str = Field(min_length=1)
+    locale: str = Field(default="pt-BR", description="BCP-47 locale code — controls LLM response language")
 
 
 class ChatSource(BaseModel):

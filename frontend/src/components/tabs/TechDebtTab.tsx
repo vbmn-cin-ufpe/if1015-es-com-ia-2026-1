@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Card, Icon, EmptyState, ErrorBanner, ThinkingDots, btnPrimary } from "../ui"
+import { useI18n } from "../../i18n"
+import type { Translations } from "../../i18n"
 import { getTechDebtHistory, analyseTechDebt, TechDebtSnapshot } from "../../services/techDebtApi"
 import { getReportUrl } from "../../services/reportApi"
 
@@ -9,45 +11,47 @@ interface Props {
   status: string
 }
 
+type TFn = (key: keyof Translations, vars?: Record<string, string>) => string
+
 // ---- Sub-components -------------------------------------------------------
 
-function TrendBadge({ trend }: { trend: string }) {
+function TrendBadge({ trend, t }: { trend: string; t: TFn }) {
   if (trend === "improving")
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-900/60 text-emerald-300 border border-emerald-700/40">
-        ↓ Melhorando
+        {t('debt_trend_improving')}
       </span>
     )
   if (trend === "degrading")
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-900/60 text-red-300 border border-red-700/40">
-        ↑ Degradando
+        {t('debt_trend_degrading')}
       </span>
     )
   return (
     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700/60 text-slate-300 border border-slate-600/40">
-      → Estável
+      {t('debt_trend_stable')}
     </span>
   )
 }
 
-function RiskBadge({ score }: { score: number }) {
+function RiskBadge({ score, t }: { score: number; t: TFn }) {
   if (score >= 75)
-    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-900 text-red-300">Crítico</span>
+    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-red-900 text-red-300">{t('common_critical')}</span>
   if (score >= 50)
-    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-orange-900 text-orange-300">Alto</span>
+    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-orange-900 text-orange-300">{t('common_high')}</span>
   if (score >= 25)
-    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-yellow-900 text-yellow-300">Médio</span>
-  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-900 text-green-300">Baixo</span>
+    return <span className="px-2 py-0.5 rounded text-xs font-bold bg-yellow-900 text-yellow-300">{t('common_medium')}</span>
+  return <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-900 text-green-300">{t('common_low')}</span>
 }
 
-function DebtBreakdownCard({ breakdown }: { breakdown: Record<string, number> }) {
+function DebtBreakdownCard({ breakdown, t }: { breakdown: Record<string, number>; t: TFn }) {
   const categories = [
-    { key: "complexity", label: "Complexidade", color: "#3b82f6", desc: "CC alta, lógica aninhada (Clean Code / SOLID SRP)" },
-    { key: "churn", label: "Instabilidade", color: "#6366f1", desc: "Arquivos muito modificados (YAGNI, refatoração)" },
-    { key: "size", label: "Tamanho", color: "#f59e0b", desc: "Arquivos grandes, difíceis de manter (KISS)" },
-    { key: "coupling", label: "Acoplamento", color: "#f97316", desc: "Muitas dependências (DIP, Hexagonal)" },
-    { key: "documentation", label: "Documentação", color: "#ef4444", desc: "Baixo ratio de comentários (Clean Code)" },
+    { key: "complexity", label: t('common_complexity'), color: "#3b82f6", desc: t('debt_catComplexityDesc') },
+    { key: "churn", label: t('debt_catChurn'), color: "#6366f1", desc: t('debt_catChurnDesc') },
+    { key: "size", label: t('debt_catSize'), color: "#f59e0b", desc: t('debt_catSizeDesc') },
+    { key: "coupling", label: t('tour_scoreCoupling'), color: "#f97316", desc: t('debt_catCouplingDesc') },
+    { key: "documentation", label: t('debt_catDocumentation'), color: "#ef4444", desc: t('debt_catDocumentationDesc') },
   ]
   return (
     <div className="space-y-3">
@@ -84,17 +88,19 @@ function MetricSparkline({
   color,
   label,
   unit = "",
+  t,
 }: {
   snapshots: TechDebtSnapshot[]
   getValue: (s: TechDebtSnapshot) => number
   color: string
   label: string
   unit?: string
+  t: TFn
 }) {
   if (snapshots.length < 2)
     return (
       <div className="flex items-center justify-center h-14 text-slate-500 text-xs">
-        Aguardando dados...
+        {t('debt_waiting')}
       </div>
     )
   const values = snapshots.map(getValue)
@@ -126,11 +132,11 @@ function MetricSparkline({
   )
 }
 
-function ScoreTrendChart({ snapshots }: { snapshots: TechDebtSnapshot[] }) {
+function ScoreTrendChart({ snapshots, t }: { snapshots: TechDebtSnapshot[]; t: TFn }) {
   if (snapshots.length < 2)
     return (
       <div className="flex items-center justify-center h-40 text-slate-500 text-sm">
-        Aguardando mais snapshots para exibir o gráfico…
+        {t('debt_waitingSnapshots')}
       </div>
     )
   const W = 600, H = 160, PAD = 32
@@ -225,6 +231,7 @@ function LlmSummaryCard({ summary }: { summary: string }) {
 // ---- Main component -------------------------------------------------------
 
 export function TechDebtTab({ repositoryId, status }: Props) {
+    const { t, locale } = useI18n()
   const [loading, setLoading] = useState(false)
   const [analysing, setAnalysing] = useState(false)
   const [error, setError] = useState("")
@@ -238,11 +245,11 @@ export function TechDebtTab({ repositoryId, status }: Props) {
       const data = await getTechDebtHistory(repositoryId)
       setHistory(data)
     } catch (e: unknown) {
-      setError((e as Error).message || "Erro ao carregar histórico de dívida técnica")
+      setError((e as Error).message || t('debt_errLoadHistory'))
     } finally {
       setLoading(false)
     }
-  }, [repositoryId])
+  }, [repositoryId, t])
 
   const analyse = useCallback(async () => {
     if (!repositoryId) return
@@ -252,11 +259,11 @@ export function TechDebtTab({ repositoryId, status }: Props) {
       await analyseTechDebt(repositoryId)
       await load()
     } catch (e: unknown) {
-      setError((e as Error).message || "Erro na análise de dívida técnica")
+      setError((e as Error).message || t('debt_errAnalyze'))
     } finally {
       setAnalysing(false)
     }
-  }, [repositoryId, load])
+  }, [repositoryId, load, t])
 
   useEffect(() => {
     load()
@@ -280,11 +287,11 @@ export function TechDebtTab({ repositoryId, status }: Props) {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold text-white">Dívida Técnica</h2>
-                {latest && <TrendBadge trend={latest.debt_trend} />}
+                <h2 className="text-xl font-bold text-white">{t('debt_title')}</h2>
+                {latest && <TrendBadge trend={latest.debt_trend} t={t} />}
               </div>
               <p className="text-indigo-300 text-sm mt-0.5">
-                Análise por Clean Code · SOLID · DRY · KISS · YAGNI · Clean Architecture
+                {t('debt_subtitle')}
               </p>
             </div>
           </div>
@@ -296,14 +303,14 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium transition"
               >
                 {analysing ? (
-                  <><ThinkingDots /> Analisando com IA...</>
+                  <><ThinkingDots /> {t('debt_analyzing')}</>
                 ) : (
-                  <><Icon name="wand-magic-sparkles" className="text-sm" />Analisar Agora</>
+                  <><Icon name="wand-magic-sparkles" className="text-sm" />{t('debt_analyzeBtn')}</>
                 )}
               </button>
             )}
             <button onClick={load} className={btnPrimary} disabled={loading || analysing}>
-              {loading ? <ThinkingDots /> : <><Icon name="rotate" className="mr-1" />Atualizar</>}
+              {loading ? <ThinkingDots /> : <><Icon name="rotate" className="mr-1" />{t('debt_refreshBtn')}</>}
             </button>
             {repositoryId && (
               <a
@@ -313,7 +320,7 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium transition"
               >
                 <Icon name="file-export" className="text-sm" />
-                Exportar
+                {t('debt_exportBtn')}
               </a>
             )}
           </div>
@@ -321,7 +328,7 @@ export function TechDebtTab({ repositoryId, status }: Props) {
       </div>
 
       {status !== "completed" && (
-        <EmptyState icon="bug" message="O repositório precisa estar indexado para calcular a dívida técnica." />
+        <EmptyState icon="bug" message={t('debt_noRepoDesc')} />
       )}
 
       {status === "completed" && (
@@ -332,12 +339,12 @@ export function TechDebtTab({ repositoryId, status }: Props) {
           {latest && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
-                { label: "Score Médio", value: latest.avg_score.toFixed(1), icon: "chart-line", color: "text-purple-400" },
-                { label: "Arquivos", value: latest.total_files, icon: "file-code", color: "text-blue-400" },
-                { label: "Críticos (≥75)", value: latest.critical_count, icon: "triangle-exclamation", color: "text-red-400" },
-                { label: "Altos (≥50)", value: latest.high_count, icon: "exclamation", color: "text-orange-400" },
-                { label: "CC Média", value: latest.avg_complexity.toFixed(1), icon: "code-branch", color: "text-sky-400" },
-                { label: "Churn Médio", value: latest.avg_churn.toFixed(1), icon: "arrows-rotate", color: "text-amber-400" },
+                { label: t('debt_avgScore'), value: latest.avg_score.toFixed(1), icon: "chart-line", color: "text-purple-400" },
+                { label: t('common_files'), value: latest.total_files, icon: "file-code", color: "text-blue-400" },
+                { label: t('debt_criticalCount'), value: latest.critical_count, icon: "triangle-exclamation", color: "text-red-400" },
+                { label: t('debt_highCount'), value: latest.high_count, icon: "exclamation", color: "text-orange-400" },
+                { label: t('debt_avgCC'), value: latest.avg_complexity.toFixed(1), icon: "code-branch", color: "text-sky-400" },
+                { label: t('debt_avgChurn'), value: latest.avg_churn.toFixed(1), icon: "arrows-rotate", color: "text-amber-400" },
               ].map(({ label, value, icon, color }) => (
                 <Card key={label} className="text-center py-4 px-2">
                   <Icon name={icon} className={`${color} text-2xl mb-1`} />
@@ -353,9 +360,9 @@ export function TechDebtTab({ repositoryId, status }: Props) {
             <Card>
               <div className="flex items-center gap-2 mb-3">
                 <Icon name="wand-magic-sparkles" className="text-indigo-400" />
-                <h3 className="text-sm font-semibold text-slate-300">Análise de Qualidade por IA</h3>
+                <h3 className="text-sm font-semibold text-slate-300">{t('debt_aiAnalysis')}</h3>
                 <span className="ml-auto text-xs text-indigo-400 bg-indigo-900/50 px-2 py-0.5 rounded-full border border-indigo-700/40">
-                  IA · baseada nos arquivos críticos reais
+                  {t('debt_aiLabel')}
                 </span>
               </div>
               <LlmSummaryCard summary={latest.llm_summary} />
@@ -366,8 +373,7 @@ export function TechDebtTab({ repositoryId, status }: Props) {
             <div className="rounded-xl p-4 bg-slate-800/50 border border-slate-700/40 flex items-center gap-3 text-sm text-slate-400">
               <Icon name="wand-magic-sparkles" className="text-indigo-400 shrink-0" />
               <span>
-                Clique em <strong className="text-white">Analisar Agora</strong> para gerar uma análise detalhada de qualidade por IA
-                (Clean Code, SOLID, DRY, KISS, YAGNI, Design Patterns).
+                {t('debt_clickAnalyzePrefix')} <strong className="text-white">{t('debt_analyzeBtn')}</strong> {t('debt_clickAnalyzeSuffix')}
               </span>
             </div>
           )}
@@ -376,19 +382,19 @@ export function TechDebtTab({ repositoryId, status }: Props) {
           <Card>
             <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
               <Icon name="chart-line" className="text-purple-400" />
-              Evolução do Score de Dívida
+              {t('debt_evolution')}
               {latest && (
                 <span className="ml-auto text-xs text-slate-500">
-                  Último: {new Date(latest.snapshot_ts).toLocaleString("pt-BR")}
+                  {t('debt_lastLabel')} {new Date(latest.snapshot_ts).toLocaleString(locale)}
                 </span>
               )}
             </h3>
             {loading ? (
               <div className="flex justify-center py-8"><ThinkingDots /></div>
             ) : history.length === 0 ? (
-              <EmptyState icon="chart-line" message="Nenhum snapshot ainda. Clique em Analisar Agora ou aguarde a próxima indexação." />
+              <EmptyState icon="chart-line" message={t('debt_noSnapshots')} />
             ) : (
-              <ScoreTrendChart snapshots={history} />
+              <ScoreTrendChart snapshots={history} t={t} />
             )}
           </Card>
 
@@ -399,14 +405,14 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                 <Card>
                   <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                     <Icon name="layer-group" className="text-indigo-400" />
-                    Dívida por Categoria
-                    <span className="text-xs text-slate-500 ml-1">(0 = saudável · 100 = crítico)</span>
+                    {t('debt_categoryTitle')}
+                    <span className="text-xs text-slate-500 ml-1">{t('debt_categoryScale')}</span>
                   </h3>
                   {Object.keys(latest.debt_breakdown).length > 0 ? (
-                    <DebtBreakdownCard breakdown={latest.debt_breakdown} />
+                    <DebtBreakdownCard breakdown={latest.debt_breakdown} t={t} />
                   ) : (
                     <p className="text-slate-500 text-sm">
-                      Dados de categoria disponíveis após clicar em <strong className="text-white">Analisar Agora</strong>.
+                      {t('debt_categoryDataHint')} <strong className="text-white">{t('debt_analyzeBtn')}</strong>.
                     </p>
                   )}
                 </Card>
@@ -415,21 +421,23 @@ export function TechDebtTab({ repositoryId, status }: Props) {
               <Card>
                 <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
                   <Icon name="chart-simple" className="text-sky-400" />
-                  Tendência de Métricas
+                  {t('debt_metricsTrend')}
                 </h3>
                 <div className="space-y-4">
                   <MetricSparkline
                     snapshots={history}
                     getValue={s => s.avg_complexity}
                     color="#38bdf8"
-                    label="Complexidade Ciclomática Média"
+                    label={t('debt_avgCyclomaticComplexity')}
+                    t={t}
                   />
                   <div className="border-t border-slate-700/50 pt-4">
                     <MetricSparkline
                       snapshots={history}
                       getValue={s => s.avg_churn}
                       color="#f59e0b"
-                      label="Churn Médio (commits/arquivo)"
+                      label={t('debt_avgChurnPerFile')}
+                      t={t}
                     />
                   </div>
                   <div className="border-t border-slate-700/50 pt-4">
@@ -437,8 +445,9 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                       snapshots={history}
                       getValue={s => s.comment_ratio * 100}
                       color="#34d399"
-                      label="Ratio de Comentários"
+                      label={t('debt_commentRatio')}
                       unit="%"
+                      t={t}
                     />
                   </div>
                 </div>
@@ -451,8 +460,8 @@ export function TechDebtTab({ repositoryId, status }: Props) {
             <Card>
               <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
                 <Icon name="fire" className="text-orange-400" />
-                Arquivos Mais Críticos
-                <span className="text-xs text-slate-500 ml-1">(último snapshot)</span>
+                {t('debt_topFilesTitle')}
+                <span className="text-xs text-slate-500 ml-1">{t('debt_lastSnapshotHint')}</span>
               </h3>
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {latest.top_files.slice(0, 15).map((f, i) => (
@@ -464,12 +473,12 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                         <span className="text-xs text-slate-500">{f.language}</span>
                         <span className="text-xs text-slate-500">{f.loc} LOC</span>
                         <span className="text-xs text-sky-500">CC {f.complexity.toFixed(1)}</span>
-                        <span className="text-xs text-amber-500">{f.churn} commits</span>
+                        <span className="text-xs text-amber-500">{f.churn} {t('common_commits').toLowerCase()}</span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-sm font-bold text-white">{f.hotspot_score.toFixed(1)}</div>
-                      <RiskBadge score={f.hotspot_score} />
+                      <RiskBadge score={f.hotspot_score} t={t} />
                     </div>
                   </div>
                 ))}
@@ -482,25 +491,25 @@ export function TechDebtTab({ repositoryId, status }: Props) {
             <Card>
               <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
                 <Icon name="clock-rotate-left" className="text-purple-400" />
-                Histórico de Snapshots
+                {t('debt_snapshotsHistory')}
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-700 text-slate-400 text-xs">
-                      <th className="text-left py-2 px-3">Data/Hora</th>
-                      <th className="text-right py-2 px-3">Score</th>
-                      <th className="text-right py-2 px-3">Arquivos</th>
-                      <th className="text-right py-2 px-3">Críticos</th>
-                      <th className="text-right py-2 px-3">CC Méd</th>
-                      <th className="text-right py-2 px-3">Tendência</th>
+                      <th className="text-left py-2 px-3">{t('drift_tableDate')}</th>
+                      <th className="text-right py-2 px-3">{t('hotspots_score')}</th>
+                      <th className="text-right py-2 px-3">{t('common_files')}</th>
+                      <th className="text-right py-2 px-3">{t('debt_tableCritical')}</th>
+                      <th className="text-right py-2 px-3">{t('debt_tableAvgCC')}</th>
+                      <th className="text-right py-2 px-3">{t('debt_tableTrend')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[...history].reverse().map(s => (
                       <tr key={s.id} className="border-b border-slate-800 hover:bg-slate-800/40">
                         <td className="py-2 px-3 text-slate-300 font-mono text-xs">
-                          {new Date(s.snapshot_ts).toLocaleString("pt-BR")}
+                          {new Date(s.snapshot_ts).toLocaleString(locale)}
                         </td>
                         <td className="py-2 px-3 text-right">
                           <span className={`font-bold ${s.avg_score >= 75 ? "text-red-400" : s.avg_score >= 50 ? "text-orange-400" : s.avg_score >= 25 ? "text-yellow-400" : "text-green-400"}`}>
@@ -510,7 +519,7 @@ export function TechDebtTab({ repositoryId, status }: Props) {
                         <td className="py-2 px-3 text-right text-slate-300">{s.total_files}</td>
                         <td className="py-2 px-3 text-right text-red-400">{s.critical_count}</td>
                         <td className="py-2 px-3 text-right text-sky-400">{s.avg_complexity.toFixed(1)}</td>
-                        <td className="py-2 px-3 text-right"><TrendBadge trend={s.debt_trend} /></td>
+                        <td className="py-2 px-3 text-right"><TrendBadge trend={s.debt_trend} t={t} /></td>
                       </tr>
                     ))}
                   </tbody>

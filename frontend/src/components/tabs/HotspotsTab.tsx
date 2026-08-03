@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { getHotspots, type FileHotspot, type HotspotAnalysis } from "../../services/hotspotApi"
 import { ThinkingDots, EmptyState, ErrorBanner, Icon } from "../ui"
+import { useI18n } from "../../i18n"
 
 interface Props {
     repositoryId: string
@@ -358,6 +359,7 @@ function FileRow({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function HotspotsTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
     const [topN, setTopN] = useState(30)
     const [churnMonths, setChurnMonths] = useState(6)
     const [analysis, setAnalysis] = useState<HotspotAnalysis | null>(null)

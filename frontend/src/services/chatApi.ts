@@ -13,8 +13,15 @@ export type ChatAskResponse = {
   sources: ChatSource[]
 }
 
-export async function askQuestion(repositoryId: string, question: string, token: string): Promise<ChatAskResponse> {
-  return await httpPost<ChatAskResponse>("/api/chat/ask", { repository_id: repositoryId, question }, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+export async function askQuestion(
+  repositoryId: string,
+  question: string,
+  token: string,
+  locale: string = "pt-BR",
+): Promise<ChatAskResponse> {
+  return await httpPost<ChatAskResponse>(
+    "/api/chat/ask",
+    { repository_id: repositoryId, question, locale },
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
 }

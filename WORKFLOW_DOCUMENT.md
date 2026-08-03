@@ -1,4 +1,4 @@
-# Workflow de Desenvolvimento Assistido por IA — [Nome da Equipe — PREENCHER]
+# Workflow de Desenvolvimento Assistido por IA — Equipe 5 - CodeCompass
 
 ## Sobre este documento
 
@@ -10,10 +10,13 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 
 ## Ferramentas utilizadas
 
-| Ferramenta                  | Categoria               | Quando usada                                                                                                                   | Modelo/Versão     | Avaliação geral |
-| --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- | --------------- |
-| ChatLLM (Claude)            | LLM/Assistente          | Elaboração da proposta, pesquisa de arquitetura, geração de código de referência, análise de viabilidade                       | Claude Opus 4     | ⭐⭐⭐⭐⭐      |
-| GitHub Copilot (Agent Mode) | Code generation / Agent | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs, otimizações e melhorias de UX | Claude Sonnet 4.6 | ⭐⭐⭐⭐⭐      |
+| Ferramenta                  | Categoria                 | Quando usada                                                                                                                   | Modelo/Versão                                     | Custo real                                   | Avaliação  |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------- | ---------- |
+| Abacus AI (ChatLLM)         | LLM Platform / Assistente | Planejamento de arquitetura, análise de domínio, sessões de design e consultas de teste da aplicação CodeCompass               | Claude Sonnet 4.5 / GPT-4.1 Mini / Gemini 3 Flash | ~12.443 créditos Jun–Jul/2026 (~$12 est.)    | ⭐⭐⭐⭐⭐ |
+| GitHub Copilot (Agent Mode) | Code generation / Agent   | Implementação completa das 8 specs (backend + frontend + testes), refatoração, leitura de specs, otimizações e melhorias de UX | Claude Sonnet 4.6 (não Opus 4 — assinatura plana) | **$57 total / 3 meses (Business, org-pago)** | ⭐⭐⭐⭐⭐ |
+| OpenAI API                  | Embeddings / Completions  | Indexação de repositórios via `text-embedding-3-small`; testes de completions GPT-5.5 durante desenvolvimento                  | text-embedding-3-small + gpt-5_5-2026-04-23       | **$0,13 — confirmado (screenshot)**          | ⭐⭐⭐⭐   |
+
+> **Nota de custos:** O GitHub Copilot Business é pago pela organização `ava-client-brazil-cnh` — custo direto ao desenvolvedor = R$0. O valor é incluído nos cálculos de economicidade por representar o custo econômico real do desenvolvimento assistido por IA, independente de quem paga. Copilot NÃO cobra por token — é assinatura plana.
 
 ---
 
@@ -51,17 +54,18 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 
 #### Camada 1 — Consumo de IA
 
-| Atividade                                      | Ferramenta/Modelo       | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-| ---------------------------------------------- | ----------------------- | --------------------- | ------------------- | -------------------- |
-| Análise dos 10 domínios + classificação        | ChatLLM / Claude Opus 4 | ~8.000                | ~6.000              | ~$0.12               |
-| Geração de estrutura do projeto (backend + IA) | ChatLLM / Claude Opus 4 | ~5.000                | ~12.000             | ~$0.22               |
-| Análise de boas práticas production-ready      | ChatLLM / Claude Opus 4 | ~4.000                | ~15.000             | ~$$0.28              |
-| Visão de produto (fluxo empresa)               | ChatLLM / Claude Opus 4 | ~3.000                | ~10.000             | ~$$0.18              |
-| Geração da PROPOSTA_v1.md                      | ChatLLM / Claude Opus 4 | ~6.000                | ~8.000              | ~$$0.16              |
-| Geração do WORKFLOW_DOCUMENT.md                | ChatLLM / Claude Opus 4 | ~4.000                | ~6.000              | ~$$0.12              |
-| **Total da fase**                              |                         | **~30.000**           | **~57.000**         | **~$1.08**           |
+| Atividade                                                    | Ferramenta/Modelo   | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD)             |
+| ------------------------------------------------------------ | ------------------- | --------------------- | ------------------- | -------------------------------- |
+| Análise dos 10 domínios + classificação                      | Abacus AI (ChatLLM) | ~8.000                | ~6.000              | Incluído na assinatura Abacus AI |
+| Geração de estrutura do projeto (backend + IA)               | Abacus AI (ChatLLM) | ~5.000                | ~12.000             | Incluído na assinatura Abacus AI |
+| Análise de boas práticas production-ready                    | Abacus AI (ChatLLM) | ~4.000                | ~15.000             | Incluído na assinatura Abacus AI |
+| Visão de produto (fluxo empresa)                             | Abacus AI (ChatLLM) | ~3.000                | ~10.000             | Incluído na assinatura Abacus AI |
+| Geração da PROPOSTA_v1.md                                    | Abacus AI (ChatLLM) | ~6.000                | ~8.000              | Incluído na assinatura Abacus AI |
+| Geração do WORKFLOW_DOCUMENT.md                              | Abacus AI (ChatLLM) | ~4.000                | ~6.000              | Incluído na assinatura Abacus AI |
+| GitHub Copilot Business — assinatura (proporcional Abr/2026) | GitHub Copilot      | —                     | —                   | **~$5,00**                       |
+| **Total da fase**                                            |                     | **~30.000 (est.)**    | **~57.000 (est.)**  | **~$6,00** (~R$34)               |
 
-> **Nota:** Estimativas baseadas no volume de texto trocado nas conversas com o ChatLLM. Preços de referência: Claude Opus ~$15/M tokens input, ~$75/M tokens output (março 2026). [AJUSTAR com preços reais consultados em docs.anthropic.com]
+> **Nota:** O Abacus AI ChatLLM é cobrado por créditos de plataforma (não por token diretamente ao usuário). O log de créditos começa em Jun/10/2026 (reinício da assinatura), portanto o uso nesta fase é estimado com base no volume de conversas. GitHub Copilot Business: assinatura plana $19/mês — não há cobrança por token. O custo desta fase é o proporcional da assinatura (~$5 de $57 total do projeto).
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
@@ -81,26 +85,26 @@ Além do registro qualitativo do uso de IA, este documento captura dados de **ec
 
 | Atividade                                       | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | ----------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| Análise comparativa dos 10 domínios             | Pleno              | 6.0h                      | R$ 75                | R$$ 450                    |
-| Definição de arquitetura + estrutura de projeto | Sênior             | 8.0h                      | R$$ 115              | R$$ 920                    |
-| Pesquisa de boas práticas (production-ready)    | Sênior             | 5.0h                      | R$$ 115              | R$ 575                     |
-| Análise de produto e fluxo de mercado           | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
-| Escrita da proposta completa                    | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
-| Documentação do workflow                        | Júnior             | 2.0h                      | R$ 40                | R$ 80                      |
-| **Total da fase**                               |                    | **31.0h**                 |                      | **R$ 2.775**               |
+| Análise comparativa dos 10 domínios             | Pleno              | 6.0h                      | R$38                 | R$228                      |
+| Definição de arquitetura + estrutura de projeto | Sênior             | 8.0h                      | R$62                 | R$496                      |
+| Pesquisa de boas práticas (production-ready)    | Sênior             | 5.0h                      | R$62                 | R$310                      |
+| Análise de produto e fluxo de mercado           | Pleno              | 4.0h                      | R$38                 | R$152                      |
+| Escrita da proposta completa                    | Pleno              | 6.0h                      | R$38                 | R$228                      |
+| Documentação do workflow                        | Júnior             | 2.0h                      | R$22                 | R$44                       |
+| **Total da fase**                               |                    | **31.0h**                 |                      | **R$1.458**                |
 
-> **Fontes salariais:** ABES pesquisa salarial 2025, Glassdoor Brasil (Recife/PE). Valores ajustáveis pela equipe com documentação da fonte.
+> **Fontes salariais (corrigidas):** Mercado de TI Recife/PE 2026 — Júnior: R$22/h (~R$3.520/mês CLT), Pleno: R$38/h (~R$6.080/mês), Sênior: R$62/h (~R$9.920/mês). Base de cálculo: salário mensal bruto ÷ 160h úteis. Hubs como SP/RJ praticam valores 40–60% maiores — os valores anteriores (R$40/R$75/R$115) correspondiam a esses mercados e foram corrigidos para refletir a realidade regional.
 >
-> **Metodologia:** O tempo estimado sem IA reflete quanto tempo um profissional do perfil indicado levaria para executar a mesma atividade partindo do zero, sem assistência de nenhuma ferramenta de IA generativa. Inclui tempo de pesquisa, escrita, revisão e iteração.
+> **Metodologia:** O tempo estimado sem IA reflete quanto tempo um profissional do perfil indicado levaria para executar a mesma atividade partindo do zero, sem assistência de nenhuma ferramenta de IA generativa. Inclui raciocínio/planejamento (~25%), implementação/execução (~60%) e pesquisa/documentação (~15%).
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$1.08 USD (~R$ 5.94 a R$5.50/USD) + 7.0h de trabalho humano
-- **Custo humano das 7.0h (perfil médio júnior/pleno):** ~R$ 385 (7h × R$55 média)
-- **Custo total com IA:** ~R$ 391
-- **Custo contrafactual sem IA:** ~R$ 2.775
-- **Razão de economicidade:** 7.1x (cada R$1 gasto com IA equivaleu a ~R$7.10 sem IA)
-- **Saving estimado:** ~R$ 2.384 (85.9%)
+- **Custo de ferramentas IA:** ~$6 USD — Copilot Business proporcional (~$5) + Abacus AI ChatLLM estimado (~$1) = **~R$34** (câmbio R$5,70/USD)
+- **Custo humano das 7.0h (perfil pleno, R$38/h):** ~R$266 — o ChatLLM substituiu ~24h de pesquisa individual e ~7h de escrita estruturada de documentos
+- **Custo total com IA:** **~R$300**
+- **Custo contrafactual sem IA:** **~R$1.458** — corrigido com taxas reais mercado Recife/PE 2026 (Sênior R$62/h, Pleno R$38/h, Júnior R$22/h)
+- **Razão de economicidade:** **4,9x** (cada R$1 gasto com IA equivaleu a ~R$4,90 sem IA)
+- **Saving estimado:** ~R$1.158 (79,4%)
 
 > **Limitações desta análise parcial:**
 >
@@ -153,19 +157,21 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 
 #### Camada 1 — Consumo de IA
 
-| Atividade                                                                         | Ferramenta/Modelo              | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD) |
-| --------------------------------------------------------------------------------- | ------------------------------ | --------------------- | ------------------- | -------------------- |
-| SPEC-0001: Monolith Foundation (backend + Docker + frontend base)                 | GitHub Copilot / Claude Opus 4 | ~35.000               | ~45.000             | ~$3.90               |
-| SPEC-0002: Repo Index & RAG (embedding, chunking, retrieval, chat)                | GitHub Copilot / Claude Opus 4 | ~30.000               | ~40.000             | ~$3.45               |
-| SPEC-0003: Guided Tour (scoring, persistence, step viewer)                        | GitHub Copilot / Claude Opus 4 | ~25.000               | ~35.000             | ~$3.00               |
-| SPEC-0004: Module Dependency Visualization (AST, graph, frontend)                 | GitHub Copilot / Claude Opus 4 | ~20.000               | ~30.000             | ~$2.55               |
-| SPEC-0005: Commit History Decision Intelligence (ingest, classify, timeline, why) | GitHub Copilot / Claude Opus 4 | ~25.000               | ~35.000             | ~$3.00               |
-| SPEC-0006: Onboarding Metrics & Evaluation (events, feedback, KPIs, dashboard)    | GitHub Copilot / Claude Opus 4 | ~18.000               | ~28.000             | ~$2.37               |
-| SPEC-0007: Auth & Onboarding Sessions (auth, sessions, checkpoints, UI)           | GitHub Copilot / Claude Opus 4 | ~15.000               | ~25.000             | ~$2.10               |
-| SPEC-0008: Observability & Operational Readiness (logging, metrics, ops, alerts)  | GitHub Copilot / Claude Opus 4 | ~18.000               | ~28.000             | ~$2.37               |
-| **Total da fase**                                                                 |                                | **~186.000**          | **~266.000**        | **~$22.74**          |
+| Atividade                                                                         | Ferramenta/Modelo                  | Tokens entrada (est.) | Tokens saída (est.) | Custo estimado (USD)           |
+| --------------------------------------------------------------------------------- | ---------------------------------- | --------------------- | ------------------- | ------------------------------ |
+| SPEC-0001: Monolith Foundation (backend + Docker + frontend base)                 | GitHub Copilot / Claude Sonnet 4.6 | ~35.000               | ~45.000             | Incluído na assinatura Copilot |
+| SPEC-0002: Repo Index & RAG (embedding, chunking, retrieval, chat)                | GitHub Copilot / Claude Sonnet 4.6 | ~30.000               | ~40.000             | Incluído na assinatura Copilot |
+| SPEC-0003: Guided Tour (scoring, persistence, step viewer)                        | GitHub Copilot / Claude Sonnet 4.6 | ~25.000               | ~35.000             | Incluído na assinatura Copilot |
+| SPEC-0004: Module Dependency Visualization (AST, graph, frontend)                 | GitHub Copilot / Claude Sonnet 4.6 | ~20.000               | ~30.000             | Incluído na assinatura Copilot |
+| SPEC-0005: Commit History Decision Intelligence (ingest, classify, timeline, why) | GitHub Copilot / Claude Sonnet 4.6 | ~25.000               | ~35.000             | Incluído na assinatura Copilot |
+| SPEC-0006: Onboarding Metrics & Evaluation (events, feedback, KPIs, dashboard)    | GitHub Copilot / Claude Sonnet 4.6 | ~18.000               | ~28.000             | Incluído na assinatura Copilot |
+| SPEC-0007: Auth & Onboarding Sessions (auth, sessions, checkpoints, UI)           | GitHub Copilot / Claude Sonnet 4.6 | ~15.000               | ~25.000             | Incluído na assinatura Copilot |
+| SPEC-0008: Observability & Operational Readiness (logging, metrics, ops, alerts)  | GitHub Copilot / Claude Sonnet 4.6 | ~18.000               | ~28.000             | Incluído na assinatura Copilot |
+| GitHub Copilot Business — assinatura (proporcional Mai–Jun/2026, fase principal)  | GitHub Copilot Business            | —                     | —                   | **~$15,00**                    |
+| Abacus AI ChatLLM — planejamento de specs (Jun/10–15)                             | Abacus AI                          | —                     | —                   | ~$3,00                         |
+| **Total da fase**                                                                 |                                    | **~186.000 (est.)**   | **~266.000 (est.)** | **~$18,00** (~R$103)           |
 
-> **Nota:** Estimativas baseadas no volume de código gerado (~4.500 linhas de Python + ~1.200 linhas de TypeScript), leitura de specs, e conversação. Preços de referência: Claude Opus 4 ~$15/M tokens input, ~$75/M tokens output (maio 2026).
+> **Nota importante sobre o modelo e custo:** O GitHub Copilot Agent Mode usa **Claude Sonnet 4.6** (não Claude Opus 4 como indicado anteriormente). Mais importante: Copilot Business é cobrado via **assinatura plana de $19/mês** — **não há cobrança por token ao usuário**. Os custos individuais por SPEC estimados no documento anterior (~$22.74 total) foram calculados com preços de Claude Opus 4 por token ($15/M input + $75/M output) e estão **incorretos**. O custo real desta fase é a parcela proporcional da assinatura ($15) + uso Abacus AI a partir de Jun/10 ($3).
 
 #### Camada 2 — Esforço humano real (auto-declarado)
 
@@ -184,25 +190,26 @@ Implementação completa das especificações SPEC-0001 a SPEC-0008 com assistê
 
 | Atividade                                                               | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | ----------------------------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| Backend foundation + Docker + CI/CD setup                               | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
-| RAG pipeline (embedding, chunking, retrieval, chat)                     | Sênior             | 20.0h                     | R$ 115               | R$ 2.300                   |
-| Guided tour (scoring engine + persistence + UI)                         | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
-| Dependency graph (AST extraction + assembly + API + frontend)           | Sênior             | 14.0h                     | R$ 115               | R$ 1.610                   |
-| Commit history intelligence (git parsing + classifier + timeline + why) | Sênior             | 16.0h                     | R$ 115               | R$ 1.840                   |
-| Metrics & evaluation (ingestion + aggregation + reporting + dashboard)  | Pleno              | 12.0h                     | R$ 75                | R$ 900                     |
-| Auth & sessions (auth service + session lifecycle + frontend)           | Pleno              | 10.0h                     | R$ 75                | R$ 750                     |
-| Observability (structured logging + metrics + ops endpoints + alerts)   | Sênior             | 12.0h                     | R$ 115               | R$ 1.380                   |
-| Testes (unitários + integração + E2E para todas as specs)               | Pleno              | 20.0h                     | R$ 75                | R$ 1.500                   |
-| **Total da fase**                                                       |                    | **136.0h**                |                      | **R$ 13.960**              |
+| Backend foundation + Docker + CI/CD setup                               | Sênior             | 16.0h                     | R$62                 | R$992                      |
+| RAG pipeline (embedding, chunking, retrieval, chat)                     | Sênior             | 20.0h                     | R$62                 | R$1.240                    |
+| Guided tour (scoring engine + persistence + UI)                         | Sênior             | 16.0h                     | R$62                 | R$992                      |
+| Dependency graph (AST extraction + assembly + API + frontend)           | Sênior             | 14.0h                     | R$62                 | R$868                      |
+| Commit history intelligence (git parsing + classifier + timeline + why) | Sênior             | 16.0h                     | R$62                 | R$992                      |
+| Metrics & evaluation (ingestion + aggregation + reporting + dashboard)  | Pleno              | 12.0h                     | R$38                 | R$456                      |
+| Auth & sessions (auth service + session lifecycle + frontend)           | Pleno              | 10.0h                     | R$38                 | R$380                      |
+| Observability (structured logging + metrics + ops endpoints + alerts)   | Sênior             | 12.0h                     | R$62                 | R$744                      |
+| Testes (unitários + integração + E2E para todas as specs)               | Pleno              | 20.0h                     | R$38                 | R$760                      |
+| **Total da fase**                                                       |                    | **136.0h**                |                      | **R$7.424**                |
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$22.74 USD (~R$ 125.07 a R$5.50/USD) + 11.4h de trabalho humano
-- **Custo humano das 11.4h (perfil médio pleno):** ~R$ 855 (11.4h × R$75 média)
-- **Custo total com IA:** ~R$ 980
-- **Custo contrafactual sem IA:** ~R$ 13.960
-- **Razão de economicidade:** 14.2x (cada R$1 gasto com IA equivaleu a ~R$14.20 sem IA)
-- **Saving estimado:** ~R$ 12.980 (93.0%)
+- **Custo de ferramentas IA:** ~$18 USD — GitHub Copilot Business ($15, **maior alocação do projeto**: esta foi a fase de maior volume de código gerado — 8 specs, ~26.575 linhas de código total) + Abacus AI Jun/10–15 ($3) = **~R$103** ($18 × R$5,70 = R$102,60)
+- **Nota:** GitHub Copilot Agent Mode é cobrado via **assinatura plana** ($19/mês Business). O modelo ativo era Claude Sonnet 4.6 (não Claude Opus 4 — o documento originalmente usou preços errados). Não há cobrança por token ao usuário — o valor anterior de $22.74 estava calculado com precos de Opus 4 por token e era **fictício**.
+- **Custo humano das 11.4h (perfil pleno, R$38/h):** ~R$433 (11.4h × R$38 = R$433,20)
+- **Custo total com IA:** **~R$536** (R$103 + R$433)
+- **Custo contrafactual sem IA:** **~R$7.424** — corrigido: Sênior R$62/h (backend complexo + RAG + observabilidade), Pleno R$38/h (métricas, auth, testes)
+- **Razão de economicidade:** **13,9x** (cada R$1 gasto com IA equivaleu a ~R$13,90 sem IA — 7.424÷536=13,85)
+- **Saving estimado:** ~R$6.888 (92,8%)
 
 > **Limitações desta análise parcial:**
 >
@@ -287,21 +294,21 @@ Fase de otimização e expansão do projeto após a implementação das 8 specs.
 
 | Atividade                                          | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | -------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| Diagnóstico e fix bug assíncrono (BackgroundTasks) | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
-| Investigação de APIs de embedding + integração     | Sênior             | 6.0h                      | R$ 115               | R$ 690                     |
-| Implementação concorrência com ThreadPoolExecutor  | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
-| Expansão registry de linguagens (9 linguagens)     | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
-| Testes de performance e benchmark                  | Pleno              | 2.0h                      | R$ 75                | R$ 150                     |
-| **Total da fase**                                  |                    | **19.0h**                 |                      | **R$ 1.985**               |
+| Diagnóstico e fix bug assíncrono (BackgroundTasks) | Sênior             | 4.0h                      | R$62                 | R$248                      |
+| Investigação de APIs de embedding + integração     | Sênior             | 6.0h                      | R$62                 | R$372                      |
+| Implementação concorrência com ThreadPoolExecutor  | Sênior             | 4.0h                      | R$62                 | R$248                      |
+| Expansão registry de linguagens (9 linguagens)     | Pleno              | 3.0h                      | R$38                 | R$114                      |
+| Testes de performance e benchmark                  | Pleno              | 2.0h                      | R$38                 | R$76                       |
+| **Total da fase**                                  |                    | **19.0h**                 |                      | **R$1.058**                |
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$1.11 USD (~R$ 6.11 a R$5.50/USD) + 4.2h de trabalho humano
-- **Custo humano das 4.2h (perfil médio pleno):** ~R$ 315 (4.2h × R$75 média)
-- **Custo total com IA:** ~R$ 321
-- **Custo contrafactual sem IA:** ~R$ 1.985
-- **Razão de economicidade:** 6.2x (cada R$1 gasto com IA equivaleu a ~R$6.20 sem IA)
-- **Saving estimado:** ~R$ 1.664 (83.8%)
+- **Custo de ferramentas IA:** ~$10,50 USD — Copilot Business ($8) + Abacus AI Jun/15–22 ($2,50 — inclui dias de uso intenso Jun/19–20: ~2.414 créditos de ChatLLM para planejamento da integração OpenAI vs Abacus) = **~R$60**
+- **Custo humano das 4.2h (perfil pleno, R$38/h):** ~R$160 (4.2h × R$38)
+- **Custo total com IA:** **~R$220**
+- **Custo contrafactual sem IA:** **~R$1.058** — corrigido: Sênior R$62/h para debugging e integração de APIs, Pleno R$38/h para expansão de registry e benchmarks
+- **Razão de economicidade:** **4,8x** (cada R$1 gasto com IA equivaleu a ~R$4,80 sem IA)
+- **Saving estimado:** ~R$838 (79,2%)
 
 **Resultado técnico de destaque desta fase:**
 
@@ -379,21 +386,21 @@ Fase de polimento de UX, segurança e documentação do projeto.
 
 | Atividade                                                | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | -------------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| Refatorar navegação para sidebar colapsável              | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
-| Implementar dark mode (Tailwind) em todos os componentes | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
-| Markdown renderer + syntax highlighting VS Code          | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
-| Auditoria de segurança e hardening de env vars           | Sênior             | 3.0h                      | R$ 115               | R$ 345                     |
-| Documentação completa (3 documentos)                     | Pleno              | 6.0h                      | R$ 75                | R$ 450                     |
-| **Total da fase**                                        |                    | **27.0h**                 |                      | **R$ 2.465**               |
+| Refatorar navegação para sidebar colapsável              | Pleno              | 6.0h                      | R$38                 | R$228                      |
+| Implementar dark mode (Tailwind) em todos os componentes | Pleno              | 4.0h                      | R$38                 | R$152                      |
+| Markdown renderer + syntax highlighting VS Code          | Sênior             | 8.0h                      | R$62                 | R$496                      |
+| Auditoria de segurança e hardening de env vars           | Sênior             | 3.0h                      | R$62                 | R$186                      |
+| Documentação completa (3 documentos)                     | Pleno              | 6.0h                      | R$38                 | R$228                      |
+| **Total da fase**                                        |                    | **27.0h**                 |                      | **R$1.290**                |
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$1.56 USD (~R$ 8.58 a R$5.50/USD) + 3.8h de trabalho humano
-- **Custo humano das 3.8h (perfil médio pleno):** ~R$ 285 (3.8h × R$75 média)
-- **Custo total com IA:** ~R$ 294
-- **Custo contrafactual sem IA:** ~R$ 2.465
-- **Razão de economicidade:** 8.4x
-- **Saving estimado:** ~R$ 2.171 (88.1%)
+- **Custo de ferramentas IA:** ~$10,50 USD — Copilot Business ($8) + Abacus AI ChatLLM Jun/22–30 ($2,50 — créditos consumidos em sessões de planejamento de UX: sidebar, dark mode, Markdown renderer) = **~R$60**
+- **Custo humano das 3.8h (perfil pleno, R$38/h):** ~R$144 (3.8h × R$38)
+- **Custo total com IA:** **~R$204**
+- **Custo contrafactual sem IA:** **~R$1.290** — corrigido: Sênior R$62/h para auditoria de segurança e Markdown renderer (componentes técnicos complexos), Pleno R$38/h para sidebar, dark mode e documentação
+- **Razão de economicidade:** **6,3x** (cada R$1 gasto com IA equivaleu a ~R$6,30 sem IA)
+- **Saving estimado:** ~R$1.086 (84,2%)
 
 ### Lições aprendidas
 
@@ -474,26 +481,26 @@ Fase de expansão com features avançadas de análise arquitetural, auditoria, i
 
 | Atividade                                     | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | --------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| AuditRepository + middleware + endpoint admin | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
-| WebhookRepository + HMAC + CRUD + receiver    | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
-| WatchlistRepository + NotificationService     | Sênior             | 8.0h                      | R$ 115               | R$ 920                     |
-| ArchitectureDriftService + snapshots API      | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
-| LLM interpretation endpoint                   | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
-| DriftTab.tsx (seleção por data + IA)          | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
-| WatchlistTab.tsx                              | Pleno              | 5.0h                      | R$ 75                | R$ 375                     |
-| AdminTab.tsx (Auditoria + Webhooks)           | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
-| Wiring + global auth fix                      | Pleno              | 3.0h                      | R$ 75                | R$ 225                     |
-| Documentação MD (5 arquivos)                  | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
-| **Total da fase**                             |                    | **67.0h**                 |                      | **R$ 6.465**               |
+| AuditRepository + middleware + endpoint admin | Sênior             | 8.0h                      | R$62                 | R$496                      |
+| WebhookRepository + HMAC + CRUD + receiver    | Sênior             | 10.0h                     | R$62                 | R$620                      |
+| WatchlistRepository + NotificationService     | Sênior             | 8.0h                      | R$62                 | R$496                      |
+| ArchitectureDriftService + snapshots API      | Sênior             | 10.0h                     | R$62                 | R$620                      |
+| LLM interpretation endpoint                   | Pleno              | 3.0h                      | R$38                 | R$114                      |
+| DriftTab.tsx (seleção por data + IA)          | Pleno              | 8.0h                      | R$38                 | R$304                      |
+| WatchlistTab.tsx                              | Pleno              | 5.0h                      | R$38                 | R$190                      |
+| AdminTab.tsx (Auditoria + Webhooks)           | Pleno              | 8.0h                      | R$38                 | R$304                      |
+| Wiring + global auth fix                      | Pleno              | 3.0h                      | R$38                 | R$114                      |
+| Documentação MD (5 arquivos)                  | Pleno              | 4.0h                      | R$38                 | R$152                      |
+| **Total da fase**                             |                    | **67.0h**                 |                      | **R$3.410**                |
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$4.26 USD (~R$ 23.43 a R$5.50/USD) + 5.8h de trabalho humano
-- **Custo humano das 5.8h (perfil médio pleno):** ~R$ 435 (5.8h × R$75 média)
-- **Custo total com IA:** ~R$ 458
-- **Custo contrafactual sem IA:** ~R$ 6.465
-- **Razão de economicidade:** 14.1x (cada R$1 gasto com IA equivaleu a ~R$14.10 sem IA)
-- **Saving estimado:** ~R$ 6.007 (92.9%)
+- **Custo de ferramentas IA:** ~$12,13 USD — Copilot Business ($10) + Abacus AI Jun/29–Jul/02 (~$2,13 — inclui dias de pico: 1.152 créditos Jun/29 e 1.026 créditos Jun/30 via API da aplicação CodeCompass durante testes) = **~R$69**
+- **Custo humano das 5.8h (perfil pleno, R$38/h):** ~R$220 (5.8h × R$38)
+- **Custo total com IA:** **~R$289**
+- **Custo contrafactual sem IA:** **~R$3.410** — corrigido: Sênior R$62/h para backend complexo (HMAC, drift detection, middleware de auditoria — tópicos de segurança e arquitetura avançada), Pleno R$38/h para componentes frontend e documentação
+- **Razão de economicidade:** **11,8x** (cada R$1 gasto com IA equivaleu a ~R$11,80 sem IA)
+- **Saving estimado:** ~R$3.121 (91,5%)
 
 ### Lições aprendidas
 
@@ -568,23 +575,23 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 
 | Atividade                                           | Perfil equivalente | Tempo estimado sem IA (h) | Salário médio/h (R$) | Custo humano estimado (R$) |
 | --------------------------------------------------- | ------------------ | ------------------------- | -------------------- | -------------------------- |
-| HotspotsTab (BubbleChart SVG + animações + filtros) | Sênior             | 12.0h                     | R$ 115               | R$ 1.380                   |
-| TechDebt v2 backend (5 métricas + trend + endpoint) | Sênior             | 10.0h                     | R$ 115               | R$ 1.150                   |
-| PROMPT-010 design + integração LLM                  | Sênior             | 4.0h                      | R$ 115               | R$ 460                     |
-| TechDebtTab.tsx (5 componentes + charts SVG)        | Pleno              | 10.0h                     | R$ 75                | R$ 750                     |
-| Testes unitários (~80 testes em 5 arquivos)         | Pleno              | 8.0h                      | R$ 75                | R$ 600                     |
-| Diagnóstico + fix de duplicata                      | Pleno              | 1.0h                      | R$ 75                | R$ 75                      |
-| Atualização de documentação (4 arquivos MD)         | Pleno              | 4.0h                      | R$ 75                | R$ 300                     |
-| **Total da fase**                                   |                    | **49.0h**                 |                      | **R$ 4.715**               |
+| HotspotsTab (BubbleChart SVG + animações + filtros) | Sênior             | 12.0h                     | R$62                 | R$744                      |
+| TechDebt v2 backend (5 métricas + trend + endpoint) | Sênior             | 10.0h                     | R$62                 | R$620                      |
+| PROMPT-010 design + integração LLM                  | Sênior             | 4.0h                      | R$62                 | R$248                      |
+| TechDebtTab.tsx (5 componentes + charts SVG)        | Pleno              | 10.0h                     | R$38                 | R$380                      |
+| Testes unitários (~80 testes em 5 arquivos)         | Pleno              | 8.0h                      | R$38                 | R$304                      |
+| Diagnóstico + fix de duplicata                      | Pleno              | 1.0h                      | R$38                 | R$38                       |
+| Atualização de documentação (4 arquivos MD)         | Pleno              | 4.0h                      | R$38                 | R$152                      |
+| **Total da fase**                                   |                    | **49.0h**                 |                      | **R$2.486**                |
 
 ### Análise parcial de economicidade (esta fase)
 
-- **Custo real com IA:** ~$2.91 USD (~R$ 16.01 a R$5.50/USD) + 3.0h de trabalho humano
-- **Custo humano das 3.0h (perfil médio pleno):** ~R$ 225 (3.0h × R$75 média)
-- **Custo total com IA:** ~R$ 241
-- **Custo contrafactual sem IA:** ~R$ 4.715
-- **Razão de economicidade:** 19.6x (cada R$1 gasto com IA equivaleu a ~R$19.60 sem IA)
-- **Saving estimado:** ~R$ 4.474 (94.9%)
+- **Custo de ferramentas IA:** ~$12,13 USD — Copilot Business ($11) + Abacus AI app API Jul/01–08 ($1 — aplicação CodeCompass chamando Abacus durante testes de PROMPT-010 e análise de dívida técnica) + **OpenAI API $0,13 confirmado** (indexação via text-embedding-3-small — único custo confirmado por screenshot) = **~R$69** ($12,13 × R$5,70 = R$69,14)
+- **Custo humano das 3.0h (perfil pleno, R$38/h):** ~R$114 (3.0h × R$38)
+- **Custo total com IA:** **~R$183** (R$69 + R$114)
+- **Custo contrafactual sem IA:** **~R$2.486** — corrigido: Sênior R$62/h para BubbleChart SVG avançado, TechDebt v2 backend e PROMPT-010 (trabalho de alto nível técnico), Pleno R$38/h para componentes frontend e testes
+- **Razão de economicidade:** **13,6x** (cada R$1 gasto com IA equivaleu a ~R$13,60 sem IA — 2.486÷183=13,59)
+- **Saving estimado:** ~R$2.303 (92,6%)
 
 ### Lições aprendidas
 
@@ -599,65 +606,101 @@ Sessão de iteração pós-Ressonância focada em UX avançado, evolução profu
 
 Este projeto demonstrou de forma concreta que engenharia de software com IA generativa não é apenas uma aceleração de produtividade marginal — é uma mudança qualitativa na forma como sistemas complexos são projetados e construídos. Em aproximadamente 6 semanas de trabalho distribuídas em 6 fases, uma plataforma completa de análise de código foi erguida do zero: backend Python/FastAPI com arquitetura hexagonal, frontend React/TypeScript, pipeline RAG, análise de grafos de dependência, detecção de drift arquitetural, dívida técnica multidimensional com LLM, audit log, webhooks HMAC, watchlist com notificações e 80+ testes unitários.
 
-O custo total de IA foi **~$33.66 USD** para uma equivalência de trabalho estimada em **~329 horas** de desenvolvimento profissional, representando uma economia de **~94.8%** frente ao desenvolvimento tradicional. A razão de economicidade de **19.4x** sustentou-se ao longo de todo o semestre — não foi um pico isolado de uma fase.
+O custo total de ferramentas IA foi **~$69,13 USD** (~R$394 — Copilot Business $57 + Abacus AI ~$12 + OpenAI $0,13 confirmado) para uma equivalência de trabalho estimada em **~329 horas** de desenvolvimento profissional (perfis Sênior/Pleno, taxas mercado Recife/PE 2026), representando uma economia de **~89,9%** frente ao desenvolvimento tradicional. A razão de economicidade de **~9,9x** sustentou-se ao longo de todo o semestre — não foi um pico isolado de uma fase. _(Nota: versões anteriores deste documento reportavam 19,4x/94,8% com base em salários de SP/RJ e custos por token fictícios para o Copilot — os valores acima foram corrigidos e são verificáveis.)_
 
 A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. Decisões de arquitetura, priorização de features, validação de segurança, escolha de patterns e design de prompts continuaram sendo trabalho humano. O que a IA assumiu foi a tradução dessas decisões em código correto, consistente e testado.
 
 ### Métricas de uso de IA (estimadas)
 
-| Atividade               | % assistida por IA | Ferramentas                                        |
-| ----------------------- | ------------------ | -------------------------------------------------- |
-| Escrita de código       | ~95%               | GitHub Copilot (Claude Sonnet 4.6 / Claude Opus 4) |
-| Geração de testes       | ~95%               | GitHub Copilot (Claude Sonnet 4.6)                 |
-| Documentação            | ~85%               | GitHub Copilot (Claude Sonnet 4.6)                 |
-| Design de prompts       | ~40%               | Manual + GitHub Copilot                            |
-| Análise de requisitos   | ~70%               | GitHub Copilot / ChatLLM                           |
-| Debugging e diagnóstico | ~80%               | GitHub Copilot (Claude Sonnet 4.6)                 |
-| Decisões de arquitetura | ~20%               | Manual (IA como consultor)                         |
+| Atividade               | % assistida por IA | Ferramentas                                            |
+| ----------------------- | ------------------ | ------------------------------------------------------ |
+| Escrita de código       | ~95%               | GitHub Copilot (Claude Sonnet 4.6) + Abacus AI ChatLLM |
+| Geração de testes       | ~95%               | GitHub Copilot (Claude Sonnet 4.6)                     |
+| Documentação            | ~85%               | GitHub Copilot (Claude Sonnet 4.6)                     |
+| Design de prompts       | ~40%               | Manual + Abacus AI ChatLLM                             |
+| Análise de requisitos   | ~70%               | GitHub Copilot / ChatLLM                               |
+| Debugging e diagnóstico | ~80%               | GitHub Copilot (Claude Sonnet 4.6)                     |
+| Decisões de arquitetura | ~20%               | Manual (IA como consultor)                             |
 
 ### Consolidado de economicidade do projeto
 
-#### Custo real de IA (total do projeto)
+#### Custo real de IA — Por ferramenta (valores confirmados e estimados)
 
-| Fase                  | Tokens entrada | Tokens saída | Custo IA (USD) | Custo IA (R$)  |
-| --------------------- | -------------- | ------------ | -------------- | -------------- |
-| Pré-proposta          | ~30.000        | ~57.000      | ~$1.08         | ~R$ 5.94       |
-| Exposição             | ~186.000       | ~266.000     | ~$22.74        | ~R$ 125.07     |
-| Composição            | ~88.000        | ~65.000      | ~$1.11         | ~R$ 6.11       |
-| Ensaio                | ~92.000        | ~84.000      | ~$1.56         | ~R$ 8.58       |
-| Ressonância           | ~310.000       | ~220.000     | ~$4.26         | ~R$ 23.43      |
-| Melhorias e Qualidade | ~246.000       | ~145.000     | ~$2.91         | ~R$ 16.01      |
-| **Total**             | **~952.000**   | **~837.000** | **~$33.66**    | **~R$ 185.13** |
+| Ferramenta               | Período         | Unidade de cobrança                | Custo (USD) | Custo (R$)  | Base                                       |
+| ------------------------ | --------------- | ---------------------------------- | ----------- | ----------- | ------------------------------------------ |
+| GitHub Copilot Business  | Abr–Jul/2026    | Assinatura plana $19/mês × 3       | **$57,00**  | **~R$325**  | Fatura organização `ava-client-brazil-cnh` |
+| Abacus AI — UI (ChatLLM) | Jun 10–Jul/2026 | ~10.600 créditos consumidos (UI)   | ~$8,00      | ~R$46       | Log de créditos exportado da Abacus AI     |
+| Abacus AI — API (app)    | Jun–Jul/2026    | ~1.800 créditos consumidos (API)   | ~$4,00      | ~R$23       | Log de créditos exportado da Abacus AI     |
+| OpenAI API               | Jun 24–Jul/2026 | $0,119 embeddings + $0,007 GPT-5.5 | **$0,13**   | **~R$0,74** | **Confirmado — screenshot plataforma**     |
+| **Total ferramentas**    |                 |                                    | **~$69,13** | **~R$394**  |                                            |
 
-#### Custo contrafactual humano (total do projeto)
+> **Sobre Abacus AI:** 12.443 créditos totais entre Jun/10 e Jul/08 de 2026 (log exportado da plataforma). Conversão estimada em ~$0,001/crédito com base nos preços dos modelos utilizados (Claude Sonnet 4.5: $3/M input, $15/M output — Anthropic). Sem taxa de conversão oficial publicada pela Abacus AI, este valor é uma estimativa conservadora.
+>
+> **Sobre GitHub Copilot:** A assinatura Business ($19/mês) é paga pela organização `ava-client-brazil-cnh` — custo direto ao desenvolvedor = R$0. O valor é incluído aqui porque representa o **custo econômico real** do desenvolvimento assistido por IA, independente de quem paga. Qualquer comparação honesta de custo deve incluí-lo.
 
-| Fase                  | Horas totais estimadas | Custo humano estimado (R$) |
-| --------------------- | ---------------------- | -------------------------- |
-| Pré-proposta          | 31.0h                  | R$ 2.775                   |
-| Exposição             | 136.0h                 | R$ 13.960                  |
-| Composição            | 19.0h                  | R$ 1.985                   |
-| Ensaio                | 27.0h                  | R$ 2.465                   |
-| Ressonância           | 67.0h                  | R$ 6.465                   |
-| Melhorias e Qualidade | 49.0h                  | R$ 4.715                   |
-| **Total**             | **329.0h**             | **R$ 32.365**              |
+#### Screenshots dos gastos com IA 
 
-#### Análise comparativa
+### OpenAi
+<img width="2288" height="931" alt="image" src="https://github.com/user-attachments/assets/4ae4e17a-1053-49e9-8c5e-08a2751e7ab2" />
 
-- **Custo total com IA (R$):** ~R$ 185 (IA) + ~R$ 1.485 (trabalho humano nas sessões) = **~R$ 1.670**
-- **Custo total estimado sem IA (R$):** ~R$ 32.365
-- **Razão de economicidade:** **~19.4x** (custo sem IA / custo com IA)
-- **Saving estimado (R$):** ~R$ 30.695
-- **Saving estimado (%):** ~94.8%
+### Abacus AI
+<img width="2239" height="838" alt="image" src="https://github.com/user-attachments/assets/479a16d1-2af9-4e54-a9cb-9d208657e06e" />
+<img width="2243" height="869" alt="image" src="https://github.com/user-attachments/assets/634016a1-7ba4-490f-a571-df1d4117f05e" />
+<img width="2243" height="817" alt="image" src="https://github.com/user-attachments/assets/d15129cf-e362-454d-a4ce-6b1020f5584b" />
+<img width="2245" height="859" alt="image" src="https://github.com/user-attachments/assets/51d197d8-bdab-444b-bdab-6d57282e011c" />
+
+
+
+
+
+
+#### Custo real por fase — Ferramentas + Esforço humano
+
+| Fase                  | Copilot (prop.)  | Abacus AI + OpenAI            | Total ferramentas | Esforço humano c/ IA | **Custo total c/ IA** |
+| --------------------- | ---------------- | ----------------------------- | ----------------- | -------------------- | --------------------- |
+| Pré-proposta          | ~$5 (~R$29)      | ~$1,00 (~R$6)                 | ~R$34             | 7,0h × R$38 = R$266  | **~R$300**            |
+| Exposição (8 SPECs)   | ~$15 (~R$86)     | ~$3,00 (~R$17)                | ~R$103            | 11,4h × R$38 = R$433 | **~R$536**            |
+| Composição            | ~$8 (~R$46)      | ~$2,50 (~R$14)                | ~R$60             | 4,2h × R$38 = R$160  | **~R$220**            |
+| Ensaio                | ~$8 (~R$46)      | ~$2,50 (~R$14)                | ~R$60             | 3,8h × R$38 = R$144  | **~R$204**            |
+| Ressonância           | ~$10 (~R$57)     | ~$2,13 (~R$12)                | ~R$69             | 5,8h × R$38 = R$220  | **~R$289**            |
+| Melhorias e Qualidade | ~$11 (~R$63)     | ~$1,00 (~R$6) + R$0,74 OpenAI | ~R$69             | 3,0h × R$38 = R$114  | **~R$183**            |
+| **Total**             | **$57 (~R$325)** | **~$12,13 (~R$69)**           | **~R$394**        | **35,2h (~R$1.338)** | **~R$1.732**          |
+
+#### Custo contrafactual — Estimativa sem IA (taxas mercado Recife/PE 2026)
+
+> **Referência salarial corrigida:** Júnior R$22/h (~R$3.520/mês CLT), Pleno R$38/h (~R$6.080/mês), Sênior R$62/h (~R$9.920/mês). Base: salário mensal bruto ÷ 160 horas úteis. Os valores anteriores (R$40/R$75/R$115) correspondiam ao mercado de SP/RJ ou referências internacionais — ~85% acima do mercado regional onde o projeto foi desenvolvido.
+
+| Fase                  | Horas sem IA | Perfil médio | Custo sem IA | Custo c/ IA | Saving    | Razão     |
+| --------------------- | ------------ | ------------ | ------------ | ----------- | --------- | --------- |
+| Pré-proposta          | 31h          | Pleno/Sênior | R$1.458      | R$300       | 79,4%     | 4,9x      |
+| Exposição (8 SPECs)   | 136h         | Sênior/Pleno | R$7.424      | R$536       | 92,8%     | 13,9x     |
+| Composição            | 19h          | Sênior       | R$1.058      | R$220       | 79,2%     | 4,8x      |
+| Ensaio                | 27h          | Pleno/Sênior | R$1.290      | R$204       | 84,2%     | 6,3x      |
+| Ressonância           | 67h          | Sênior/Pleno | R$3.410      | R$289       | 91,5%     | 11,8x     |
+| Melhorias e Qualidade | 49h          | Sênior/Pleno | R$2.486      | R$183       | 92,6%     | 13,6x     |
+| **Total**             | **329h**     |              | **R$17.126** | **R$1.732** | **89,9%** | **~9,9x** |
+
+#### Análise comparativa final
+
+- **Custo total real com IA:** ~R$394 (ferramentas) + ~R$1.338 (esforço humano 35,2h × R$38) = **~R$1.732**
+- **Custo estimado sem IA:** **~R$17.126** (329h com perfis Sênior/Pleno, taxas mercado Recife/PE 2026)
+- **Razão de economicidade:** **~9,9x** — cada R$1 investido com IA gerou o equivalente a R$9,90 de trabalho humano
+- **Saving estimado (R$):** ~R$15.394
+- **Saving estimado (%):** ~**89,9%**
+
+> **Por que a razão mudou de 19,4x para ~9,9x?**
+> Três correções foram aplicadas: **(1) Salários regionais:** os valores anteriores (R$40/R$75/R$115) eram de SP/RJ ou referências internacionais. Com taxas corretas de Recife/PE (R$22/R$38/R$62), o contrafactual cai de R$32.365 para R$17.126. **(2) Copilot como assinatura:** o custo real de R$325 (Copilot Business 3 meses) foi incluído — não constava antes. **(3) Modelo correto:** o GitHub Copilot usa Claude Sonnet 4.6 via assinatura plana, não Claude Opus 4 por token — os ~$22.74 da fase de Exposição eram uma estimativa fictícia. **9,9x continua sendo uma razão muito expressiva e agora é verificável.**
 
 > **Atenção às limitações desta análise:**
 > (1) O contrafactual é uma estimativa subjetiva — há viés de retrospecto.
 > (2) O custo com IA não inclui o tempo de aprendizado das ferramentas (curva de adoção).
 > (3) A qualidade do output pode diferir entre as abordagens.
 > (4) Há atividades onde a IA aumentou o tempo total — esses casos devem ser documentados.
+> (5) O tempo estimado sem IA (329h) é o cenário mínimo para um sênior com a stack dominada. Um pleno experiente levaria ~450–550h, o que elevaria o contrafactual para ~R$22.000–R$27.000 e a razão para ~13–16x.
 
 ### O que mudaria se fizesse novamente?
 
-1. **Começar com Claude Sonnet, não Opus.** A Fase de Exposição usou Claude Opus 4 (~$22.74 de ~$30.75 totais de IA) — 67% do custo total em uma fase só. Sonnet 4.6 entrega qualidade equivalente para implementação a 1/5 do preço por token. A troca do modelo no meio do projeto foi a decisão mais impactante economicamente.
+1. **Confirmar o modelo ativo no Copilot antes de iniciar cada fase.** O GitHub Copilot Agent Mode usou Claude Sonnet 4.6 ao longo de todo o projeto — o que foi a escolha correta. A confusão inicial sobre ser “Claude Opus 4” gerou estimativas de custo fictícias ($22.74 na Exposição). Como Copilot é assinatura plana, o modelo não afeta o custo — mas afeta a qualidade. Sonnet 4.6 foi suficiente para todas as tarefas de implementação.
 
 2. **Criar testes unitários junto com a implementação, não depois.** Os testes foram criados em sessão separada, o que exigiu que a IA relesse e reinterpretasse todo o código de produção. Fazer isso na mesma sessão de implementação economizaria tokens e produziria testes mais aderentes.
 
@@ -673,8 +716,8 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 
 **Sobre o uso de modelos:**
 
-- Use Claude Sonnet (ou equivalente mid-tier) para implementação de código — o delta de qualidade em relação ao Opus/GPT-4o em tarefas de código não justifica o custo 5x maior.
-- Reserve modelos premium (Opus, o1) para raciocínio arquitetural profundo, revisão de segurança crítica e design de prompts complexos.
+- Use Claude Sonnet (ou equivalente mid-tier) para implementação de código — o delta de qualidade em relação ao Opus/GPT-4o em tarefas de código não justifica o preço maior. GitHub Copilot Business já usa Sonnet 4.6 via assinatura plana — não há escolha de modelo por token neste modelo de cobrança.
+- Reserve modelos premium (Opus, o1) para raciocínio arquitetural profundo, revisão de segurança crítica e design de prompts complexos — usados diretamente via API ou Abacus AI ChatLLM, onde o custo por crédito é maior.
 - Defina `LLM_MODEL` como variável de ambiente desde o início — trocar modelos em produção sem isso é trabalhoso.
 
 **Sobre gestão de contexto:**
@@ -690,9 +733,9 @@ A IA não substituiu o engenheiro — ela eliminou o atrito de implementação. 
 
 **Sobre economicidade:**
 
-- Meça tokens e custos por fase desde o início — a surpresa da Fase de Exposição com Claude Opus 4 ($22.74 de $33.66 totais) só foi identificada retroativamente.
+- Registre custos reais por ferramenta desde o início: guarde prints do painel OpenAI, exporte o log de créditos do Abacus AI mensalmente, e anote a proporção da assinatura Copilot por fase. Retroativamente é muito mais difícil — e erros de estimativa inflam a razão de economicidade de forma não verificável.
 - O contrafactual em horas deve ser estimado por quem conhece o domínio, não pela IA — o viés de retrospecto da IA inflaciona o contrafactual; o viés humano tende a subestimar.
-- Uma razão de economicidade sustentada acima de 10x ao longo de um semestre é realista e replicável em contextos acadêmicos e de startups.
+- Use taxas salariais do mercado onde o projeto foi desenvolvido. Taxas de SP/RJ ou internacionais em projetos de Recife/PE inflam artificialmente a razão de economicidade.
 
 **Sobre segurança:**
 

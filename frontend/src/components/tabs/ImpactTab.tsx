@@ -15,6 +15,7 @@ import {
     btnSecondary,
     Icon,
 } from "../ui"
+import { useI18n } from "../../i18n"
 
 interface Props {
     repositoryId: string
@@ -292,6 +293,7 @@ function ImpactEntryRow({ entry, onAnalyze }: { entry: ImpactEntry; onAnalyze: (
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function ImpactTab({ repositoryId, status }: Props) {
+    const { t } = useI18n()
     const [pendingModule, setPendingModule] = useState("")
     const [module, setModule] = useState("")
     const [maxDepth, setMaxDepth] = useState(5)

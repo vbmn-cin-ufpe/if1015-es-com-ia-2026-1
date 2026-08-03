@@ -10,6 +10,7 @@ import {
   btnSecondary,
   inputCls,
 } from "../ui"
+import { useI18n } from "../../i18n"
 import { generateModuleDoc } from "../../services/docGeneratorApi"
 import { fadeUp, fadeUpTransition } from "../../animations"
 
@@ -38,6 +39,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function DocGeneratorTab({ repositoryId, status }: Props) {
+  const { t } = useI18n()
   const [modulePath, setModulePath] = useState("")
   const [doc, setDoc] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

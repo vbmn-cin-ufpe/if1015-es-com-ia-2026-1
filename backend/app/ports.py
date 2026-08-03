@@ -94,8 +94,8 @@ class EmbeddingPort(Protocol):
 class LLMPort(Protocol):
     """Interface for LLM text generation."""
 
-    def generate_answer(self, question: str, context_chunks: list[dict[str, Any]]) -> str:
-        """Generate answer based on question and retrieved context."""
+    def generate_answer(self, question: str, context_chunks: list[dict[str, Any]], locale: str = "pt-BR") -> str:
+        """Generate answer based on question and retrieved context, in the requested locale."""
         ...
 
     def generate_raw(self, prompt: str, system_prompt: str) -> str:
