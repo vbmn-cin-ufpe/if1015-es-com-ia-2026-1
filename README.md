@@ -10,7 +10,7 @@ Repository dedicated to the course at Centro de Informática, UFPE (Federal Univ
 
 🎬 **YouTube Demo Video:** https://youtu.be/63nNUSE4aY8
 
-🚀 **Production system:** https://codecompass.lemonwave-598e1007.brazilsouth.azurecontainerapps.io/chat
+🚀 **Production system:** https://codecompass.bravegrass-34034b2f.brazilsouth.azurecontainerapps.io/
 
 
 ---
