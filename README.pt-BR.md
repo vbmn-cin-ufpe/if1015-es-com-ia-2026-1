@@ -10,8 +10,7 @@ Repositório dedicado à disciplina do Centro de Informática da UFPE — **IF10
 
 🎬 **Vídeo Demo YouTube:**: https://youtu.be/63nNUSE4aY8
 
-🚀 **Sistema em produção:**:  https://codecompass.lemonwave-598e1007.brazilsouth.azurecontainerapps.io/chat
-
+🚀 **Sistema em produção:**:  https://codecompass.bravegrass-34034b2f.brazilsouth.azurecontainerapps.io/
 
 ---
 
