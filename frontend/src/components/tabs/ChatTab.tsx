@@ -62,7 +62,7 @@ const LANG_LABELS: Record<string, string> = {
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
     const [copied, setCopied] = useState(false);
     const label =
-        (LANG_LABELS[lang.toLowerCase()] ?? lang.toUpperCase()) || "Código";
+        (LANG_LABELS[lang.toLowerCase()] ?? lang.toUpperCase()) || "Code";
 
     function copy() {
         navigator.clipboard.writeText(code).then(() => {
@@ -91,11 +91,11 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
                     {copied ? (
                         <>
                             <Icon name="check" className="text-green-400" />{" "}
-                            Copiado!
+                            Copied!
                         </>
                     ) : (
                         <>
-                            <Icon name="copy" /> Copiar
+                            <Icon name="copy" /> Copy
                         </>
                     )}
                 </button>
@@ -428,7 +428,7 @@ export function ChatTab({ repositoryId, status }: Props) {
                 setResponseTimes((prev) => ({ ...prev, [lastEntry.id]: ms }));
             }
         } catch {
-            setError("Falha ao consultar o modelo. Tente novamente.");
+            setError(t('chat_errorMsg'));
             setInput(q); // restore input on error
         } finally {
             clearInterval(interval);
@@ -455,8 +455,8 @@ export function ChatTab({ repositoryId, status }: Props) {
             <Card>
                 <EmptyState
                     icon="comments"
-                    title="Repositório não indexado"
-                    description="Indexe um repositório na aba Repositório para usar o chat."
+                    title={t('common_noRepoTitle')}
+                    description={t('common_noRepoDesc')}
                 />
             </Card>
         );
@@ -471,20 +471,20 @@ export function ChatTab({ repositoryId, status }: Props) {
                         <Icon name="comments" className="text-lg" />
                     </span>
                     <div className="flex-1">
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Chat sobre o código</h2>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{t('chat_title')}</h2>
                         <p className="text-xs text-gray-400">
                             {history.length > 0
-                                ? `${history.length} pergunta${history.length !== 1 ? "s" : ""} nesta sessão`
-                                : "Faça perguntas em linguagem natural sobre o repositório"}
+                                ? `${history.length} ${history.length !== 1 ? t('chat_sessionQuestions') : t('chat_sessionQuestion')}`
+                                : t('chat_subtitle')}
                         </p>
                     </div>
                     {history.length > 0 && (
                         <button
                             onClick={clearHistory}
                             className={`${btnSecondary} text-xs`}
-                            title="Limpar conversa"
+                            title={t('chat_clearTitle')}
                         >
-                            <Icon name="trash" /> Limpar
+                            <Icon name="trash" /> {t('chat_clearBtn')}
                         </button>
                     )}
                 </div>
@@ -511,8 +511,8 @@ export function ChatTab({ repositoryId, status }: Props) {
                             <Icon name="comments" className="text-3xl" />
                         </motion.span>
                         <div className="text-center">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nenhuma pergunta ainda</p>
-                            <p className="text-xs text-gray-400 mt-1">Use o campo abaixo para perguntar sobre o código</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('chat_emptyTitle')}</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('chat_emptyDesc')}</p>
                         </div>
                         <motion.div
                             variants={staggerContainer}
@@ -521,10 +521,10 @@ export function ChatTab({ repositoryId, status }: Props) {
                             className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 w-full max-w-lg"
                         >
                             {[
-                                "Como funciona o serviço de autenticação?",
-                                "Quais são os principais módulos?",
-                                "Explique o fluxo de dados da aplicação",
-                                "Quais padrões de design são usados?",
+                                t('chat_suggestion_1'),
+                                t('chat_suggestion_2'),
+                                t('chat_suggestion_3'),
+                                t('chat_suggestion_4'),
                             ].map((suggestion) => (
                                 <motion.button
                                     key={suggestion}
@@ -561,7 +561,7 @@ export function ChatTab({ repositoryId, status }: Props) {
                             <div className="max-w-[80%] bg-indigo-600 dark:bg-indigo-500 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
                                 <p className="text-sm leading-relaxed">{entry.question}</p>
                                 <p className="text-[10px] text-indigo-200 mt-1 text-right">
-                                    {new Date(entry.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                    {new Date(entry.timestamp).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
                                 </p>
                             </div>
                             <span className="shrink-0 w-8 h-8 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center text-sm self-end">
@@ -591,7 +591,7 @@ export function ChatTab({ repositoryId, status }: Props) {
                                     <details className="mt-4">
                                         <summary className="cursor-pointer text-xs text-gray-400 hover:text-indigo-500 flex items-center gap-1.5 select-none">
                                             <Icon name="database" className="text-indigo-400" />
-                                            {entry.response.sources.length} fonte{entry.response.sources.length !== 1 ? "s" : ""} consultada{entry.response.sources.length !== 1 ? "s" : ""}
+                                            {entry.response.sources.length} {entry.response.sources.length !== 1 ? t('search_snippets') : t('search_snippet')}
                                             <Icon name="chevron-down" className="text-[10px]" />
                                         </summary>
                                         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -628,23 +628,23 @@ export function ChatTab({ repositoryId, status }: Props) {
                                     {feedbackSent[entry.id] ? (
                                         <span className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg font-medium">
                                             <Icon name={feedbackSent[entry.id] === "up" ? "thumbs-up" : "thumbs-down"} />
-                                            Obrigado pelo feedback!
+                                            {t('chat_feedbackThanks')}
                                         </span>
                                     ) : (
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handleFeedback(entry.id, true)}
                                                 className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                                                title="Resposta útil"
+                                                title={t('chat_feedbackQuestion')}
                                             >
-                                                <Icon name="thumbs-up" regular /> Sim
+                                                <Icon name="thumbs-up" regular /> {t('chat_feedbackYes')}
                                             </button>
                                             <button
                                                 onClick={() => handleFeedback(entry.id, false)}
                                                 className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                                title="Resposta não útil"
+                                                title={t('chat_feedbackQuestion')}
                                             >
-                                                <Icon name="thumbs-down" regular /> Não
+                                                <Icon name="thumbs-down" regular /> {t('chat_feedbackNo')}
                                             </button>
                                         </div>
                                     )}
@@ -716,7 +716,7 @@ export function ChatTab({ repositoryId, status }: Props) {
                                     if (!loading && input.trim()) onAsk(e as unknown as FormEvent);
                                 }
                             }}
-                            placeholder="Pergunte sobre o código… (Enter para enviar)"
+                            placeholder={t('chat_inputPlaceholder')}
                             disabled={loading}
                             className={`${inputCls} pl-9`}
                         />
@@ -727,15 +727,15 @@ export function ChatTab({ repositoryId, status }: Props) {
                         className={btnPrimary}
                     >
                         {loading ? (
-                            <><Icon name="spinner" className="animate-spin" /> Pensando…</>
+                            <><Icon name="spinner" className="animate-spin" /> {t('chat_thinking')}</>
                         ) : (
-                            <><Icon name="paper-plane" /> Enviar</>
+                            <><Icon name="paper-plane" /> {t('chat_sendBtn')}</>
                         )}
                     </button>
                 </form>
                 <p className="text-[10px] text-gray-400 mt-1.5 text-right">
                     <Icon name="floppy-disk" className="mr-1 text-indigo-300" />
-                    Histórico salvo nesta sessão — persiste ao trocar de aba
+                    {t('chat_sessionHint')}
                 </p>
             </div>
         </div>
