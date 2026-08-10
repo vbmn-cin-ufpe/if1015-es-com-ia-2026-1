@@ -416,7 +416,7 @@ webhook_controller
 | [README.md](README.md)                       | Visão geral, stack, features por fase, como executar |
 | [COMO_FUNCIONA.md](COMO_FUNCIONA.md)         | Arquitetura narrativa + fluxos detalhados            |
 | [COMO_RODAR.md](COMO_RODAR.md)               | Setup passo a passo do zero                          |
-| [CATALOGO_PROMPTS.md](CATALOGO_PROMPTS.md)   | Todos os 9 prompts da aplicação documentados         |
+| [CATALOGO_PROMPTS.md](CATALOGO_PROMPTS.md)   | Todos os 10 prompts da aplicação documentados        |
 | [C4_MODEL.md](C4_MODEL.md)                   | Este documento — C4 Model completo                   |
 | [ARCHITECTURE.md](ARCHITECTURE.md)           | Arquitetura hexagonal, SOLID, DI patterns            |
 | [PROPOSTA_v1.md](PROPOSTA_v1.md)             | Proposta inicial, problema e solução                 |
