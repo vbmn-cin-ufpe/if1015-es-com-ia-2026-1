@@ -112,26 +112,26 @@ app/
 
 ### Controllers (endpoints)
 
-| Router                        | Prefix                    | Responsibility                                            |
-| ----------------------------- | ------------------------- | ----------------------------------------------------------- |
-| `health_controller`           | `/api/health`             | Application status                                         |
-| `auth_controller`             | `/api/auth`               | Signup, signin, onboarding sessions, password reset        |
-| `repo_controller`             | `/api/repos`              | Repository indexing and status                              |
-| `chat_controller`             | `/api/chat`               | RAG questions about the repository                          |
-| `tour_controller`             | `/api/tours`              | Guided tour generation and listing                          |
-| `dependency_graph_controller` | `/api/repos/{id}/graph`   | Dependency graph, snapshots, and architectural diff          |
-| `history_controller`          | `/api/repos/{id}/history` | Commit timeline and "Why?" explanations                     |
-| `metrics_controller`          | `/api/repos/{id}/metrics` | Metrics collection and quality report                       |
-| `ops_controller`              | `/api/ops`                | Liveness, readiness, and operational summary                |
-| `admin_controller`            | `/api/admin`              | User/plan management, health, LLM costs, audit log          |
-| `watchlist_controller`        | `/api/repos/{id}/watch`   | Module subscription for email notifications                 |
-| `webhook_controller`          | `/api/admin/webhooks`     | Webhook CRUD and GitHub push-event receiver                  |
-| `tour_controller`             | `/api/tours`              | Guided tour generation and listing                           |
-| `dependency_graph_controller` | `/api/graph`              | Dependency graph and module details                          |
-| `history_controller`          | `/api/history`            | Commit timeline and "Why?" explanations                      |
-| `metrics_controller`          | `/api/metrics`            | Metrics collection and quality report                        |
-| `ops_controller`              | `/api/ops`                | Liveness, readiness, and operational summary                 |
-
+| Router                        | Prefix                          | Responsibility                                              |
+| ----------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| `health_controller`           | `/api/health`                    | Application status                                            |
+| `auth_controller`             | `/api/auth`                      | Signup, signin, onboarding sessions, password reset          |
+| `repo_controller`             | `/api/repos`                     | Repository indexing and status                                |
+| `chat_controller`             | `/api/chat`                      | RAG questions about the repository                            |
+| `tour_controller`             | `/api/tours`                     | Guided tour generation and listing                            |
+| `dependency_graph_controller` | `/api/repos/{id}/graph`          | Dependency graph, snapshots, impact analysis, and architectural diff |
+| `history_controller`          | `/api/repos/{id}/history`        | Commit timeline and "Why?" explanations                       |
+| `metrics_controller`          | `/api/repos/{id}/metrics`        | Metrics collection and quality report                         |
+| `hotspot_controller`          | `/api/repos/{id}/hotspots`       | Highest-risk files by churn × complexity                      |
+| `tech_debt_controller`        | `/api/repos/{id}/tech-debt`      | Multidimensional technical-debt score + AI summary            |
+| `branch_controller`           | `/api/repos/{id}/analyze-branch` | Branch-vs-base comparison, risk score, LLM summary             |
+| `search_controller`           | `/api/repos/{id}/search`         | Semantic similarity search over indexed code                  |
+| `doc_controller`              | `/api/repos/{id}/generate-doc`   | LLM-generated module documentation                             |
+| `report_controller`           | `/api/repos/{id}/report`         | HTML/JSON repository report export                             |
+| `admin_controller`            | `/api/admin`                     | User/plan management, health, LLM costs, audit log            |
+| `watchlist_controller`        | `/api/repos/{id}/watch`          | Module subscription for email notifications                   |
+| `webhook_controller`          | `/api/admin/webhooks`            | Webhook CRUD and GitHub push-event receiver                    |
+| `ops_controller`              | `/api/ops`                       | Liveness, readiness, and operational summary                   |
 ---
 
 ## Tech stack
