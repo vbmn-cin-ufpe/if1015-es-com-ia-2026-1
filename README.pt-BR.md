@@ -260,18 +260,21 @@ npm --prefix frontend test
 
 ## Uso de IA no desenvolvimento
 
-O projeto foi desenvolvido com assistência extensiva do **GitHub Copilot Agent Mode** (modelo **Claude Sonnet 4.6**) via VS Code, complementado por **ChatLLM** (Claude Opus 4) nas fases iniciais.
+O projeto foi desenvolvido com assistência extensiva do **GitHub Copilot Agent Mode** (**Claude Sonnet 4.6**) via VS Code, complementado pelo **Abacus AI ChatLLM** (**Claude Sonnet 4.5 / GPT-4.1 Mini / Gemini 3 Flash**, variando por sessão) para planejamento de arquitetura e pesquisa de design.
 
-| Fase                 | Tokens entrada (est.) | Tokens saída (est.) | Custo IA (USD) | Razão economicidade |
-| -------------------- | --------------------- | ------------------- | -------------- | -------------------- |
-| Pré-proposta         | ~30.000               | ~57.000             | ~$1.08         | 7.1x                |
-| Fase 1 (Exposição)   | ~186.000              | ~266.000            | ~$22.74        | 14.2x               |
-| Fase 2 (Composição)  | ~88.000               | ~65.000             | ~$1.11         | 6.2x                |
-| Fase 3 (Ensaio)      | ~92.000               | ~84.000             | ~$1.56         | 8.4x                |
-| Fase 4 (Ressonância) | ~310.000              | ~180.000            | ~$5.25         | 11.8x               |
-| **Total**            | **~706.000**          | **~652.000**        | **~$31.74**    | **~10.4x**          |
+> **Correção (09/07/2026):** uma análise anterior estimava o custo do Copilot por preço-por-token do Claude Opus 4 — modelo que ele não usa. O Copilot Business é cobrado por **assinatura fixa de $19/mês**, e o Agent Mode usou **Claude Sonnet 4.6** o tempo todo, não Opus 4. Essa suposição gerou um valor fictício de $22,74 para a fase de Exposição e uma razão de ~19,4×; os registros de cobrança reais mostram ~$69 de custo total de ferramentas e ~9,9×. Derivação completa em [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md).
 
-> Custo contrafactual total estimado (sem IA): **~R$ 27.000+** · Saving estimado: **>92%**
+| Fase | Ferramentas (US$) | Humano (h) | Humano (US$) | Total c/ IA (US$) | Contrafactual (h) | Contrafactual (US$) | Razão |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Pré-proposta | 6 | 7,0 | 47 | 53 | 31 | 256 | 4,9× |
+| Fase 1 (Exposição) | 18 | 11,4 | 76 | 94 | 136 | 1.302 | 13,9× |
+| Fase 2 (Composição) | 11 | 4,2 | 28 | 39 | 19 | 186 | 4,8× |
+| Fase 3 (Ensaio) | 11 | 3,8 | 25 | 36 | 27 | 226 | 6,3× |
+| Fase 4 (Ressonância) | 12 | 5,8 | 39 | 51 | 67 | 598 | 11,8× |
+| Melhorias e Qualidade | 12 | 3,0 | 20 | 32 | 49 | 436 | 13,6× |
+| **Total** | **69** | **35,2** | **235** | **304** | **329** | **3.005** | **9,9×** |
+
+> Esforço humano valorado à taxa regional de nível pleno (US$6,67/h); contrafactual precificado por senioridade (júnior/pleno/sênior: US$3,86/6,67/10,88 — mercado Recife/PE). 329h profissionais estimadas vs. 35,2h efetivamente registradas (~9× menos) e US$69 em ferramentas, para razão de ~9,9× — um número conservador assumindo um sênior já fluente na stack; um perfil pleno elevaria a razão para 13–16×.
 
 ---
 
