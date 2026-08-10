@@ -261,18 +261,21 @@ npm --prefix frontend test
 
 ## AI usage in development
 
-The project was developed with extensive assistance from **GitHub Copilot Agent Mode** (**Claude Sonnet 4.6** model) via VS Code, complemented by **ChatLLM** (Claude Opus 4) in the early phases.
+The project was developed with extensive assistance from **GitHub Copilot Agent Mode** (**Claude Sonnet 4.6**) via VS Code, complemented by **Abacus AI ChatLLM** (**Claude Sonnet 4.5 / GPT-4.1 Mini / Gemini 3 Flash**, varying by session) for architecture planning and design research.
 
-| Phase                | Input tokens (est.) | Output tokens (est.) | AI cost (USD) | Cost-efficiency ratio |
-| --------------------- | --------------------- | ---------------------- | --------------- | ----------------------- |
-| Pre-proposal         | ~30,000               | ~57,000                | ~$1.08          | 7.1x                    |
-| Phase 1 (Exposition) | ~186,000              | ~266,000               | ~$22.74         | 14.2x                   |
-| Phase 2 (Composition)| ~88,000               | ~65,000                | ~$1.11          | 6.2x                    |
-| Phase 3 (Rehearsal)  | ~92,000               | ~84,000                | ~$1.56          | 8.4x                    |
-| Phase 4 (Resonance)  | ~310,000              | ~180,000               | ~$5.25          | 11.8x                   |
-| **Total**            | **~706,000**          | **~652,000**            | **~$31.74**     | **~10.4x**              |
+> **Correction (2026-07-09):** an earlier pass estimated Copilot's cost from per-token pricing for Claude Opus 4 — the model it does not run. Copilot Business is a **flat $19/month subscription**, and Agent Mode used **Claude Sonnet 4.6** throughout, not Opus 4. That assumption produced a fictitious $22.74 for the Exposition phase and a ~19.4× cost-efficiency ratio; billing records instead show ~$69 total tooling cost and ~9.9×. Full derivation in [WORKFLOW_DOCUMENT.md](WORKFLOW_DOCUMENT.md).
 
-> Estimated total counterfactual cost (without AI): **~R$27,000+** · Estimated savings: **>92%**
+| Phase | Tools (US$) | Human (h) | Human (US$) | Total w/ AI (US$) | Counterfactual (h) | Counterfactual (US$) | Ratio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Pre-proposal | 6 | 7.0 | 47 | 53 | 31 | 256 | 4.9× |
+| Phase 1 (Exposition) | 18 | 11.4 | 76 | 94 | 136 | 1,302 | 13.9× |
+| Phase 2 (Composition) | 11 | 4.2 | 28 | 39 | 19 | 186 | 4.8× |
+| Phase 3 (Rehearsal) | 11 | 3.8 | 25 | 36 | 27 | 226 | 6.3× |
+| Phase 4 (Resonance) | 12 | 5.8 | 39 | 51 | 67 | 598 | 11.8× |
+| Quality & improvements | 12 | 3.0 | 20 | 32 | 49 | 436 | 13.6× |
+| **Total** | **69** | **35.2** | **235** | **304** | **329** | **3,005** | **9.9×** |
+
+> Human effort valued at the mid-level regional rate (US$6.67/h); counterfactual priced at seniority-appropriate regional rates (junior/mid/senior: US$3.86/6.67/10.88, Recife/PE market). 329 estimated professional hours vs. 35.2 logged hours (~9× less) and US$69 in tooling, for a ~9.9× ratio — a conservative figure assuming a senior already fluent in the stack; a mid-level profile would plausibly raise it to 13–16×.
 
 ---
 
