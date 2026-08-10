@@ -105,7 +105,7 @@ The backend follows **Hexagonal Architecture** (Ports & Adapters) with dependenc
 app/
 ├── ports.py            # Interfaces (Protocol) — Dependency Inversion
 ├── dependencies.py     # DI container — FastAPI Depends
-├── controllers/        # HTTP handlers (9 routers)
+├── controllers/        # HTTP handlers (18 routers)
 ├── services/           # Business logic
 └── infrastructure/     # External adapters (Postgres, Chroma, Git, LLM)
 ```
@@ -295,8 +295,8 @@ The project was developed with extensive assistance from **GitHub Copilot Agent 
 │   │   ├── main.py          # FastAPI entry point (version 0.3.0)
 │   │   ├── ports.py         # Interfaces / contracts
 │   │   ├── dependencies.py  # Dependency injection container
-│   │   ├── controllers/     # 9 HTTP routers
-│   │   ├── services/        # 20 business services
+│   │   ├── controllers/     # 18 HTTP routers
+│   │   ├── services/        # 29 business services
 │   │   └── infrastructure/  # External adapters
 │   └── tests/
 │       ├── unit/
