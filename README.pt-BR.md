@@ -111,25 +111,26 @@ app/
 
 ### Controllers (endpoints)
 
-| Router                        | Prefixo                   | Responsabilidade                                         |
-| ----------------------------- | ------------------------- | -------------------------------------------------------- |
-| `health_controller`           | `/api/health`             | Status da aplicação                                      |
-| `auth_controller`             | `/api/auth`               | Signup, signin, sessões de onboarding, reset de senha    |
-| `repo_controller`             | `/api/repos`              | Indexação e status de repositórios                       |
-| `chat_controller`             | `/api/chat`               | Perguntas RAG sobre o repositório                        |
-| `tour_controller`             | `/api/tours`              | Geração e listagem de tours guiados                      |
-| `dependency_graph_controller` | `/api/repos/{id}/graph`   | Grafo de dependências, snapshots e diff arquitetural     |
-| `history_controller`          | `/api/repos/{id}/history` | Timeline de commits e explicações "Por quê?"             |
-| `metrics_controller`          | `/api/repos/{id}/metrics` | Coleta de métricas e relatório de qualidade              |
-| `ops_controller`              | `/api/ops`                | Liveness, readiness e resumo operacional                 |
-| `admin_controller`            | `/api/admin`              | Gestão de usuários, planos, saúde, custos LLM, audit log |
-| `watchlist_controller`        | `/api/repos/{id}/watch`   | Subscrição a módulos para notificações por e-mail        |
-| `webhook_controller`          | `/api/admin/webhooks`     | CRUD de webhooks e receiver de push events GitHub        |
-| `tour_controller`             | `/api/tours`              | Geração e listagem de tours guiados                      |
-| `dependency_graph_controller` | `/api/graph`              | Grafo de dependências e detalhes de módulo               |
-| `history_controller`          | `/api/history`            | Timeline de commits e explicações "Por quê?"             |
-| `metrics_controller`          | `/api/metrics`            | Coleta de métricas e relatório de qualidade              |
-| `ops_controller`              | `/api/ops`                | Liveness, readiness e resumo operacional                 |
+| Router                        | Prefixo                          | Responsabilidade                                              |
+| ----------------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| `health_controller`           | `/api/health`                     | Status da aplicação                                               |
+| `auth_controller`             | `/api/auth`                       | Signup, signin, sessões de onboarding, reset de senha            |
+| `repo_controller`             | `/api/repos`                      | Indexação e status de repositórios                                |
+| `chat_controller`             | `/api/chat`                       | Perguntas RAG sobre o repositório                                 |
+| `tour_controller`             | `/api/tours`                      | Geração e listagem de tours guiados                               |
+| `dependency_graph_controller` | `/api/repos/{id}/graph`           | Grafo de dependências, snapshots, análise de impacto e diff arquitetural |
+| `history_controller`          | `/api/repos/{id}/history`         | Timeline de commits e explicações "Por quê?"                      |
+| `metrics_controller`          | `/api/repos/{id}/metrics`         | Coleta de métricas e relatório de qualidade                       |
+| `hotspot_controller`          | `/api/repos/{id}/hotspots`        | Arquivos de maior risco (churn × complexidade)                    |
+| `tech_debt_controller`        | `/api/repos/{id}/tech-debt`       | Score de dívida técnica multidimensional + resumo por IA          |
+| `branch_controller`           | `/api/repos/{id}/analyze-branch`  | Comparação de branch vs. base, risk score, resumo via LLM         |
+| `search_controller`           | `/api/repos/{id}/search`          | Busca por similaridade semântica no código indexado               |
+| `doc_controller`              | `/api/repos/{id}/generate-doc`    | Documentação de módulo gerada via LLM                              |
+| `report_controller`           | `/api/repos/{id}/report`          | Exportação de relatório do repositório (HTML/JSON)                |
+| `admin_controller`            | `/api/admin`                      | Gestão de usuários, planos, saúde, custos LLM, audit log          |
+| `watchlist_controller`        | `/api/repos/{id}/watch`           | Subscrição a módulos para notificações por e-mail                 |
+| `webhook_controller`          | `/api/admin/webhooks`             | CRUD de webhooks e receiver de push events GitHub                 |
+| `ops_controller`              | `/api/ops`                        | Liveness, readiness e resumo operacional                          |
 
 ---
 
